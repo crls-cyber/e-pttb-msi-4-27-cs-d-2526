@@ -42,6 +42,25 @@ class User(Base, UUIDMixin, TimestampMixin):
         """Check if password is correct."""
         return check_password_hash(self.password_hash, password)
 
+    # Flask-Login required properties (AJOUTER CES 4 MÉTHODES)
+    @property
+    def is_authenticated(self):
+        """User is authenticated."""
+        return True
+
+    @property
+    def is_active(self):
+        """User is active."""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """User is not anonymous."""
+        return False
+
+    def get_id(self):
+        """Get user ID for Flask-Login."""
+        return str(self.id)
 
 class Role(Base, UUIDMixin, TimestampMixin):
     """Role model."""

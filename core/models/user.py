@@ -1,0 +1,64 @@
+"""User, Role, and Permission models."""
+from sqlalchemy import Column, String, Table, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from werkzeug.security import generate_password_hash, check_password_hash
+from .base import Base, UUIDMixin, TimestampMixin
+
+# Association tables
+user_roles = Table(
+    'user_roles',
+    Base.metadata,
+    Column('user_id', UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True),
+    Column('role_id', UUID(as_uuid=True), ForeignKey('roles.id'), primary_key=True)
+)
+
+role_permissions = Table(
+    'role_permissions',
+    Base.metadata,
+    Column('role_id', UUID(as_uuid=True), ForeignKey('roles.id'), primary_key=True),
+    Column('permission_id', UUID(as_uuid=True), ForeignKey('permissions.id'), primary_key=True)
+)
+
+
+class User(Base, UUIDMixin, TimestampMixin):
+    """User model."""
+    __tablename__ = 'users'
+
+    username = Column(String(50), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    email = Column(String(100), nullable=True)
+
+    # Relationships
+    roles = relationship('Role', secondary=user_roles, back_populates='users')
+    jobs = relationship('Job', back_populates='user')
+    audit_logs = relationship('AuditLog', back_populates='user')
+
+    def set_password(self, password):
+        """Hash and set password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Check if password is correct."""
+        return check_password_hash(self.password_hash, password)
+
+
+class Role(Base, UUIDMixin, TimestampMixin):
+    """Role model."""
+    __tablename__ = 'roles'
+
+    name = Column(String(50), unique=True, nullable=False)
+
+    # Relationships
+    users = relationship('User', secondary=user_roles, back_populates='roles')
+    permissions = relationship('Permission', secondary=role_permissions, back_populates='roles')
+
+
+class Permission(Base, UUIDMixin, TimestampMixin):
+    """Permission model."""
+    __tablename__ = 'permissions'
+
+    name = Column(String(100), unique=True, nullable=False)
+
+    # Relationships
+    roles = relationship('Role', secondary=role_permissions, back_populates='permissions')

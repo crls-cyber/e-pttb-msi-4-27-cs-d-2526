@@ -2,9 +2,11 @@
 from .celery_app import celery_app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from core.models import Job
+from core.models import Job, Finding
+from core.plugins import executor
 import os
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -35,20 +37,47 @@ def run_plugin(self, job_id, plugin_name, config):
         job.status = 'running'
         session.commit()
         
-        # TODO: Load and execute the plugin (Jour 4)
-        # For now, just simulate work
-        import time
-        time.sleep(5)
+        # Execute plugin via executor
+        result = executor.execute(plugin_name, config)
         
-        # Update job status to completed
-        job.status = 'completed'
-        session.commit()
-        
-        return {
-            'job_id': str(job_id),
-            'plugin': plugin_name,
-            'status': 'completed'
-        }
+        if result['success']:
+            # Create findings in database
+            for finding_data in result['findings']:
+                finding = Finding(
+                    id=uuid.uuid4(),
+                    job_id=job.id,
+                    title=finding_data['title'],
+                    severity=finding_data['severity'],
+                    description=finding_data.get('description', ''),
+                    remediation=finding_data.get('remediation', ''),
+                    cvss_score=finding_data.get('cvss_score'),
+                    cve_id=finding_data.get('cve_id')
+                )
+                session.add(finding)
+            
+            # Update job status to completed
+            job.status = 'completed'
+            session.commit()
+            
+            return {
+                'job_id': str(job_id),
+                'plugin': plugin_name,
+                'status': 'completed',
+                'findings_count': len(result['findings']),
+                'duration': result['duration']
+            }
+        else:
+            # Plugin execution failed
+            job.status = 'failed'
+            job.error = result['error']
+            session.commit()
+            
+            return {
+                'job_id': str(job_id),
+                'plugin': plugin_name,
+                'status': 'failed',
+                'error': result['error']
+            }
         
     except Exception as e:
         # Update job status to failed
@@ -67,3 +96,4 @@ def run_plugin(self, job_id, plugin_name, config):
 def hello_world():
     """Test task."""
     return 'Hello from Celery!'
+

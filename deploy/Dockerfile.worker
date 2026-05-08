@@ -1,0 +1,35 @@
+FROM python:3.11-slim
+
+# Installation des outils de pentest + dépendances WeasyPrint
+RUN apt-get update && apt-get install -y \
+    # Outils de pentest
+    nmap \
+    sqlmap \
+    git \
+    wget \
+    unzip \
+    # Dépendances WeasyPrint pour génération PDF
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    libcairo2 \
+    shared-mime-info \
+    # Fonts pour rendu PDF propre
+    fonts-liberation \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installation Nuclei
+RUN wget -qO nuclei.zip https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip \
+    && unzip nuclei.zip && mv nuclei /usr/local/bin/ && rm nuclei.zip
+
+# Copie du code
+COPY . /app
+WORKDIR /app
+
+# Installation dépendances Python (inclut WeasyPrint via pyproject.toml)
+RUN pip install poetry && poetry install --no-dev
+
+CMD ["celery", "-A", "core.orchestrator.celery_app", "worker", "-Q", "default,scan", "--loglevel=info"]

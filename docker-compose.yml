@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - pentest_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - pentest_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - pentest_net
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    env_file: deploy/.env
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./core:/app/core
+      - ./ui:/app/ui
+    networks:
+      - pentest_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.worker
+    env_file: deploy/.env
+    volumes:
+      - ./core:/app/core
+      - ./plugins:/app/plugins
+    network_mode: "host"
+    depends_on:
+      - redis
+      - postgres
+
+networks:
+  pentest_net:
+    driver: bridge
+
+volumes:
+  pg_data:
+  minio_data:

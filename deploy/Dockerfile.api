@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Installation de Poetry
+RUN pip install poetry
+
+# Copie des fichiers de configuration
+COPY pyproject.toml poetry.lock* ./
+
+# Installation des dépendances sans les paquets de développement
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-dev --no-interaction --no-ansi
+
+# Copie du reste du code
+COPY . .
+
+# Exposition du port Flask
+EXPOSE 5000
+
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]

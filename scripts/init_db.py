@@ -3,17 +3,30 @@
 import sys
 import os
 
+# Charger le fichier .env (AJOUTER CES 2 LIGNES)
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sqlalchemy import create_engine
 from core.models import Base, Role
 
+# Database URL from environment variables
+POSTGRES_USER = os.getenv('POSTGRES_USER', 'pentest')
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'password')
+POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
+POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
+POSTGRES_DB = os.getenv('POSTGRES_DB', 'pentest_toolbox')
+
+DATABASE_URL = f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
+
 # Database URL from environment
-DATABASE_URL = os.getenv(
-    'DATABASE_URL',
-    'postgresql://pentest:CHANGE_ME_IN_PROD@localhost:5432/pentest_toolbox'
-)
+#  DATABASE_URL = os.getenv(
+#    'DATABASE_URL',
+#     'postgresql://pentest:CHANGE_ME_IN_PROD@localhost:5432/pentest_toolbox'
+#  )
 
 def init_db():
     """Create all tables and default roles."""

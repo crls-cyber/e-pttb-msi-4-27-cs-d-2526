@@ -20,6 +20,9 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: pentest-toolbox-redis
+    ports:
+      - "6379:6379"
     networks:
       - pentest_net
     healthcheck:

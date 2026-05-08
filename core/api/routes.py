@@ -1,4 +1,5 @@
 """API routes."""
+from core.security import audit_log, require_role
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .auth import authenticate_user, logout_current_user
@@ -23,6 +24,7 @@ def login():
     user = authenticate_user(username, password)
     
     if user:
+        audit_log('user.login', 'user', user.id)  #  AJOUT AUDIT
         return jsonify({
             'message': 'Login successful',
             'user': {

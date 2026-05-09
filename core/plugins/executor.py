@@ -74,7 +74,10 @@ class PluginExecutor:
                 signal.alarm(0)
                 
                 # Parse output
-                findings = plugin.parse_output(execution_result.get('raw_output'))
+                findings = plugin.parse_output(
+                    execution_result.get('raw_output'),
+                    execution_result.get('metadata', {})
+                )
                 
                 # Success
                 result['success'] = True

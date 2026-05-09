@@ -69,7 +69,8 @@ services:
     volumes:
       - ./core:/app/core
       - ./plugins:/app/plugins
-    network_mode: "host"
+    networks:
+      - pentest_net
     depends_on:
       - redis
       - postgres

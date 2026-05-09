@@ -135,3 +135,27 @@ def get_job(job_id):
         'created_at': job.created_at.isoformat(),
         'updated_at': job.updated_at.isoformat()
     }), 200
+
+
+@api_bp.route('/jobs/<job_id>/findings', methods=['GET'])
+@login_required
+def get_job_findings(job_id):
+    """Get findings for a specific job"""
+    from core.models.finding import Finding
+    
+    findings = db.session.query(Finding).filter_by(job_id=job_id).all()
+    
+    return jsonify({
+        'job_id': job_id,
+        'findings': [
+            {
+                'id': str(f.id),
+                'title': f.title,
+                'severity': f.severity,
+                'description': f.description,
+                'created_at': f.created_at.isoformat() if f.created_at else None
+            }
+            for f in findings
+        ]
+    })
+

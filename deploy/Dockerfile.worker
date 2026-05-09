@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
     # Fonts pour rendu PDF propre
     fonts-liberation \
     fontconfig \
+    # Utilitaires réseau pour debug
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation Nuclei

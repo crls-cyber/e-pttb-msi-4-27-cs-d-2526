@@ -10,7 +10,7 @@ COPY pyproject.toml poetry.lock* ./
 
 # Installation des dépendances sans les paquets de développement
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-interaction --no-ansi
+    && poetry install --only main --no-root --no-interaction --no-ansi
 
 # Copie du reste du code
 COPY . .
@@ -18,4 +18,4 @@ COPY . .
 # Exposition du port Flask
 EXPOSE 5000
 
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+CMD ["sh", "-c", "FLASK_APP=core.api:create_app python -m flask run --host=0.0.0.0 --port=5000"]

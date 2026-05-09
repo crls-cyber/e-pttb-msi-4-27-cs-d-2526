@@ -49,7 +49,6 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
-    env_file: deploy/.env
     ports:
       - "5000:5000"
     volumes:
@@ -67,7 +66,6 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.worker
-    env_file: deploy/.env
     volumes:
       - ./core:/app/core
       - ./plugins:/app/plugins

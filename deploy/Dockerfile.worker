@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libffi-dev \
     libcairo2 \
     shared-mime-info \
@@ -22,14 +22,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation Nuclei
-RUN wget -qO nuclei.zip https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip \
-    && unzip nuclei.zip && mv nuclei /usr/local/bin/ && rm nuclei.zip
+RUN wget -O /tmp/nuclei.zip https://github.com/projectdiscovery/nuclei/releases/download/v3.2.3/nuclei_3.2.3_linux_amd64.zip \
+    && unzip /tmp/nuclei.zip -d /tmp/ \
+    && mv /tmp/nuclei /usr/local/bin/nuclei \
+    && chmod +x /usr/local/bin/nuclei \
+    && rm /tmp/nuclei.zip
 
 # Copie du code
 COPY . /app
 WORKDIR /app
 
 # Installation dépendances Python (inclut WeasyPrint via pyproject.toml)
-RUN pip install poetry && poetry install --no-dev
+RUN pip install poetry && poetry install --only main --no-root
 
-CMD ["celery", "-A", "core.orchestrator.celery_app", "worker", "-Q", "default,scan", "--loglevel=info"]
+CMD ["poetry", "run", "celery", "-A", "core.orchestrator.celery_app", "worker", "-Q", "default,scan", "--loglevel=info"]

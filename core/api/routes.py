@@ -159,3 +159,52 @@ def get_job_findings(job_id):
         ]
     })
 
+
+@api_bp.route('/findings', methods=['GET'])
+@login_required
+def get_findings():
+    """Get findings with optional filters"""
+    from core.models.finding import Finding
+    
+    job_id = request.args.get('job_id')
+    severity = request.args.get('severity')
+    
+    query = db.session.query(Finding)
+    
+    if job_id:
+        query = query.filter_by(job_id=job_id)
+    if severity:
+        query = query.filter_by(severity=severity)
+    
+    findings = query.order_by(Finding.created_at.desc()).all()
+    
+    return jsonify([{
+        'id': str(f.id),
+        'job_id': str(f.job_id),
+        'title': f.title,
+        'severity': f.severity,
+        'description': f.description,
+        'cvss_score': f.cvss_score,
+        'created_at': f.created_at.isoformat()
+    } for f in findings])
+
+
+@api_bp.route('/findings/<finding_id>', methods=['GET'])
+@login_required
+def get_finding(finding_id):
+    """Get a specific finding"""
+    from core.models.finding import Finding
+    
+    finding = db.session.query(Finding).filter_by(id=finding_id).first_or_404()
+    
+    return jsonify({
+        'id': str(finding.id),
+        'job_id': str(finding.job_id),
+        'title': finding.title,
+        'severity': finding.severity,
+        'description': finding.description,
+        'cvss_score': finding.cvss_score,
+        'evidence': finding.evidence,
+        'remediation': finding.remediation,
+        'created_at': finding.created_at.isoformat()
+    })

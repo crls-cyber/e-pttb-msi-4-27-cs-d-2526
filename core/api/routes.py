@@ -233,3 +233,19 @@ def run_web_pentest_workflow():
         'status': 'running',
         'message': 'Web pentest workflow started (Nmap → Nuclei → SQLmap)'
     }), 202
+
+
+@api_bp.route('/reports/<job_id>/html', methods=['GET'])
+@login_required
+def get_html_report(job_id):
+    """Generate and return HTML report for a job"""
+    from core.reporting.html_generator import generate_html_report
+    
+    try:
+        html = generate_html_report(job_id)
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+

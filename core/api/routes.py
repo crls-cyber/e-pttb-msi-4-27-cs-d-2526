@@ -208,3 +208,28 @@ def get_finding(finding_id):
         'remediation': finding.remediation,
         'created_at': finding.created_at.isoformat()
     })
+
+
+@api_bp.route('/workflows/web-pentest', methods=['POST'])
+@login_required
+def run_web_pentest_workflow():
+    """Launch web pentest workflow: Nmap → Nuclei → SQLmap"""
+    from core.orchestrator.workflows import web_pentest_workflow
+    
+    data = request.get_json()
+    target = data.get('target')
+    
+    if not target:
+        return jsonify({'error': 'Target required'}), 400
+    
+    # Launch workflow
+    workflow_result = web_pentest_workflow(target, current_user.id)
+    
+    audit_log('workflow.start', 'workflow', workflow_result.id)
+    
+    return jsonify({
+        'workflow_id': workflow_result.id,
+        'target': target,
+        'status': 'running',
+        'message': 'Web pentest workflow started (Nmap → Nuclei → SQLmap)'
+    }), 202

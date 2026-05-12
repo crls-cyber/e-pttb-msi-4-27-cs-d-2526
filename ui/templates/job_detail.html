@@ -71,4 +71,36 @@
     </p>
     {% endif %}
 </div>
+
+<script>
+// Auto-refresh si job en cours
+const jobStatus = "{{ job.status }}";
+
+if (jobStatus === 'running' || jobStatus === 'pending') {
+    // Afficher un indicateur visuel
+    const statusBadge = document.querySelector('.card p:nth-child(4)');
+    if (statusBadge) {
+        const spinner = document.createElement('span');
+        spinner.textContent = ' 🔄';
+        spinner.style.animation = 'spin 2s linear infinite';
+        statusBadge.appendChild(spinner);
+    }
+    
+    // Ajouter CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Rafraîchir toutes les 5 secondes
+    setTimeout(function() {
+        location.reload();
+    }, 10000);
+}
+</script>
+
 {% endblock %}

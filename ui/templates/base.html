@@ -24,12 +24,20 @@
     </header>
 
     <main class="container">
+        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
+                    <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid; display: flex; align-items: center; gap: 10px;">
+                        {% if category == 'success' %}
+                            <span style="font-size: 24px;">✅</span>
+                        {% elif category == 'error' %}
+                            <span style="font-size: 24px;">❌</span>
+                        {% else %}
+                            <span style="font-size: 24px;">ℹ️</span>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}

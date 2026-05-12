@@ -243,3 +243,24 @@ tr:hover {
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+/* Flash messages */
+.alert {
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.alert-success {
+    border-left-color: #27ae60 !important;
+    background: #d4edda !important;
+}
+
+.alert-error {
+    border-left-color: #e74c3c !important;
+    background: #f8d7da !important;
+}
+
+.alert-info {
+    border-left-color: #3498db !important;
+    background: #d1ecf1 !important;
+}

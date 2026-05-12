@@ -46,8 +46,18 @@
                 <td><strong>{{ job.plugin_name }}</strong></td>
                 <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                 <td>
-                    <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
-                </td>
+                    {% if job.status == 'completed' %}
+                        <span class="badge badge-success">✓ completed</span>
+                    {% elif job.status == 'failed' %}
+                        <span class="badge badge-failed">✗ failed</span>
+                    {% elif job.status == 'running' %}
+                        <span class="badge badge-running">🔄 running</span>
+                    {% elif job.status == 'pending' %}
+                        <span class="badge badge-pending">⏳ pending</span>
+                    {% else %}
+                        <span class="badge">{{ job.status }}</span>
+                    {% endif %}
+                </td>    
                 <td>
                     <a href="{{ url_for('ui.job_detail', job_id=job.id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">
                         Voir

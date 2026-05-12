@@ -36,3 +36,34 @@ def create_app():
     app.register_blueprint(ui_bp)
 
     return app
+
+
+def create_test_app():
+    """Create Flask app for testing with SQLite in-memory database"""
+    app = Flask(__name__)
+    
+    # Test-specific config
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SECRET_KEY'] = 'test-secret-key'
+    app.config['WTF_CSRF_ENABLED'] = False
+    
+    # Initialize extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+
+    # User loader for Flask-Login
+    from core.models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, user_id)
+    
+    # Register blueprints
+    from core.api.routes import auth_bp, api_bp
+    from ui.routes import ui_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(ui_bp)
+    
+    return app

@@ -2,7 +2,7 @@
 Pytest fixtures communes pour tous les tests
 """
 import pytest
-from core.api.app import create_app, db as _db
+from core.api.app import create_test_app, db as _db
 from core.models.user import User
 from werkzeug.security import generate_password_hash
 import uuid
@@ -11,12 +11,16 @@ import uuid
 @pytest.fixture(scope='session')
 def app():
     """Create application for testing"""
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['WTF_CSRF_ENABLED'] = False
+    app = create_test_app()
     
     with app.app_context():
+        # Import ALL models BEFORE create_all()
+        from core.models.user import User
+        from core.models.job import Job
+        from core.models.finding import Finding
+        from core.models.artifact import Artifact
+        from core.models.audit_log import AuditLog
+        
         _db.create_all()
         yield app
         _db.drop_all()
@@ -42,7 +46,7 @@ def auth_client(client, db):
     """Create authenticated test client"""
     # Create test user
     user = User(
-        id=str(uuid.uuid4()),
+        id=uuid.uuid4(),
         username='testuser',
         password_hash=generate_password_hash('testpass'),
         email='test@test.com'
@@ -52,7 +56,7 @@ def auth_client(client, db):
     
     # Login
     with client.session_transaction() as sess:
-        sess['_user_id'] = user.id
+        sess['_user_id'] = str(user.id)
     
     return client
 
@@ -63,8 +67,8 @@ def sample_job(db):
     from core.models.job import Job
     
     job = Job(
-        id=str(uuid.uuid4()),
-        user_id=str(uuid.uuid4()),
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
         plugin_name='nmap',
         config={'target': '192.168.1.1'},
         status='completed'
@@ -81,7 +85,7 @@ def sample_finding(db, sample_job):
     from core.models.finding import Finding
     
     finding = Finding(
-        id=str(uuid.uuid4()),
+        id=uuid.uuid4(),
         job_id=sample_job.id,
         title='Test vulnerability',
         severity='high',

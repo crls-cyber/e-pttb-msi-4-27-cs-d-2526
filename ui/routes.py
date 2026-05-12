@@ -100,11 +100,27 @@ def new_job():
             flash('Plugin et cible requis', 'error')
             return render_template('new_job.html')
         
-        # Redirect to API to create job
-        from flask import jsonify
-        import requests
-        # Note: In production, call API internally
-        flash(f'Job {plugin} créé pour {target}', 'success')
-        return redirect(url_for('ui.jobs'))
+        # Create job in database
+        import uuid
+        from core.models.job import Job
+        
+        job = Job(
+            id=str(uuid.uuid4()),
+            user_id=current_user.id,
+            plugin_name=plugin,
+            config={'target': target},
+            status='pending'
+        )
+        
+        db.session.add(job)
+        db.session.commit()
+        
+        # Send to Celery
+        from core.orchestrator.tasks import run_plugin
+        run_plugin.delay(job.id, plugin, job.config)
+        
+        flash(f'Scan {plugin} lancé sur {target} !', 'success')
+        return redirect(url_for('ui.job_detail', job_id=job.id))
     
     return render_template('new_job.html')
+

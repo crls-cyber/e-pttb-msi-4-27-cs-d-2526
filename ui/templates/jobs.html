@@ -26,7 +26,7 @@
         <tbody>
             {% for job in jobs %}
             <tr>
-                <td><code>{{ job.id[:8] }}</code></td>
+                <td><code>{{ (job.id|string)[:8] }}</code></td>
                 <td><strong>{{ job.plugin_name }}</strong></td>
                 <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                 <td>

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs - ToolBox Pentest{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📋 Tous les Jobs</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('ui.new_job') }}" class="btn btn-success">
+            ➕ Nouveau Scan
+        </a>
+    </div>
+    
+    {% if jobs %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Plugin</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td><code>{{ job.id[:8] }}</code></td>
+                <td><strong>{{ job.plugin_name }}</strong></td>
+                <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+                </td>
+                <td>
+                    <a href="{{ url_for('ui.job_detail', job_id=job.id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">
+                        Détails
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #95a5a6; padding: 40px;">
+        Aucun job pour le moment.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

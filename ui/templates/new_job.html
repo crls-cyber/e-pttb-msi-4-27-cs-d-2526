@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Nouveau Scan - ToolBox Pentest{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>➕ Nouveau Scan</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="plugin">Plugin</label>
+            <select id="plugin" name="plugin" required>
+                <option value="">-- Choisir un plugin --</option>
+                <option value="nmap">Nmap (Scan réseau)</option>
+                <option value="nuclei">Nuclei (Scan web)</option>
+                <option value="sqlmap">SQLmap (Injection SQL)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="target">Cible (IP ou URL)</label>
+            <input type="text" id="target" name="target" placeholder="192.168.145.102 ou http://example.com" required>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-success" style="flex: 1;">
+                🚀 Lancer le Scan
+            </button>
+            <a href="{{ url_for('ui.jobs') }}" class="btn" style="background: #95a5a6; color: white;">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

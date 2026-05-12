@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ToolBox Pentest{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📊 Dashboard</h2>
+    <p>Bienvenue, <strong>{{ current_user.username }}</strong> !</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card critical">
+        <div class="label">Findings Critiques</div>
+        <div class="number">{{ stats.critical }}</div>
+    </div>
+    <div class="stat-card high">
+        <div class="label">Findings Hautes</div>
+        <div class="number">{{ stats.high }}</div>
+    </div>
+    <div class="stat-card medium">
+        <div class="label">Findings Moyennes</div>
+        <div class="number">{{ stats.medium }}</div>
+    </div>
+    <div class="stat-card low">
+        <div class="label">Findings Basses</div>
+        <div class="number">{{ stats.low }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🕐 Derniers Jobs</h2>
+    
+    {% if recent_jobs %}
+    <table>
+        <thead>
+            <tr>
+                <th>Plugin</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in recent_jobs %}
+            <tr>
+                <td><strong>{{ job.plugin_name }}</strong></td>
+                <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+                </td>
+                <td>
+                    <a href="{{ url_for('ui.job_detail', job_id=job.id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">
+                        Voir
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #95a5a6; padding: 20px;">
+        Aucun job pour le moment.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

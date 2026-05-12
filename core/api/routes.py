@@ -249,3 +249,26 @@ def get_html_report(job_id):
     except Exception as e:
         return jsonify({'error': f'Report generation error: {str(e)}'}), 500
 
+
+@api_bp.route('/reports/<job_id>/pdf', methods=['GET'])
+@login_required
+def get_pdf_report(job_id):
+    """Generate and return PDF report for a job"""
+    from core.reporting.pdf_generator import generate_pdf_report
+    
+    try:
+        pdf_bytes = generate_pdf_report(job_id)
+        
+        # Create response with PDF content
+        from flask import make_response
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=pentest_report_{job_id[:8]}.pdf'
+        
+        return response
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
+

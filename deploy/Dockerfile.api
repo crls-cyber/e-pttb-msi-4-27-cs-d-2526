@@ -2,20 +2,34 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Installation de Poetry
+# Installation des dépendances système pour WeasyPrint
+RUN apt-get update && apt-get install -y \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    libcairo2 \
+    shared-mime-info \
+    fonts-liberation \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installation Poetry
 RUN pip install poetry
 
-# Copie des fichiers de configuration
+# Copie des fichiers de dépendances
 COPY pyproject.toml poetry.lock* ./
 
-# Installation des dépendances sans les paquets de développement
+# Installation des dépendances Python
 RUN poetry config virtualenvs.create false \
     && poetry install --only main --no-root --no-interaction --no-ansi
 
-# Copie du reste du code
+# Copie du code source
 COPY . .
 
-# Exposition du port Flask
+# Exposition du port
 EXPOSE 5000
 
-CMD ["sh", "-c", "FLASK_APP=core.api:create_app python -m flask run --host=0.0.0.0 --port=5000"]
+# Commande de démarrage
+CMD ["sh", "-c", "FLASK_APP=core.api.app:create_app flask run --host=0.0.0.0"]

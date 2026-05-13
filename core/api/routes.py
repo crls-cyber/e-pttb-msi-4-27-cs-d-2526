@@ -272,3 +272,109 @@ def get_pdf_report(job_id):
         return jsonify({'error': f'Report generation error: {str(e)}'}), 500
 
 
+
+
+@api_bp.route('/upload-external', methods=['POST'])
+@login_required
+def upload_external_file():
+    """Upload external file (PCAP, Metasploit logs) for parsing."""
+    from werkzeug.utils import secure_filename
+    from plugins.external import WiresharkParser, MetasploitParser
+    import tempfile
+    import shutil
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Empty filename'}), 400
+    
+    # Get parser type
+    parser_type = request.form.get('parser_type', 'auto')
+    
+    # Secure filename
+    filename = secure_filename(file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    
+    # Auto-detect parser
+    if parser_type == 'auto':
+        if ext in ['.pcap', '.pcapng', '.cap']:
+            parser_type = 'wireshark'
+        elif ext in ['.log', '.txt']:
+            parser_type = 'metasploit'
+        else:
+            return jsonify({'error': f'Unsupported file type: {ext}'}), 400
+    
+    # Select parser
+    if parser_type == 'wireshark':
+        parser = WiresharkParser()
+    elif parser_type == 'metasploit':
+        parser = MetasploitParser()
+    else:
+        return jsonify({'error': f'Unknown parser type: {parser_type}'}), 400
+    
+    # Save to temp file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+        file.save(tmp.name)
+        tmp_path = tmp.name
+    
+    try:
+        # Parse file
+        result = parser.parse(tmp_path, current_user.id)
+        
+        # Create Job in database
+        job = Job(
+            id=str(uuid.uuid4()),
+            user_id=current_user.id,
+            plugin_name=f"external_{parser_type}",
+            config={'filename': filename},
+            status='completed'
+        )
+        db.session.add(job)
+        
+        # Create Findings
+        for finding_data in result['findings']:
+            finding = Finding(
+                id=str(uuid.uuid4()),
+                job_id=job.id,
+                title=finding_data['title'],
+                severity=finding_data['severity'],
+                description=finding_data['description']
+            )
+            db.session.add(finding)
+        
+        # Upload original file to MinIO as artifact
+        from core.storage import upload_artifact
+        artifact_key = upload_artifact(tmp_path, job.id, filename)
+        
+        artifact = Artifact(
+            id=str(uuid.uuid4()),
+            job_id=job.id,
+            filename=filename,
+            content_type=file.content_type or 'application/octet-stream',
+            minio_bucket='artifacts',
+            minio_key=artifact_key,
+            size_bytes=os.path.getsize(tmp_path)
+        )
+        db.session.add(artifact)
+        
+        db.session.commit()
+        
+        audit_log('external.upload', 'job', job.id)
+        
+        return jsonify({
+            'success': True,
+            'job_id': job.id,
+            'findings_count': len(result['findings']),
+            'summary': result['summary'],
+            'message': f'{parser_type.capitalize()} file parsed successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+    finally:
+        # Cleanup temp file
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)

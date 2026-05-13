@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Upload External File{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📤 Upload External File</h1>
+    
+    <div class="info-box">
+        <h3>ℹ️ Supported File Types</h3>
+        <ul>
+            <li><strong>Wireshark PCAP</strong>: .pcap, .pcapng, .cap (max 100MB)</li>
+            <li><strong>Metasploit Logs</strong>: .log, .txt (max 50MB)</li>
+        </ul>
+        <p><strong>⚠️ Important:</strong> Only upload files from authorized penetration tests.</p>
+    </div>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Select File:</label>
+            <input type="file" id="file" name="file" required 
+                   accept=".pcap,.pcapng,.cap,.log,.txt">
+        </div>
+        
+        <div class="form-group">
+            <label for="parser_type">Parser Type:</label>
+            <select id="parser_type" name="parser_type">
+                <option value="auto">Auto-detect</option>
+                <option value="wireshark">Wireshark (PCAP)</option>
+                <option value="metasploit">Metasploit (Logs)</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="uploadBtn">Upload & Parse</button>
+    </form>
+    
+    <div id="progress" style="display:none;">
+        <p>⏳ Uploading and parsing file...</p>
+        <div class="progress-bar">
+            <div id="progressBar" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <div id="result" style="display:none;"></div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('file');
+    const parserType = document.getElementById('parser_type').value;
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progress = document.getElementById('progress');
+    const result = document.getElementById('result');
+    
+    // Validate file
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    
+    if (file.size > maxSize) {
+        alert('File too large. Maximum size: 100MB');
+        return;
+    }
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('parser_type', parserType);
+    
+    // Show progress
+    uploadBtn.disabled = true;
+    progress.style.display = 'block';
+    result.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/upload-external', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            result.innerHTML = `
+                <div class="success-box">
+                    <h3>✅ Upload Successful</h3>
+                    <p><strong>Summary:</strong> ${data.summary}</p>
+                    <p><strong>Findings:</strong> ${data.findings_count}</p>
+                    <p><strong>Job ID:</strong> ${data.job_id}</p>
+                    <a href="/jobs/${data.job_id}" class="btn">View Details</a>
+                </div>
+            `;
+        } else {
+            result.innerHTML = `
+                <div class="error-box">
+                    <h3>❌ Upload Failed</h3>
+                    <p>${data.error || 'Unknown error'}</p>
+                </div>
+            `;
+        }
+        
+        result.style.display = 'block';
+        
+    } catch (error) {
+        result.innerHTML = `
+            <div class="error-box">
+                <h3>❌ Upload Failed</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+        result.style.display = 'block';
+        
+    } finally {
+        uploadBtn.disabled = false;
+        progress.style.display = 'none';
+    }
+});
+</script>
+
+<style>
+.info-box {
+    background: #e7f3ff;
+    border: 1px solid #2196F3;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+}
+
+.form-group {
+    margin: 20px 0;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="file"],
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button[type="submit"] {
+    background: #4CAF50;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button[type="submit"]:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+#progressBar {
+    height: 100%;
+    background: #4CAF50;
+    transition: width 0.3s;
+}
+
+.success-box {
+    background: #d4edda;
+    border: 1px solid #28a745;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.error-box {
+    background: #f8d7da;
+    border: 1px solid #dc3545;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-block;
+    background: #2196F3;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}

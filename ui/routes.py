@@ -124,3 +124,9 @@ def new_job():
     
     return render_template('new_job.html')
 
+
+@ui_bp.route('/upload-external')
+@login_required
+def upload_external_page():
+    """Page for uploading external files (PCAP, Metasploit logs)."""
+    return render_template('upload_external.html')

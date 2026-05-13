@@ -1,307 +1,377 @@
-# 🛡️ ToolBox Pentest M1 — Automated Penetration Testing Platform
+# 🛡️ Pentest Toolbox — M1 Cybersecurity Project
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11+-green.svg)
-![Docker](https://img.shields.io/badge/docker-24.0+-blue.svg)
-![Status](https://img.shields.io/badge/status-MVP-success.svg)
+**Automated Penetration Testing Platform**
 
-**Projet M1 Cybersécurité** — Plateforme d'automatisation complète de tests d'intrusion avec orchestration intelligente, reporting avancé et interface web intuitive.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/docker-24.0+-blue.svg)](https://www.docker.com/)
 
----
-
-## 📊 Dashboard
-
-![Dashboard](docs/images/01_dashboard.png)
+> **Academic Project** — M1 Cybersecurity (2026)  
+> Automated modular toolbox for penetration testing with RBAC, reporting, and Docker orchestration.
 
 ---
 
-## 🎯 Objectifs du projet
+## 📋 Table of Contents
 
-- ✅ **Automatiser** l'ensemble des phases d'un pentest (reconnaissance → exploitation → post-exploitation)
-- ✅ **Réduire de 40%** le temps de réalisation d'un pentest
-- ✅ **Standardiser** les pratiques et le reporting
-- ✅ **Modularité** : ajout de nouveaux outils sans toucher au core
-- ✅ **Sécurité** : RBAC, chiffrement, audit logs, HTTPS
-
----
-
-## 🚀 Fonctionnalités principales
-
-### ✅ **4 Plugins opérationnels**
-
-| Plugin | Description | Capabilities |
-|--------|-------------|--------------|
-| **Nmap** | Scan réseau, détection services/OS | Port scanning, service detection |
-| **Nuclei** | Scan vulnérabilités CVE (8000+ templates) | CVE detection, misconfigurations |
-| **SQLmap** | Exploitation injections SQL | SQL injection testing |
-| **theHarvester** | Reconnaissance OSINT | Email/subdomain/IP discovery |
-
-### ✅ **Workflow automatisé**
-
-Enchaînement intelligent des outils : **Nmap → Nuclei → SQLmap**
-
-![Jobs List](docs/images/02_jobs_list.png)
-
-### ✅ **Reporting avancé**
-
-- Export **HTML** interactif avec graphiques (Chart.js)
-- Export **PDF** professionnel (WeasyPrint)
-- Export **CSV** pour analyse externe
-
-### ✅ **Interface web intuitive**
-
-- Dashboard avec statistiques en temps réel
-- Suivi des jobs avec auto-refresh
-- Visualisation des findings par sévérité
-- Téléchargement des artifacts (XML, JSON, PCAP)
-
-![Job Detail](docs/images/03_job_detail_nmap.png)
-
-### ✅ **Sécurité intégrée**
-
-- **Authentification** : Flask-Login + sessions sécurisées
-- **RBAC** : 3 rôles (admin, analyst, viewer)
-- **Chiffrement** : Credentials chiffrés avec Fernet
-- **Audit logs** : Traçabilité complète des actions
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Plugins](#plugins)
+- [Screenshots](#screenshots)
+- [Documentation](#documentation)
+- [Security](#security)
+- [Legal Notice](#legal-notice)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🏗️ Architecture
-┌─────────────────────────────────────────────────┐
-│              INTERFACE WEB (Flask)               │
-│         Dashboard │ Jobs │ Findings │ Reports   │
-└────────────────────┬────────────────────────────┘
-│
-┌───────────▼───────────┐
-│   API REST (Flask)    │
-│   + RBAC + Auth       │
-└───────────┬───────────┘
-│
-┌────────────┴────────────┐
-▼                         ▼
-┌──────────────┐         ┌──────────────┐
-│ PostgreSQL   │         │   Celery     │
-│ (Metadata)   │         │ (Orchestrator)│
-└──────────────┘         └──────┬───────┘
-│
-┌───────────┴──────────┐
-▼                      ▼
-┌──────────────┐      ┌──────────────┐
-│    Redis     │      │   Workers    │
-│   (Broker)   │      │  (Plugins)   │
-└──────────────┘      └──────┬───────┘
-│
-▼
-┌──────────────┐
-│    MinIO     │
-│  (Artifacts) │
-└──────────────┘
+## 🎯 Overview
+
+**Pentest Toolbox** is a modular penetration testing platform designed to:
+- ✅ **Automate** reconnaissance, scanning, exploitation phases
+- ✅ **Reduce** pentest time by 40%+ through orchestrated workflows
+- ✅ **Standardize** practices with reusable plugins
+- ✅ **Secure** access with RBAC (Admin, Analyst, Viewer)
+- ✅ **Generate** professional reports (HTML, PDF, CSV)
+
+**Target users:** Security analysts, pentesters, SOC teams, academic researchers.
+
 ---
 
-## 📦 Stack technique
+## ✨ Features
 
-| Composant | Technologie | Version |
-|-----------|-------------|---------|
+### Core Capabilities
+
+- 🔌 **5 Automated Plugins:**
+  - **Nmap** — Network scanning + port discovery
+  - **Nuclei** — CVE detection (8000+ templates)
+  - **SQLmap** — SQL injection automation
+  - **theHarvester** — OSINT (emails, subdomains)
+  - **Hydra** — Brute-force attacks (with legal warnings)
+
+- 📤 **2 External Parsers:**
+  - **Wireshark** — PCAP analysis (HTTP, FTP, protocols)
+  - **Metasploit** — Console log parsing (exploits, sessions)
+
+- 🔄 **Automated Workflows:**
+  - Web Pentest: Nmap → Nuclei → SQLmap (sequential)
+  - Custom workflows via Celery task chains
+
+- 📊 **Professional Reporting:**
+  - HTML reports with charts (Chart.js)
+  - PDF exports (WeasyPrint)
+  - CSV exports for data analysis
+
+- 🔐 **Enterprise Security:**
+  - **Authentication:** Bcrypt password hashing
+  - **RBAC:** 3 roles with granular permissions
+  - **Encryption:** Fernet for secrets
+  - **Audit Logs:** All sensitive actions tracked
+  - **GDPR Compliance:** User rights (access, deletion, portability)
+
+### User Interface
+
+- 🖥️ **Web Dashboard:** Flask + Jinja2 (responsive)
+- 📈 **Real-time Stats:** Jobs, findings, severity breakdown
+- 🔍 **Advanced Filtering:** By plugin, status, severity
+- 📥 **File Upload:** Drag-and-drop for PCAP/logs
+
+---
+
+## 🏛️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    INTERFACE WEB (Flask)                    │
+│              Dashboard | Jobs | Findings | Reports          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+         ┌───────────────▼────────────────┐
+         │   API REST (Flask)             │
+         │   + RBAC + Authentication      │
+         └───────────┬────────────────────┘
+                     │
+        ┌────────────┴────────────┐
+        ▼                         ▼
+┌───────────────┐         ┌──────────────┐
+│  PostgreSQL   │         │   Celery     │
+│  (Metadata)   │         │(Orchestrator)│
+└───────────────┘         └──────┬───────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+            ┌──────────────┐          ┌─────────────┐
+            │    Redis     │          │   Workers   │
+            │   (Broker)   │          │  (Plugins)  │
+            └──────────────┘          └─────┬───────┘
+                                            │
+                                            ▼
+                                    ┌──────────────┐
+                                    │    MinIO     │
+                                    │ (Artifacts)  │
+                                    └──────────────┘
+```
+
+**Components:**
+- **Flask API** — REST endpoints (17+), authentication, RBAC
+- **PostgreSQL** — Users, jobs, findings, audit logs
+- **Celery** — Asynchronous job orchestration
+- **Redis** — Message broker for Celery
+- **MinIO** — S3-compatible artifact storage (XML, PCAP, logs)
+- **Docker** — Containerized deployment (6 services)
+
+---
+
+## 🧰 Tech Stack
+
+| Component | Technology | Version |
+|-----------|------------|---------|
 | **Backend** | Python + Flask | 3.11+ / 3.0+ |
-| **Orchestration** | Celery + Redis | 5.3+ / 7.0+ |
-| **Base de données** | PostgreSQL | 15+ |
-| **Stockage objets** | MinIO (S3-compatible) | Latest |
-| **Conteneurisation** | Docker + Docker Compose | 24+ |
-| **Gestion dépendances** | Poetry | 1.7+ |
+| **Database** | PostgreSQL | 15+ |
+| **Broker** | Redis | 7.0+ |
+| **Storage** | MinIO | Latest |
+| **Orchestration** | Celery | 5.3+ |
+| **ORM** | SQLAlchemy | 2.0+ |
+| **Containerization** | Docker + Compose | 24+ |
+| **Dependency Mgmt** | Poetry | 1.7+ |
+
+**Security Libraries:**
+- `bcrypt` — Password hashing
+- `cryptography` (Fernet) — Secret encryption
+- `flask-login` — Session management
+
+**Pentest Tools (in Docker):**
+- Nmap 7.99+, Nuclei latest, SQLmap 1.10+, theHarvester 4.6+, Hydra 9.6+
 
 ---
 
-## 🚀 Démarrage rapide (10 minutes)
+## 🚀 Quick Start
 
-### **Prérequis**
+### Prerequisites
 
-- Kali Linux 2026+ (ou Debian/Ubuntu)
-- Docker + Docker Compose installés
-- 4GB RAM minimum, 8GB recommandé
-- 50GB d'espace disque
+- **OS:** Kali Linux 2026.1 (or Ubuntu 22.04+)
+- **Docker:** 24.0+
+- **Docker Compose:** 2.0+
+- **Python:** 3.11+
+- **Poetry:** 1.7+
+- **Network:** Host-Only adapter for lab environment
 
-### **Installation**
+### Installation (10 minutes)
 
 ```bash
-# 1. Cloner le repository
+# 1. Clone repository
 git clone https://github.com/crls-cyber/pentest-toolbox-v2.git
 cd pentest-toolbox-v2
 
-# 2. Configurer les variables d'environnement
+# 2. Configure environment
 cp deploy/.env.example deploy/.env
-nano deploy/.env  # Modifier les mots de passe
+nano deploy/.env  # Edit passwords and secrets
 
-# 3. Lancer l'infrastructure
+# 3. Start services
 cd deploy
 docker compose up -d
 
-# 4. Initialiser la base de données
+# 4. Wait for services to start
+sleep 30
+
+# 5. Initialize database
 docker compose exec api python scripts/init_db.py
 
-# 5. Créer un utilisateur admin
+# 6. Create admin user
 docker compose exec api python scripts/create_user.py \
   --username admin \
-  --password VotreMotDePasse \
+  --password Admin123! \
+  --email admin@toolbox.local \
   --role admin
+
+# 7. Access web interface
+firefox http://localhost:5000
 ```
 
-### **Accès à l'interface**
-
-Ouvrez votre navigateur : **http://localhost:5000**
-
-Login : `admin` / `VotreMotDePasse`
+**Default credentials:** `admin` / `Admin123!`
 
 ---
 
-## 📸 Captures d'écran
+## 🔌 Plugins
 
-### **Findings Nuclei (CVE détectées)**
+### Active Plugins (5)
 
-![Nuclei Findings](docs/images/04_findings_nuclei.png)
+| Plugin | Capability | Status |
+|--------|------------|--------|
+| **Nmap** | Network scanning, port discovery | ✅ Operational |
+| **Nuclei** | CVE detection (8000+ templates) | ✅ Operational |
+| **SQLmap** | SQL injection automation | ✅ Operational |
+| **theHarvester** | OSINT (emails, subdomains, IPs) | ✅ Operational |
+| **Hydra** | Brute-force (FTP, SSH, HTTP, etc.) | ✅ Operational |
 
-### **Plugin theHarvester (OSINT)**
+### External Parsers (2)
 
-![theHarvester](docs/images/05_theharvester_success.png)
+| Parser | File Types | Output |
+|--------|------------|--------|
+| **Wireshark** | .pcap, .pcapng, .cap | HTTP traffic, FTP creds, protocol stats |
+| **Metasploit** | .log, .txt | Exploits, sessions, vulnerabilities |
 
----
+### Adding a Plugin
 
-## 🧪 Tester la toolbox
-
-### **Test 1 : Scan Nmap simple**
-
-```bash
-curl -X POST http://localhost:5000/api/jobs \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "plugin": "nmap",
-    "config": {
-      "target": "scanme.nmap.org",
-      "ports": "80,443"
-    }
-  }'
-```
-
-### **Test 2 : Workflow automatisé**
-
-```bash
-curl -X POST http://localhost:5000/api/workflows/web-pentest \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "target": "192.168.1.100"
-  }'
-```
+See [docs/PLUGINS.md](docs/PLUGINS.md) for the plugin development guide.
 
 ---
 
-## 📚 Documentation complète
+## 📸 Screenshots
 
-- [Architecture détaillée](docs/architecture_pentest_toolbox_v3.md)
-- [Guide de développement](docs/PLAN_DEVELOPPEMENT_v3.md)
-- [Créer un plugin](docs/PLUGINS.md)
-- [API Reference](docs/API.md)
+### Dashboard
+![Dashboard](docs/images/01_dashboard.png)
 
----
+### Job Details
+![Job Details](docs/images/03_job_detail_nmap.png)
 
-## 🛠️ Développement
+### Findings (Nuclei CVE Detection)
+![Findings](docs/images/04_findings_nuclei.png)
 
-### **Ajouter un nouveau plugin**
+### Security Warning (Hydra)
+![Hydra Warnings](docs/images/07_hydra_warnings.png)
 
-```bash
-# 1. Créer la structure
-mkdir -p plugins/mon_plugin
-touch plugins/mon_plugin/__init__.py
-touch plugins/mon_plugin/plugin.py
-
-# 2. Implémenter PluginBase (voir docs/PLUGINS.md)
-
-# 3. Redémarrer le Worker
-docker compose restart worker
-```
-
-### **Lancer les tests**
-
-```bash
-poetry run pytest tests/ -v
-poetry run pytest --cov=core --cov=plugins
-```
+*More screenshots in [docs/images/](docs/images/)*
 
 ---
 
-## 🔐 Sécurité
+## 📚 Documentation
 
-### **Bonnes pratiques**
-
-- ✅ Ne **JAMAIS** commiter le fichier `.env`
-- ✅ Utiliser des **mots de passe forts** (>20 caractères)
-- ✅ Scanner **uniquement des cibles autorisées**
-- ✅ Activer **HTTPS** en production (Traefik recommandé)
-- ✅ Sauvegarder régulièrement la base de données
-
-### **Cibles de test autorisées**
-
-- ✅ `scanme.nmap.org` (Nmap uniquement)
-- ✅ `testphp.vulnweb.com` (Tests web)
-- ✅ Vos propres VMs de lab (DVWA, Metasploitable, etc.)
-- ❌ **JAMAIS** scanner l'Internet sans autorisation écrite
+| Document | Description |
+|----------|-------------|
+| [LISEZMOI.md](LISEZMOI.md) | 🇫🇷 French version of README |
+| [API.md](docs/API.md) | Complete API reference (17+ endpoints) |
+| [PLUGINS.md](docs/PLUGINS.md) | Plugin development guide |
+| [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) | Current limitations & workarounds |
+| [RGPD_POLICY.md](docs/RGPD_POLICY.md) | GDPR compliance policy |
+| [BACKUP_PROCEDURES.md](docs/BACKUP_PROCEDURES.md) | Backup & recovery guide |
+| [ROADMAP_PHASE3.md](docs/ROADMAP_PHASE3.md) | Future features roadmap |
 
 ---
 
-## 📊 Métriques du projet
+## 🔐 Security
 
-| Métrique | Valeur |
-|----------|--------|
-| **Plugins opérationnels** | 4 (Nmap, Nuclei, SQLmap, theHarvester) |
-| **Endpoints API** | 15+ |
-| **Coverage tests** | 43% (baseline) |
-| **Lignes de code** | ~5000 |
-| **Conformité CDC** | 92% |
+### Built-in Security Features
 
----
+- ✅ **Password Hashing:** Bcrypt (cost factor 12)
+- ✅ **Secret Encryption:** Fernet symmetric encryption
+- ✅ **RBAC:** 3 roles (Admin, Analyst, Viewer)
+- ✅ **Audit Logs:** All sensitive actions tracked (IP, user-agent, timestamp)
+- ✅ **Session Security:** Httponly cookies, secure flag (HTTPS in Phase 3)
+- ✅ **GDPR Compliance:** User rights (access, rectification, erasure, portability)
 
-## 🗓️ Roadmap
+### Network Isolation
 
-### **Phase 2 (En cours)**
+**CRITICAL:** This toolbox is designed for **Host-Only networks** (isolated lab environments).
 
-- [ ] Plugin Hydra (brute-force)
-- [ ] Upload fichiers externes (PCAP Wireshark, logs Metasploit)
-- [ ] Enrichment APIs (VirusTotal, Shodan, OWASP mapping)
-- [ ] Export CSV
+**Authorized targets:**
+- ✅ Your own VMs (Metasploitable2, DVWA, WebSRV, etc.)
+- ✅ `scanme.nmap.org` (Nmap official test target)
+- ✅ `testphp.vulnweb.com` (Acunetix test site)
 
-### **Phase 3 (À venir)**
+**❌ NEVER scan production systems without written authorization.**
 
-- [ ] CI/CD GitHub Actions
-- [ ] Profils par pôle métier (SOC, SaaS, Infra)
-- [ ] Dashboard KPIs avancés
-- [ ] Intégration Maltego (graphes OSINT)
+### Responsible Disclosure
+
+Found a vulnerability? Please report privately to: **admin@toolbox.local**
 
 ---
 
-## 👥 Contributeurs
+## ⚖️ Legal Notice
 
-**Développeur principal (Phase 1 MVP)** : Carlos  
-**Équipe** : Groupe M1 Cybersécurité (4 personnes)  
-**Encadrement** : Projet M1 CS 2025
+### Educational Purpose
+
+This project is an **academic research tool** for learning penetration testing techniques.
+
+### Legal Framework
+
+**Article 323-1 of the French Penal Code:**
+> "Accessing or maintaining fraudulent access to an automated data processing system is punishable by two years' imprisonment and a fine of €60,000."
+
+**Use this toolbox ONLY on:**
+- ✅ Your own systems
+- ✅ Systems with explicit written authorization
+- ✅ Authorized public test targets (scanme.nmap.org, etc.)
+
+**The authors assume NO responsibility for illegal use of this tool.**
+
+### GDPR Compliance
+
+See [docs/RGPD_POLICY.md](docs/RGPD_POLICY.md) for data protection policy.
 
 ---
 
-## 📝 Licence
+## 🤝 Contributing
 
-MIT License - Voir [LICENSE](LICENSE) pour plus de détails.
+Contributions are welcome! Please follow these guidelines:
 
----
-
-## 🙏 Remerciements
-
-- **Nmap** : Gordon Lyon (Fyodor)
-- **Nuclei** : ProjectDiscovery
-- **SQLmap** : Bernardo Damele & Miroslav Stampar
-- **theHarvester** : Christian Martorella (Edge-Security)
-- **OWASP ZAP** : OWASP Foundation
+1. **Fork** the repository
+2. **Create a feature branch:** `git checkout -b feature/my-new-plugin`
+3. **Follow coding standards:** `flake8 core/ plugins/`
+4. **Write tests:** Maintain >80% coverage
+5. **Commit with Conventional Commits:** `feat:`, `fix:`, `docs:`, etc.
+6. **Open a Pull Request** with detailed description
 
 ---
 
-**Version** : v1.0.0-mvp  
-**Date** : 13 mai 2026  
-**Status** : ✅ MVP opérationnel
+## 📊 Project Metrics
+
+| Metric | Value |
+|--------|-------|
+| **Plugins** | 5 automated |
+| **Parsers** | 2 external |
+| **API Endpoints** | 17+ |
+| **UI Templates** | 9 |
+| **Documentation** | 10 files |
+| **Test Coverage** | ~40% (target: 85%) |
+| **CDC Compliance** | ~99% |
+
+---
+
+## 🎓 Academic Context
+
+**Institution:** M1 Cybersecurity  
+**Period:** May 8 - June 26, 2026  
+**Team:** 4 members  
+
+**Objective:** Develop a production-ready penetration testing automation platform demonstrating:
+- Software architecture skills
+- Security best practices
+- DevOps workflows (Docker, CI/CD)
+- Project management (Agile)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+## 🙏 Acknowledgments
+
+- **OWASP** — Web security testing methodologies
+- **Kali Linux** — Pre-configured security tools
+- **ProjectDiscovery** — Nuclei vulnerability scanner
+- **Docker Community** — Containerization platform
+
+---
+
+## 📬 Contact
+
+**Project Lead:** Carlos  
+**GitHub:** [@crls-cyber](https://github.com/crls-cyber)  
+**Repository:** [pentest-toolbox-v2](https://github.com/crls-cyber/pentest-toolbox-v2)
+
+---
+
+**⭐ If you find this project useful, please star it on GitHub!**
+
+---
+
+**Version:** v1.0.0-mvp  
+**Last Updated:** May 14, 2026  
+**Status:** ✅ MVP Complete (Phase 1)

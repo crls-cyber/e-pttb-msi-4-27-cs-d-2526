@@ -130,3 +130,10 @@ def new_job():
 def upload_external_page():
     """Page for uploading external files (PCAP, Metasploit logs)."""
     return render_template('upload_external.html')
+
+
+@ui_bp.route('/hydra-launch', methods=['GET'])
+@login_required
+def hydra_launch():
+    """Page with security warnings for Hydra brute-force."""
+    return render_template('hydra_launch.html')

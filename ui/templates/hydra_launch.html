@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Hydra Brute-Force - ATTENTION{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>⚠️ Hydra - Brute-Force Attack</h1>
+    
+    <!-- DANGER ZONE -->
+    <div class="danger-zone">
+        <h2>🚨 AVERTISSEMENT CRITIQUE 🚨</h2>
+        
+        <div class="risk-list">
+            <h3>Risques identifiés :</h3>
+            <ul>
+                <li>❌ <strong>Bannissement IP</strong> : L'IP source peut être bannie définitivement</li>
+                <li>❌ <strong>Détection IDS/IPS</strong> : Déclenchement d'alertes sécurité</li>
+                <li>❌ <strong>Verrouillage de comptes</strong> : Blocage des comptes testés</li>
+                <li>❌ <strong>Traçabilité</strong> : Logs détaillés conservés par la cible</li>
+                <li>⚖️ <strong>Légalité</strong> : ILLÉGAL sans autorisation écrite explicite</li>
+            </ul>
+        </div>
+        
+        <div class="legal-warning">
+            <h3>⚖️ Cadre légal</h3>
+            <p>
+                <strong>Article 323-1 du Code Pénal français :</strong><br>
+                "Le fait d'accéder ou de se maintenir frauduleusement dans un système de traitement automatisé 
+                de données est puni de deux ans d'emprisonnement et de 60 000 euros d'amende."
+            </p>
+            <p>
+                <strong>Utilisation autorisée UNIQUEMENT sur :</strong>
+            </p>
+            <ul>
+                <li>✅ Vos propres machines de lab (Host-Only)</li>
+                <li>✅ Environnements de test avec autorisation écrite</li>
+                <li>❌ JAMAIS sur des systèmes de production</li>
+                <li>❌ JAMAIS sur Internet sans contrat de pentest signé</li>
+            </ul>
+        </div>
+        
+        <div class="lab-confirmation">
+            <h3>✅ Environnement de lab recommandé</h3>
+            <p>Ce projet est conçu pour un environnement <strong>Host-Only</strong> isolé :</p>
+            <ul>
+                <li>Metasploitable2 (192.168.145.102)</li>
+                <li>WebSRV (192.168.145.133)</li>
+                <li>WS22 (192.168.145.10)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- FORMULAIRE -->
+    <form id="hydraForm" method="POST">
+        <h2>Configuration de l'attaque</h2>
+        
+        <div class="form-group">
+            <label for="target">Cible (IP ou domaine) :</label>
+            <input type="text" id="target" name="target" 
+                   placeholder="192.168.145.102" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="service">Service :</label>
+            <select id="service" name="service" required>
+                <option value="">-- Choisir un service --</option>
+                <option value="ssh">SSH (port 22)</option>
+                <option value="ftp">FTP (port 21)</option>
+                <option value="telnet">Telnet (port 23)</option>
+                <option value="http-get">HTTP GET (port 80)</option>
+                <option value="mysql">MySQL (port 3306)</option>
+                <option value="postgres">PostgreSQL (port 5432)</option>
+                <option value="rdp">RDP (port 3389)</option>
+                <option value="smb">SMB (port 445)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="username">Username (ou laisser vide pour wordlist) :</label>
+            <input type="text" id="username" name="username" 
+                   placeholder="msfadmin">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password (ou laisser vide pour wordlist) :</label>
+            <input type="password" id="password" name="password" 
+                   placeholder="msfadmin">
+        </div>
+        
+        <div class="form-group">
+            <label for="threads">Threads (max 4 pour éviter détection) :</label>
+            <input type="number" id="threads" name="threads" 
+                   value="4" min="1" max="4">
+        </div>
+        
+        <!-- CONFIRMATIONS OBLIGATOIRES -->
+        <div class="confirmation-section">
+            <h3>Confirmations obligatoires</h3>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="confirm_lab" required>
+                <label for="confirm_lab">
+                    ✅ J'atteste que cette attaque est effectuée sur un <strong>environnement de lab isolé (Host-Only)</strong>
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="confirm_auth" required>
+                <label for="confirm_auth">
+                    ✅ J'atteste avoir <strong>l'autorisation explicite</strong> du propriétaire du système cible
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="confirm_legal" required>
+                <label for="confirm_legal">
+                    ✅ Je comprends les <strong>risques légaux</strong> et techniques de cette attaque
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="confirm_responsibility" required>
+                <label for="confirm_responsibility">
+                    ✅ J'assume l'<strong>entière responsabilité</strong> des conséquences de cette attaque
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit" id="launchBtn" class="danger-button" disabled>
+            🔴 LANCER L'ATTAQUE HYDRA
+        </button>
+        
+        <a href="{{ url_for('ui.new_job') }}" class="cancel-link">← Annuler et revenir</a>
+    </form>
+</div>
+
+<script>
+// Enable launch button only when all checkboxes are checked
+const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+const launchBtn = document.getElementById('launchBtn');
+
+checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        launchBtn.disabled = !allChecked;
+        
+        if (allChecked) {
+            launchBtn.classList.add('pulse');
+        } else {
+            launchBtn.classList.remove('pulse');
+        }
+    });
+});
+
+// Form submission
+document.getElementById('hydraForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Final confirmation popup
+    const confirmed = confirm(
+        '⚠️ DERNIÈRE CONFIRMATION ⚠️\n\n' +
+        'Vous êtes sur le point de lancer une attaque par brute-force.\n\n' +
+        'Êtes-vous absolument certain(e) ?\n\n' +
+        'Cible : ' + document.getElementById('target').value + '\n' +
+        'Service : ' + document.getElementById('service').value
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Prepare data
+    const formData = {
+        plugin: 'hydra',
+        config: {
+            target: document.getElementById('target').value,
+            service: document.getElementById('service').value,
+            username: document.getElementById('username').value || undefined,
+            password: document.getElementById('password').value || undefined,
+            threads: parseInt(document.getElementById('threads').value),
+            confirmed: true
+        }
+    };
+    
+    // Submit to API
+    try {
+        const response = await fetch('/api/jobs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.job_id) {
+            window.location.href = `/jobs/${data.job_id}`;
+        } else {
+            alert('Erreur : ' + (data.error || 'Unknown error'));
+        }
+        
+    } catch (error) {
+        alert('Erreur : ' + error.message);
+    }
+});
+</script>
+
+<style>
+.danger-zone {
+    background: #ffebee;
+    border: 3px solid #d32f2f;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+.danger-zone h2 {
+    color: #d32f2f;
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.risk-list, .legal-warning, .lab-confirmation {
+    background: white;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    border-left: 4px solid #d32f2f;
+}
+
+.risk-list ul, .legal-warning ul, .lab-confirmation ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.risk-list li, .legal-warning li, .lab-confirmation li {
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.form-group {
+    margin: 20px 0;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.confirmation-section {
+    background: #fff3cd;
+    padding: 20px;
+    margin: 30px 0;
+    border-radius: 5px;
+    border: 2px solid #ff9800;
+}
+
+.checkbox-group {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.checkbox-group label {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.danger-button {
+    width: 100%;
+    padding: 15px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.danger-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.danger-button.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.cancel-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    text-decoration: none;
+}
+</style>
+{% endblock %}

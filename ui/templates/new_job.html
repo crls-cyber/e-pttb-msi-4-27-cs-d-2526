@@ -11,6 +11,8 @@
                 <option value="nmap">Nmap (Scan réseau)</option>
                 <option value="nuclei">Nuclei (Scan web)</option>
                 <option value="sqlmap">SQLmap (Injection SQL)</option>
+                <option value="theharvester">theHarvester (OSINT)</option>
+                <option value="hydra">Hydra (Brute-force) ⚠️</option>
             </select>
         </div>
         <div class="form-group">
@@ -81,6 +83,19 @@ form.addEventListener('submit', function(e) {
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Lancement en cours...';
+});
+</script>
+
+<script>
+// Redirect to warning page if Hydra is selected
+document.getElementById('plugin').addEventListener('change', function() {
+    if (this.value === 'hydra') {
+        if (confirm('⚠️ HYDRA est un outil dangereux nécessitant des précautions spéciales.\n\nVous allez être redirigé vers une page d\'avertissement.\n\nContinuer ?')) {
+            window.location.href = '{{ url_for("ui.hydra_launch") }}';
+        } else {
+            this.value = '';
+        }
+    }
 });
 </script>
 {% endblock %}

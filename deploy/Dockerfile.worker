@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     unzip \
+    # Java pour ZAP
+    default-jre-headless \
     # Dépendances WeasyPrint pour génération PDF
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
@@ -39,6 +41,13 @@ RUN wget -qO subfinder.zip https://github.com/projectdiscovery/subfinder/release
     && mv subfinder /usr/local/bin/ \
     && chmod +x /usr/local/bin/subfinder \
     && rm subfinder.zip
+
+# Installation OWASP ZAP
+RUN wget -q https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz -O /tmp/zap.tar.gz \
+    && tar -xzf /tmp/zap.tar.gz -C /opt/ \
+    && rm /tmp/zap.tar.gz \
+    && ln -s /opt/ZAP_2.17.0/zap.sh /usr/local/bin/zap.sh \
+    && chmod +x /usr/local/bin/zap.sh
 
 # Copie du code
 COPY . /app

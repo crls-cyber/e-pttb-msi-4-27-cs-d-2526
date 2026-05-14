@@ -1,4 +1,3 @@
-"""Hydra brute-force plugin."""
-from plugins.hydra.plugin import HydraPlugin
+from .plugin import HydraPlugin
 
-__all__ = ['HydraPlugin']
+__all__ = ["HydraPlugin"]

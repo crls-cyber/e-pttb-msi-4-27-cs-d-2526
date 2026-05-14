@@ -59,7 +59,7 @@ class PluginExecutor:
             # Get plugin class
             plugin_class = registry.get_plugin(plugin_name)
             
-            # Instantiate plugin
+            # Instantiate plugin with config
             plugin: PluginBase = plugin_class(config)
             
             # Set timeout alarm
@@ -74,10 +74,7 @@ class PluginExecutor:
                 signal.alarm(0)
                 
                 # Parse output
-                findings = plugin.parse_output(
-                    execution_result.get('raw_output'),
-                    execution_result.get('metadata', {})
-                )
+                findings = plugin.parse_output(execution_result.get('raw_output'))
                 
                 # Success
                 result['success'] = True

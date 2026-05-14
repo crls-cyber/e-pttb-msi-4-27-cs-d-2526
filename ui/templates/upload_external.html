@@ -9,8 +9,13 @@
     <div class="info-box">
         <h3>ℹ️ Supported File Types</h3>
         <ul>
-            <li><strong>Wireshark PCAP</strong>: .pcap, .pcapng, .cap (max 100MB)</li>
+            <li><strong>Aircrack-ng</strong>: .txt, .log (WiFi cracking output)</li>
+            <li><strong>Burp Suite</strong>: .xml (scan report)</li>
+            <li><strong>Hydra</strong>: .txt (brute force results)</li>
             <li><strong>Metasploit Logs</strong>: .log, .txt (max 50MB)</li>
+            <li><strong>Nikto</strong>: .xml, .txt (web scan results)</li>
+            <li><strong>SQLmap</strong>: .log, .txt (injection logs)</li>
+            <li><strong>Wireshark PCAP</strong>: .pcap, .pcapng, .cap (max 100MB)</li>
         </ul>
         <p><strong>⚠️ Important:</strong> Only upload files from authorized penetration tests.</p>
     </div>
@@ -26,8 +31,14 @@
             <label for="parser_type">Parser Type:</label>
             <select id="parser_type" name="parser_type">
                 <option value="auto">Auto-detect</option>
-                <option value="wireshark">Wireshark (PCAP)</option>
+                <option value="aircrack">Aircrack-ng (WiFi Cracking)</option>
+                <option value="burp">Burp Suite (HTTP Proxy)</option>
+                <option value="hydra">Hydra (Brute Force)</option>
                 <option value="metasploit">Metasploit (Logs)</option>
+                <option value="nikto">Nikto (Web Scan)</option>
+                <option value="sqlmap">SQLmap (SQL Injection)</option>
+                <option value="wireshark">Wireshark (PCAP)</option>
+                <option value="metasploit">Metasploit (Logs)</optiKon>
             </select>
         </div>
         

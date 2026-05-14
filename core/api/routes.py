@@ -3,6 +3,7 @@ from core.security import audit_log, require_role
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .auth import authenticate_user, logout_current_user
+from plugins.external import WiresharkParser, MetasploitParser, AircrackParser
 from core.orchestrator import run_plugin
 from core.models import Job, Finding, Artifact
 from .app import db
@@ -280,7 +281,6 @@ def get_pdf_report(job_id):
 def upload_external_file():
     """Upload external file (PCAP, Metasploit logs) for parsing."""
     from werkzeug.utils import secure_filename
-    from plugins.external import WiresharkParser, MetasploitParser
     import tempfile
     import shutil
     
@@ -303,7 +303,11 @@ def upload_external_file():
         if ext in ['.pcap', '.pcapng', '.cap']:
             parser_type = 'wireshark'
         elif ext in ['.log', '.txt']:
+            # Check file content to disambiguate
+            parser_type = 'auto'  # Will be determined by content
             parser_type = 'metasploit'
+        elif parser_type == 'aircrack':
+            parser = AircrackParser()
         else:
             return jsonify({'error': f'Unsupported file type: {ext}'}), 400
     
@@ -312,6 +316,8 @@ def upload_external_file():
         parser = WiresharkParser()
     elif parser_type == 'metasploit':
         parser = MetasploitParser()
+    elif parser_type == 'aircrack':
+        parser = AircrackParser()
     else:
         return jsonify({'error': f'Unknown parser type: {parser_type}'}), 400
     

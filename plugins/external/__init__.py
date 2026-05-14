@@ -1,5 +1,6 @@
 """External file parsers."""
-from plugins.external.wireshark_parser import WiresharkParser
-from plugins.external.metasploit_parser import MetasploitParser
+from .wireshark_parser import WiresharkParser
+from .metasploit_parser import MetasploitParser
+from .aircrack_parser import AircrackParser
 
-__all__ = ['WiresharkParser', 'MetasploitParser']
+__all__ = ['WiresharkParser', 'MetasploitParser', 'AircrackParser']

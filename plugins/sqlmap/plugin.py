@@ -108,15 +108,23 @@ class SQLmapPlugin(PluginBase):
                 'artifacts': []
             }
     
-    def parse_output(self, raw_output: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: Any) -> List[Dict[str, Any]]:
         """Parse SQLmap output to extract findings."""
+        # Extract metadata from raw_output if it's a dict
+        if isinstance(raw_output, dict):
+            metadata = raw_output.get("metadata", {})
+            output_text = raw_output.get("raw_output", "")
+        else:
+            metadata = {}
+            output_text = str(raw_output) if raw_output else ""
+        
         findings = []
-        
-        if not raw_output:
+
+        if not output_text:
             return findings
-        
+
         # Parse SQLmap output (text-based)
-        lines = raw_output.split('\n')
+        lines = output_text.split('\n')
         
         target = metadata.get('target', 'unknown')
         

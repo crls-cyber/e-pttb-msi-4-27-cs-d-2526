@@ -274,8 +274,6 @@ def get_pdf_report(job_id):
         return jsonify({'error': f'Report generation error: {str(e)}'}), 500
 
 
-
-
 @api_bp.route('/upload-external', methods=['POST'])
 @login_required
 def upload_external_file():
@@ -389,3 +387,59 @@ def upload_external_file():
         # Cleanup temp file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+@api_bp.route('/findings/export/csv', methods=['GET'])
+@login_required
+def export_findings_csv():
+    """Export all findings to CSV."""
+    import csv
+    from io import StringIO
+    from flask import make_response
+    
+    # Get filters
+    job_id = request.args.get('job_id')
+    severity = request.args.get('severity')
+    
+    # Query findings
+    from core.models import Finding
+    
+    query = db.session.query(Finding)
+    if job_id:
+        query = query.filter_by(job_id=job_id)
+    if severity:
+        query = query.filter_by(severity=severity)
+    
+    findings = query.order_by(Finding.created_at.desc()).all()
+    
+    # Create CSV
+    si = StringIO()
+    writer = csv.writer(si)
+    
+    # Header
+    writer.writerow([
+        'ID', 'Job ID', 'Title', 'Severity', 
+        'Description', 'CVE', 'CVSS Score', 
+        'Remediation', 'Created At'
+    ])
+    
+    # Data
+    for f in findings:
+        writer.writerow([
+            str(f.id),
+            str(f.job_id),
+            f.title,
+            f.severity,
+            f.description[:200] if f.description else '',
+            f.cve_id or '',
+            f.cvss_score or '',
+            f.remediation[:200] if f.remediation else '',
+            f.created_at.isoformat()
+        ])
+    
+    # Response
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=findings.csv"
+    output.headers["Content-type"] = "text/csv"
+    
+    return output

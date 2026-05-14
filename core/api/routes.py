@@ -3,7 +3,7 @@ from core.security import audit_log, require_role
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .auth import authenticate_user, logout_current_user
-from plugins.external import WiresharkParser, MetasploitParser, AircrackParser
+from plugins.external import WiresharkParser, MetasploitParser, AircrackParser, EttercapParser
 from core.orchestrator import run_plugin
 from core.models import Job, Finding, Artifact
 from .app import db
@@ -308,6 +308,8 @@ def upload_external_file():
             parser_type = 'metasploit'
         elif parser_type == 'aircrack':
             parser = AircrackParser()
+        elif parser_type == 'ettercap':
+            parser = EttercapParser()
         else:
             return jsonify({'error': f'Unsupported file type: {ext}'}), 400
     
@@ -318,6 +320,8 @@ def upload_external_file():
         parser = MetasploitParser()
     elif parser_type == 'aircrack':
         parser = AircrackParser()
+    elif parser_type == 'ettercap':
+        parser = EttercapParser()
     else:
         return jsonify({'error': f'Unknown parser type: {parser_type}'}), 400
     

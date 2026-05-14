@@ -65,21 +65,21 @@ class WiresharkParser(ExternalParserBase):
                 timeout=30
             )
             
-            # Parse packet count from output
-            lines = result.stdout.split('\n')
-            packet_count = 0
-            for line in lines:
-                if 'packets' in line.lower():
-                    parts = line.split()
-                    for i, part in enumerate(parts):
-                        if part.isdigit():
-                            packet_count = int(part)
-                            break
+            # Simpler: count packets directly
+            result = subprocess.run(
+                ['tshark', '-r', filepath, '-T', 'fields', '-e', 'frame.number'],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            # Count lines = packet count
+            packet_count = len([line for line in result.stdout.strip().split('\n') if line])
             
             return {'packet_count': packet_count}
-            
-        except Exception:
-            return {'packet_count': 0}
+        
+        except Exception as e:
+            return {'packet_count': 0, 'error': str(e)}
     
     def _extract_protocols(self, filepath: str) -> List[str]:
         """Extract list of protocols used."""

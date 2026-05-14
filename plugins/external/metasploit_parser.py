@@ -95,15 +95,26 @@ class MetasploitParser(ExternalParserBase):
         """Extract opened sessions."""
         sessions = []
         
-        # Pattern: [*] Command shell session X opened
-        # Pattern: [*] Meterpreter session X opened
-        pattern = r'\[\*\]\s+(Command shell|Meterpreter) session (\d+) opened'
-        matches = re.finditer(pattern, content, re.IGNORECASE)
+        # Pattern 1: [*] Meterpreter session X opened
+        pattern1 = r'\[\*\]\s+(Command shell|Meterpreter) session (\d+) opened'
+        matches1 = re.finditer(pattern1, content, re.IGNORECASE)
         
-        for match in matches:
+        for match in matches1:
             sessions.append({
                 'type': match.group(1),
                 'session_id': match.group(2)
+            })
+        
+        # Pattern 2: Table format "meterpreter php/linux"
+        pattern2 = r'(\d+)\s+(meterpreter|shell)\s+([\w/]+)\s+([\w\-@\s]+)'
+        matches2 = re.finditer(pattern2, content, re.IGNORECASE)
+        
+        for match in matches2:
+            sessions.append({
+                'type': match.group(2).capitalize(),
+                'session_id': match.group(1),
+                'platform': match.group(3),
+                'user': match.group(4).strip()
             })
         
         return sessions

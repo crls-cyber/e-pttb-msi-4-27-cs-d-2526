@@ -4,9 +4,10 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .auth import authenticate_user, logout_current_user
 from core.orchestrator import run_plugin
-from core.models import Job
+from core.models import Job, Finding, Artifact
 from .app import db
 import uuid
+import os
 
 
 # Auth blueprint

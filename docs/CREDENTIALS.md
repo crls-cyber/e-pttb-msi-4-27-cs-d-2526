@@ -40,3 +40,33 @@
 - Ne JAMAIS commiter le fichier `.env` dans Git
 - Ce fichier CREDENTIALS.md est safe à commiter (pas de secrets réels)
 - Pour usage interne uniquement (projet académique)
+
+## Metasploit RPC (msfrpcd)
+
+| Service | Host | Port | Password | Notes |
+|---------|------|------|----------|-------|
+| msfrpcd | 192.168.200.129 | 55553 | msf | Kali sur réseau NAT |
+
+**Commande de démarrage :**
+```bash
+msfrpcd -P msf -S -a 0.0.0.0 &
+```
+
+**Vérification :**
+```bash
+netstat -tulnp | grep 55553
+# Doit écouter sur 0.0.0.0:55553
+```
+
+**Configuration plugin Metasploit :**
+```json
+{
+  "msf_host": "192.168.200.129",
+  "msf_port": 55553,
+  "msf_password": "msf"
+}
+```
+
+---
+
+**Dernière mise à jour :** 15 mai 2026 (ajout msfrpcd)

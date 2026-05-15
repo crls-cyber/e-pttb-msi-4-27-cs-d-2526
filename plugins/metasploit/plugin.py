@@ -60,14 +60,14 @@ class MetasploitPlugin(PluginBase):
                 ssl=False
             )
             
-            msf_version = client.core.version()
+            msf_version = client.core.version
             logger.info(f"Connected to Metasploit {msf_version}")
             
             # Get exploit module
             exploit = client.modules.use('exploit', exploit_path)
             
             # Configure exploit
-            exploit['RHOST'] = target
+            exploit['RHOSTS'] = target
             if 'rport' in self.config:
                 exploit['RPORT'] = self.config['rport']
             
@@ -77,9 +77,16 @@ class MetasploitPlugin(PluginBase):
             # Configure payload
             lhost = self.config.get('lhost', msf_host)  # Default to Kali IP
             lport = self.config.get('lport', 4444)
-            exploit['LHOST'] = lhost
-            exploit['LPORT'] = lport
+            # Try to set LHOST/LPORT, ignore if not valid options
+            try:
+                exploit['LHOST'] = lhost
+            except:
+                pass  # Payload doesn't use LHOST
             
+            try:
+                exploit['LPORT'] = lport
+            except:
+                pass  # Payload doesn't use LPORT
             # Additional options
             if 'options' in self.config:
                 for key, value in self.config['options'].items():

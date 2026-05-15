@@ -1,53 +1,203 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ToolBox Pentest{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>{% block title %}{{ t('app_title') }}{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Kibana Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kibana-style.css') }}">
+    
+    {% block head %}{% endblock %}
+    
+    <style>
+        /* Sidebar Layout */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 240px;
+            background: #1A1C23;
+            color: #DFE5EF;
+            padding: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #343741;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .sidebar-logo {
+            font-size: 1.5rem;
+            color: #006BB4;
+        }
+        
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #DFE5EF;
+            margin: 0;
+        }
+        
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: #98A2B3;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .nav-item:hover {
+            background: #25262E;
+            color: #DFE5EF;
+        }
+        
+        .nav-item.active {
+            background: #006BB4;
+            color: #FFFFFF;
+            border-left: 3px solid #00A9E0;
+        }
+        
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid #343741;
+            padding: 16px 20px;
+        }
+        
+        .main-content {
+            margin-left: 240px;
+            min-height: 100vh;
+            background: #F5F7FA;
+        }
+        
+        .top-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid #D3DAE6;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .lang-switch {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .lang-switch a {
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #69707D;
+            font-size: 0.875rem;
+        }
+        
+        .lang-switch a.active {
+            background: #006BB4;
+            color: #FFFFFF;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #343741;
+        }
+        
+        .content-area {
+            padding: 24px;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>🛡️ ToolBox Pentest M1</h1>
-            <nav>
-                {% if current_user.is_authenticated %}
-                <a href="{{ url_for('ui.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('ui.jobs') }}">Jobs</a>
-                <a href="{{ url_for('ui.new_job') }}">Nouveau Scan</a>
-                <a href="{{ url_for('ui.upload_external_page') }}">Upload External</a>
-                <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
-                {% else %}
-                <a href="{{ url_for('ui.login') }}">Connexion</a>
-                {% endif %}
-            </nav>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-alt sidebar-logo"></i>
+            <h1 class="sidebar-title">{{ t('app_title') }}</h1>
         </div>
-    </header>
-
-    <main class="container">
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid; display: flex; align-items: center; gap: 10px;">
-                        {% if category == 'success' %}
-                            <span style="font-size: 24px;">✅</span>
-                        {% elif category == 'error' %}
-                            <span style="font-size: 24px;">❌</span>
-                        {% else %}
-                            <span style="font-size: 24px;">ℹ️</span>
-                        {% endif %}
-                        <span>{{ message }}</span>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer style="text-align: center; padding: 20px; color: #7f8c8d; margin-top: 40px;">
-        <p>ToolBox Pentest v1.0.0-mvp | Projet M1 Cybersécurité 2026</p>
-    </footer>
+        
+        <nav class="sidebar-nav">
+            <a href="/{{ lang }}/dashboard" class="nav-item {% if request.endpoint == 'ui.dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>{{ t('nav.dashboard') }}</span>
+            </a>
+            <a href="/{{ lang }}/jobs" class="nav-item {% if request.endpoint == 'ui.list_jobs' %}active{% endif %}">
+                <i class="fas fa-tasks"></i>
+                <span>{{ t('nav.jobs') }}</span>
+            </a>
+            <a href="/{{ lang }}/findings" class="nav-item">
+                <i class="fas fa-bug"></i>
+                <span>{{ t('nav.findings') }}</span>
+            </a>
+            <a href="/{{ lang }}/workflows" class="nav-item">
+                <i class="fas fa-project-diagram"></i>
+                <span>{{ t('nav.workflows') }}</span>
+            </a>
+            <a href="/{{ lang }}/upload-external" class="nav-item {% if request.endpoint == 'ui.upload_external' %}active{% endif %}">
+                <i class="fas fa-upload"></i>
+                <span>{{ t('nav.upload') }}</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>{{ t('nav.logout') }}</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-header">
+            <div class="lang-switch">
+                <a href="/en{{ request.path.replace('/fr', '').replace('/en', '') }}" class="{% if lang == 'en' %}active{% endif %}">EN</a>
+                <a href="/fr{{ request.path.replace('/fr', '').replace('/en', '') }}" class="{% if lang == 'fr' %}active{% endif %}">FR</a>
+            </div>
+            <div class="user-menu">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ current_user.username if current_user.is_authenticated else 'Guest' }}</span>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

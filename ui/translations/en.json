@@ -1,0 +1,40 @@
+{
+  "app_title": "Pentest Toolbox M1",
+  "nav": {
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "findings": "Findings",
+    "workflows": "Workflows",
+    "upload": "Upload",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Security Dashboard",
+    "kpi": {
+      "critical": "Critical Findings",
+      "high": "High Findings",
+      "completed": "Jobs Completed",
+      "plugins": "Active Plugins"
+    },
+    "charts": {
+      "severity": "Findings by Severity",
+      "status": "Jobs Status",
+      "recent": "Recent Activity",
+      "plugins": "Top Plugins Used"
+    }
+  },
+  "severity": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "info": "Info"
+  },
+  "status": {
+    "completed": "Completed",
+    "failed": "Failed",
+    "running": "Running",
+    "pending": "Pending"
+  }
+}

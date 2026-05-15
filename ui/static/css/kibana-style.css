@@ -1,0 +1,171 @@
+/* Kibana-inspired Dashboard Styles */
+
+:root {
+    --kibana-blue: #006BB4;
+    --kibana-light-blue: #0077CC;
+    --kibana-bg: #F5F7FA;
+    --kibana-card-bg: #FFFFFF;
+    --kibana-border: #D3DAE6;
+    --kibana-text: #343741;
+    --kibana-text-secondary: #69707D;
+    --kibana-success: #017D73;
+    --kibana-warning: #F5A700;
+    --kibana-danger: #BD271E;
+    --kibana-critical: #7B341E;
+}
+
+body {
+    background-color: var(--kibana-bg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: var(--kibana-text);
+}
+
+/* KPI Cards */
+.kpi-card {
+    background: var(--kibana-card-bg);
+    border: 1px solid var(--kibana-border);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+}
+
+.kpi-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.kpi-label {
+    font-size: 0.875rem;
+    color: var(--kibana-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-critical { color: var(--kibana-critical); }
+.kpi-high { color: var(--kibana-danger); }
+.kpi-medium { color: var(--kibana-warning); }
+.kpi-success { color: var(--kibana-success); }
+.kpi-info { color: var(--kibana-blue); }
+
+/* Chart Cards */
+.chart-card {
+    background: var(--kibana-card-bg);
+    border: 1px solid var(--kibana-border);
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: 100%;
+}
+
+.chart-card-header {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--kibana-text);
+    border-bottom: 1px solid var(--kibana-border);
+    padding-bottom: 12px;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.chart-container-small {
+    position: relative;
+    height: 200px;
+}
+
+/* Recent Jobs Table */
+.jobs-table {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.jobs-table th {
+    background-color: var(--kibana-bg);
+    color: var(--kibana-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--kibana-border);
+}
+
+.jobs-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--kibana-border);
+}
+
+.jobs-table tbody tr:hover {
+    background-color: var(--kibana-bg);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-completed {
+    background-color: #D3F0F1;
+    color: var(--kibana-success);
+}
+
+.status-failed {
+    background-color: #F8E9E9;
+    color: var(--kibana-danger);
+}
+
+.status-running {
+    background-color: #FEF5E7;
+    color: var(--kibana-warning);
+}
+
+.status-pending {
+    background-color: #E8E8E8;
+    color: var(--kibana-text-secondary);
+}
+
+/* Page Header */
+.page-header {
+    background: var(--kibana-card-bg);
+    border-bottom: 1px solid var(--kibana-border);
+    padding: 20px 0;
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: var(--kibana-text);
+    margin: 0;
+}
+
+/* Responsive Grid */
+.dashboard-grid {
+    display: grid;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .kpi-value {
+        font-size: 1.75rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}

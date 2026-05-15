@@ -639,3 +639,63 @@ def trigger_osint_recon():
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/stats/dashboard', methods=['GET'])
+@login_required
+def get_dashboard_stats():
+    '''
+    Get dashboard statistics
+    
+    Returns:
+    - findings_by_severity: {critical: N, high: N, ...}
+    - jobs_by_status: {completed: N, running: N, failed: N}
+    - recent_jobs: [last 10 jobs]
+    - top_plugins: [most used plugins]
+    '''
+    from sqlalchemy import func
+    
+    # Findings by severity
+    findings_by_severity = db.session.query(
+        Finding.severity,
+        func.count(Finding.id).label('count')
+    ).group_by(Finding.severity).all()
+    
+    findings_stats = {sev: count for sev, count in findings_by_severity}
+    
+    # Jobs by status
+    jobs_by_status = db.session.query(
+        Job.status,
+        func.count(Job.id).label('count')
+    ).group_by(Job.status).all()
+    
+    jobs_stats = {status: count for status, count in jobs_by_status}
+    
+    # Recent jobs (last 10)
+    recent_jobs = db.session.query(Job).order_by(
+        Job.created_at.desc()
+    ).limit(10).all()
+    
+    recent_jobs_data = [{
+        'id': str(job.id),
+        'plugin': job.plugin_name,
+        'status': job.status,
+        'created_at': job.created_at.isoformat() if job.created_at else None
+    } for job in recent_jobs]
+    
+    # Top plugins used
+    top_plugins = db.session.query(
+        Job.plugin_name,
+        func.count(Job.id).label('count')
+    ).group_by(Job.plugin_name).order_by(
+        func.count(Job.id).desc()
+    ).limit(5).all()
+    
+    top_plugins_data = {plugin: count for plugin, count in top_plugins}
+    
+    return jsonify({
+        'findings_by_severity': findings_stats,
+        'jobs_by_status': jobs_stats,
+        'recent_jobs': recent_jobs_data,
+        'top_plugins': top_plugins_data
+    })

@@ -1,76 +1,252 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - ToolBox Pentest{% endblock %}
+{% block title %}{{ t('dashboard.title') }} - {{ t('app_title') }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/kibana-style.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>📊 Dashboard</h2>
-    <p>Bienvenue, <strong>{{ current_user.username }}</strong> !</p>
+<div class="page-header">
+    <h1 class="page-title">{{ t('dashboard.title') }}</h1>
 </div>
 
-<div class="stats-grid">
-    <div class="stat-card critical">
-        <div class="label">Findings Critiques</div>
-        <div class="number">{{ stats.critical }}</div>
+<!-- KPI Cards Row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-value kpi-critical" id="kpi-critical">-</div>
+            <div class="kpi-label">{{ t('dashboard.kpi.critical') }}</div>
+        </div>
     </div>
-    <div class="stat-card high">
-        <div class="label">Findings Hautes</div>
-        <div class="number">{{ stats.high }}</div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-value kpi-high" id="kpi-high">-</div>
+            <div class="kpi-label">{{ t('dashboard.kpi.high') }}</div>
+        </div>
     </div>
-    <div class="stat-card medium">
-        <div class="label">Findings Moyennes</div>
-        <div class="number">{{ stats.medium }}</div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-value kpi-success" id="kpi-completed">-</div>
+            <div class="kpi-label">{{ t('dashboard.kpi.completed') }}</div>
+        </div>
     </div>
-    <div class="stat-card low">
-        <div class="label">Findings Basses</div>
-        <div class="number">{{ stats.low }}</div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-value kpi-info" id="kpi-plugins">-</div>
+            <div class="kpi-label">{{ t('dashboard.kpi.plugins') }}</div>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <h2>🕐 Derniers Jobs</h2>
-    
-    {% if recent_jobs %}
-    <table>
-        <thead>
-            <tr>
-                <th>Plugin</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in recent_jobs %}
-            <tr>
-                <td><strong>{{ job.plugin_name }}</strong></td>
-                <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>
-                    {% if job.status == 'completed' %}
-                        <span class="badge badge-success">✓ completed</span>
-                    {% elif job.status == 'failed' %}
-                        <span class="badge badge-failed">✗ failed</span>
-                    {% elif job.status == 'running' %}
-                        <span class="badge badge-running">🔄 running</span>
-                    {% elif job.status == 'pending' %}
-                        <span class="badge badge-pending">⏳ pending</span>
-                    {% else %}
-                        <span class="badge">{{ job.status }}</span>
-                    {% endif %}
-                </td>    
-                <td>
-                    <a href="{{ url_for('ui.job_detail', job_id=job.id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">
-                        Voir
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="text-align: center; color: #95a5a6; padding: 20px;">
-        Aucun job pour le moment.
-    </p>
-    {% endif %}
+<!-- Charts + Recent Jobs Row -->
+<div class="row">
+    <!-- Findings Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">{{ t('dashboard.charts.severity') }}</div>
+            <div class="chart-container-small">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Status Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">{{ t('dashboard.charts.status') }}</div>
+            <div class="chart-container-small">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Jobs -->
+    <div class="col-lg-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">{{ t('dashboard.charts.recent') }}</div>
+            <div id="recentJobs">Loading...</div>
+        </div>
+    </div>
 </div>
+
+<!-- Top Plugins Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="chart-card-header">{{ t('dashboard.charts.plugins') }}</div>
+            <div class="chart-container-small">
+                <canvas id="pluginsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<script>
+// Translations for JavaScript
+const i18n = {
+    severity: {
+        critical: "{{ t('severity.critical') }}",
+        high: "{{ t('severity.high') }}",
+        medium: "{{ t('severity.medium') }}",
+        low: "{{ t('severity.low') }}",
+        info: "{{ t('severity.info') }}"
+    },
+    status: {
+        completed: "{{ t('status.completed') }}",
+        failed: "{{ t('status.failed') }}",
+        running: "{{ t('status.running') }}",
+        pending: "{{ t('status.pending') }}"
+    }
+};
+
+// Kibana color palette
+const kibanaColors = {
+    critical: '#7B341E',
+    high: '#BD271E',
+    medium: '#F5A700',
+    low: '#017D73',
+    info: '#006BB4',
+    completed: '#017D73',
+    failed: '#BD271E',
+    running: '#F5A700',
+    pending: '#69707D'
+};
+
+// Fetch dashboard data
+fetch('/api/stats/dashboard')
+    .then(response => response.json())
+    .then(data => {
+        // Update KPI cards
+        document.getElementById('kpi-critical').textContent = data.findings_by_severity.critical || 0;
+        document.getElementById('kpi-high').textContent = data.findings_by_severity.high || 0;
+        document.getElementById('kpi-completed').textContent = data.jobs_by_status.completed || 0;
+        document.getElementById('kpi-plugins').textContent = Object.keys(data.top_plugins).length;
+
+        // Severity Chart
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+        new Chart(severityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    i18n.severity.critical,
+                    i18n.severity.high,
+                    i18n.severity.medium,
+                    i18n.severity.low,
+                    i18n.severity.info
+                ],
+                datasets: [{
+                    data: [
+                        data.findings_by_severity.critical || 0,
+                        data.findings_by_severity.high || 0,
+                        data.findings_by_severity.medium || 0,
+                        data.findings_by_severity.low || 0,
+                        data.findings_by_severity.info || 0
+                    ],
+                    backgroundColor: [
+                        kibanaColors.critical,
+                        kibanaColors.high,
+                        kibanaColors.medium,
+                        kibanaColors.low,
+                        kibanaColors.info
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '70%'
+            }
+        });
+
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    i18n.status.completed,
+                    i18n.status.failed,
+                    i18n.status.running,
+                    i18n.status.pending
+                ],
+                datasets: [{
+                    data: [
+                        data.jobs_by_status.completed || 0,
+                        data.jobs_by_status.failed || 0,
+                        data.jobs_by_status.running || 0,
+                        data.jobs_by_status.pending || 0
+                    ],
+                    backgroundColor: [
+                        kibanaColors.completed,
+                        kibanaColors.failed,
+                        kibanaColors.running,
+                        kibanaColors.pending
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '70%'
+            }
+        });
+
+        // Plugins Chart
+        const pluginsCtx = document.getElementById('pluginsChart').getContext('2d');
+        const pluginNames = Object.keys(data.top_plugins);
+        const pluginCounts = Object.values(data.top_plugins);
+
+        new Chart(pluginsCtx, {
+            type: 'bar',
+            data: {
+                labels: pluginNames,
+                datasets: [{
+                    label: 'Usage',
+                    data: pluginCounts,
+                    backgroundColor: kibanaColors.info,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: '#E8E8E8' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Recent Jobs Table
+        const recentJobsDiv = document.getElementById('recentJobs');
+        let html = '<table class="jobs-table"><thead><tr><th>Plugin</th><th>Status</th><th>Time</th></tr></thead><tbody>';
+
+        data.recent_jobs.slice(0, 5).forEach(job => {
+            const statusClass = 'status-' + job.status;
+            const statusText = i18n.status[job.status] || job.status;
+            const date = new Date(job.created_at);
+            const timeStr = date.toLocaleTimeString('{{ lang }}', { hour: '2-digit', minute: '2-digit' });
+
+            html += `<tr>
+                <td><strong>${job.plugin}</strong></td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${timeStr}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table>';
+        recentJobsDiv.innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error loading dashboard:', error);
+    });
+</script>
 {% endblock %}

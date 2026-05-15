@@ -82,7 +82,7 @@ class ZapPlugin(PluginBase):
             # Stop ZAP daemon
             self._stop_zap_daemon(zap_process)
     
-    def parse_output(self, raw_output: Any) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: Any, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Parse ZAP alerts into findings."""
         findings = []
         

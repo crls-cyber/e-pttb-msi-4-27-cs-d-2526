@@ -108,7 +108,7 @@ class SQLmapPlugin(PluginBase):
                 'artifacts': []
             }
     
-    def parse_output(self, raw_output: Any) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: Any, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Parse SQLmap output to extract findings."""
         # Extract metadata from raw_output if it's a dict
         if isinstance(raw_output, dict):

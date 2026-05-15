@@ -443,3 +443,63 @@ def export_findings_csv():
     output.headers["Content-type"] = "text/csv"
     
     return output
+
+
+# ============================================
+# WORKFLOWS ENDPOINTS
+# ============================================
+
+@api_bp.route('/workflows/recon-to-exploit', methods=['POST'])
+@login_required
+def trigger_recon_to_exploit():
+    """
+    Trigger recon-to-exploit workflow: Nmap → Nuclei → Metasploit
+    
+    Request body:
+    {
+        "target": "192.168.200.133",
+        "exploit": "exploit/unix/ftp/vsftpd_234_backdoor",  // optional
+        "payload": "cmd/unix/interact"  // optional
+    }
+    """
+    from core.orchestrator.workflows import recon_to_exploit_workflow
+    
+    data = request.get_json()
+    
+    if not data or 'target' not in data:
+        return jsonify({'error': 'Missing required parameter: target'}), 400
+    
+    target = data['target']
+    exploit = data.get('exploit')
+    payload = data.get('payload')
+    
+    # Validate: if exploit provided, payload is required
+    if exploit and not payload:
+        return jsonify({'error': 'Payload required when exploit is specified'}), 400
+    
+    try:
+        result = recon_to_exploit_workflow(
+            target=target,
+            user_id=current_user.id,
+            exploit_path=exploit,
+            payload=payload
+        )
+        
+        stages = ['nmap', 'nuclei']
+        if exploit:
+            stages.append('metasploit')
+        
+        return jsonify({
+            'message': 'Recon-to-exploit workflow started',
+            'workflow_id': result['workflow_id'],
+            'nmap_job_id': result['nmap_job_id'],
+            'nuclei_job_id': result['nuclei_job_id'],
+            'metasploit_job_id': result.get('metasploit_job_id'),
+            'target': target,
+            'stages': stages
+        }), 202
+        
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500

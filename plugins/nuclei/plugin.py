@@ -82,7 +82,7 @@ class NucleiPlugin(PluginBase):
                 os.remove(json_output)
             raise Exception(f"Nuclei execution failed: {str(e)}")
 
-    def parse_output(self, raw_output: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: str, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Parse Nuclei JSON output into findings"""
         findings = []
 
@@ -97,7 +97,7 @@ class NucleiPlugin(PluginBase):
                 template_name = item.get('info', {}).get('name', 'Unknown vulnerability')
                 severity = item.get('info', {}).get('severity', 'info').lower()
                 description = item.get('info', {}).get('description', 'No description available')
-                matched_at = item.get('matched-at', item.get('host', metadata.get('target', 'Unknown')))
+                matched_at = item.get('matched-at', item.get('host', (metadata or {}).get('target', 'Unknown')))
 
                 cve_ids = item.get('info', {}).get('classification', {}).get('cve-id', [])
                 cwe_ids = item.get('info', {}).get('classification', {}).get('cwe-id', [])

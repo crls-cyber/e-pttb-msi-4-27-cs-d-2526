@@ -77,16 +77,9 @@ class MetasploitPlugin(PluginBase):
             # Configure payload
             lhost = self.config.get('lhost', msf_host)  # Default to Kali IP
             lport = self.config.get('lport', 4444)
-            # Try to set LHOST/LPORT, ignore if not valid options
-            try:
-                exploit['LHOST'] = lhost
-            except:
-                pass  # Payload doesn't use LHOST
+            exploit['LHOST'] = lhost
+            exploit['LPORT'] = lport
             
-            try:
-                exploit['LPORT'] = lport
-            except:
-                pass  # Payload doesn't use LPORT
             # Additional options
             if 'options' in self.config:
                 for key, value in self.config['options'].items():
@@ -130,7 +123,7 @@ class MetasploitPlugin(PluginBase):
             logger.error(f"Metasploit execution failed: {str(e)}")
             raise Exception(f"Metasploit RPC error: {str(e)}")
     
-    def parse_output(self, raw_output: Any, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: Any) -> List[Dict[str, Any]]:
         """Parse Metasploit output into findings."""
         findings = []
         

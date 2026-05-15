@@ -46,12 +46,13 @@ class PluginBase(ABC):
         pass
     
     @abstractmethod
-    def parse_output(self, raw_output: Any) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: Any, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
         Parse raw output into standardized findings.
         
         Args:
             raw_output: Raw output from the tool
+            metadata: Optional metadata dict with context (job_id, config, etc.)
             
         Returns:
             List of findings, each containing:

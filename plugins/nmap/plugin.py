@@ -53,7 +53,7 @@ class NmapPlugin(PluginBase):
                 os.remove(xml_output_path)
             raise e
     
-    def parse_output(self, raw_output: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def parse_output(self, raw_output: str, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Parse Nmap XML output into findings."""
         findings = []
         

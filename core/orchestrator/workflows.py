@@ -152,3 +152,204 @@ def recon_to_exploit_workflow(target, user_id, exploit_path=None, payload=None):
         'metasploit_job_id': metasploit_job.id if metasploit_job else None,
         'status': 'running'
     }
+
+
+def web_pentest_advanced(target, user_id, sqli_url=None):
+    """
+    Advanced web pentest: Nmap → Nuclei → SQLmap
+    
+    Args:
+        target: IP or domain (e.g., "192.168.200.133")
+        user_id: UUID of the user
+        sqli_url: Optional specific URL for SQLmap (e.g., "http://target/page.php?id=1")
+    
+    Returns:
+        dict with job_ids
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Step 1: Nmap web ports
+    nmap_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='nmap',
+        config={
+            'target': target,
+            'ports': '80,443,8080,8443,8180'  # Web ports only
+        },
+        status='pending'
+    )
+    
+    # Step 2: Nuclei vulnerability scan
+    nuclei_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='nuclei',
+        config={'target': f'http://{target}'},
+        status='pending'
+    )
+    
+    # Step 3: SQLmap injection test
+    sqlmap_target = sqli_url or f'http://{target}:8080/vulnerabilities/sqli/?id=1&Submit=Submit'
+    sqlmap_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='sqlmap',
+        config={
+            'target': sqlmap_target,
+            'mode': 'detect',
+            'level': 1,
+            'risk': 1
+        },
+        status='pending'
+    )
+    
+    # Save to database
+    db.session.add(nmap_job)
+    db.session.add(nuclei_job)
+    db.session.add(sqlmap_job)
+    db.session.commit()
+    
+    logger.info(f"Web pentest workflow: Nmap ({nmap_job.id}) → Nuclei ({nuclei_job.id}) → SQLmap ({sqlmap_job.id})")
+    
+    # Chain execution
+    nmap_task = run_plugin.si(nmap_job.id, 'nmap', nmap_job.config)
+    nuclei_task = run_plugin.si(nuclei_job.id, 'nuclei', nuclei_job.config)
+    sqlmap_task = run_plugin.si(sqlmap_job.id, 'sqlmap', sqlmap_job.config)
+    
+    workflow = chain(nmap_task, nuclei_task, sqlmap_task)
+    result = workflow.apply_async()
+    
+    return {
+        'workflow_id': str(result.id),
+        'nmap_job_id': nmap_job.id,
+        'nuclei_job_id': nuclei_job.id,
+        'sqlmap_job_id': sqlmap_job.id,
+        'status': 'running'
+    }
+
+
+def network_bruteforce(target, user_id, service='ssh', username='msfadmin', password_list=None):
+    """
+    Network pentest: Nmap → Hydra (brute-force)
+    
+    Args:
+        target: IP address
+        user_id: UUID of the user
+        service: Service to brute-force (ssh, ftp, etc.)
+        username: Username to test
+        password_list: List of passwords (default: common passwords)
+    
+    Returns:
+        dict with job_ids
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    if password_list is None:
+        password_list = ['password', 'admin', 'msfadmin', '123456', 'root']
+    
+    # Step 1: Nmap common ports
+    nmap_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='nmap',
+        config={
+            'target': target,
+            'ports': '21,22,23,25,139,445,3389'  # Auth services
+        },
+        status='pending'
+    )
+    
+    # Step 2: Hydra brute-force
+    hydra_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='hydra',
+        config={
+            'target': target,
+            'service': service,
+            'username': username,
+            'passlist': password_list
+        },
+        status='pending'
+    )
+    
+    # Save to database
+    db.session.add(nmap_job)
+    db.session.add(hydra_job)
+    db.session.commit()
+    
+    logger.info(f"Network bruteforce workflow: Nmap ({nmap_job.id}) → Hydra ({hydra_job.id})")
+    
+    # Chain execution
+    nmap_task = run_plugin.si(nmap_job.id, 'nmap', nmap_job.config)
+    hydra_task = run_plugin.si(hydra_job.id, 'hydra', hydra_job.config)
+    
+    workflow = chain(nmap_task, hydra_task)
+    result = workflow.apply_async()
+    
+    return {
+        'workflow_id': str(result.id),
+        'nmap_job_id': nmap_job.id,
+        'hydra_job_id': hydra_job.id,
+        'status': 'running'
+    }
+
+
+def osint_recon(domain, user_id):
+    """
+    OSINT reconnaissance: theHarvester → subfinder
+    
+    Args:
+        domain: Target domain (e.g., "example.com")
+        user_id: UUID of the user
+    
+    Returns:
+        dict with job_ids
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Step 1: theHarvester (email, subdomains, hosts)
+    harvester_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='theharvester',
+        config={
+            'domain': domain,
+            'sources': 'google,bing,yahoo'
+        },
+        status='pending'
+    )
+    
+    # Step 2: subfinder (subdomain enumeration)
+    subfinder_job = Job(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        plugin_name='subfinder',
+        config={'domain': domain},
+        status='pending'
+    )
+    
+    # Save to database
+    db.session.add(harvester_job)
+    db.session.add(subfinder_job)
+    db.session.commit()
+    
+    logger.info(f"OSINT workflow: theHarvester ({harvester_job.id}) → subfinder ({subfinder_job.id})")
+    
+    # Chain execution
+    harvester_task = run_plugin.si(harvester_job.id, 'theharvester', harvester_job.config)
+    subfinder_task = run_plugin.si(subfinder_job.id, 'subfinder', subfinder_job.config)
+    
+    workflow = chain(harvester_task, subfinder_task)
+    result = workflow.apply_async()
+    
+    return {
+        'workflow_id': str(result.id),
+        'harvester_job_id': harvester_job.id,
+        'subfinder_job_id': subfinder_job.id,
+        'status': 'running'
+    }

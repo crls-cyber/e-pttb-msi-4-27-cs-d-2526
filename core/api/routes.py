@@ -503,3 +503,139 @@ def trigger_recon_to_exploit():
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/workflows/web-pentest-advanced', methods=['POST'])
+@login_required
+def trigger_web_pentest_advanced():
+    """
+    Trigger advanced web pentest: Nmap → Nuclei → SQLmap
+    
+    Request body:
+    {
+        "target": "192.168.200.133",
+        "sqli_url": "http://192.168.200.133:8080/..."  // optional
+    }
+    """
+    from core.orchestrator.workflows import web_pentest_advanced
+    
+    data = request.get_json()
+    
+    if not data or 'target' not in data:
+        return jsonify({'error': 'Missing required parameter: target'}), 400
+    
+    target = data['target']
+    sqli_url = data.get('sqli_url')
+    
+    try:
+        result = web_pentest_advanced(
+            target=target,
+            user_id=current_user.id,
+            sqli_url=sqli_url
+        )
+        
+        return jsonify({
+            'message': 'Web pentest workflow started',
+            'workflow_id': result['workflow_id'],
+            'nmap_job_id': result['nmap_job_id'],
+            'nuclei_job_id': result['nuclei_job_id'],
+            'sqlmap_job_id': result['sqlmap_job_id'],
+            'target': target,
+            'stages': ['nmap', 'nuclei', 'sqlmap']
+        }), 202
+        
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/workflows/network-bruteforce', methods=['POST'])
+@login_required
+def trigger_network_bruteforce():
+    """
+    Trigger network bruteforce: Nmap → Hydra
+    
+    Request body:
+    {
+        "target": "192.168.200.133",
+        "service": "ssh",  // optional, default: ssh
+        "username": "msfadmin",  // optional
+        "password_list": ["password", "admin"]  // optional
+    }
+    """
+    from core.orchestrator.workflows import network_bruteforce
+    
+    data = request.get_json()
+    
+    if not data or 'target' not in data:
+        return jsonify({'error': 'Missing required parameter: target'}), 400
+    
+    target = data['target']
+    service = data.get('service', 'ssh')
+    username = data.get('username', 'msfadmin')
+    password_list = data.get('password_list')
+    
+    try:
+        result = network_bruteforce(
+            target=target,
+            user_id=current_user.id,
+            service=service,
+            username=username,
+            password_list=password_list
+        )
+        
+        return jsonify({
+            'message': 'Network bruteforce workflow started',
+            'workflow_id': result['workflow_id'],
+            'nmap_job_id': result['nmap_job_id'],
+            'hydra_job_id': result['hydra_job_id'],
+            'target': target,
+            'stages': ['nmap', 'hydra']
+        }), 202
+        
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/workflows/osint-recon', methods=['POST'])
+@login_required
+def trigger_osint_recon():
+    """
+    Trigger OSINT recon: theHarvester → subfinder
+    
+    Request body:
+    {
+        "domain": "example.com"
+    }
+    """
+    from core.orchestrator.workflows import osint_recon
+    
+    data = request.get_json()
+    
+    if not data or 'domain' not in data:
+        return jsonify({'error': 'Missing required parameter: domain'}), 400
+    
+    domain = data['domain']
+    
+    try:
+        result = osint_recon(
+            domain=domain,
+            user_id=current_user.id
+        )
+        
+        return jsonify({
+            'message': 'OSINT recon workflow started',
+            'workflow_id': result['workflow_id'],
+            'harvester_job_id': result['harvester_job_id'],
+            'subfinder_job_id': result['subfinder_job_id'],
+            'domain': domain,
+            'stages': ['theharvester', 'subfinder']
+        }), 202
+        
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500

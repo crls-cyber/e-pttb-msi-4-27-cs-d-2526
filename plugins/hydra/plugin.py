@@ -74,7 +74,18 @@ class HydraPlugin(PluginBase):
         if "password" in self.config:
             cmd.extend(["-p", self.config["password"]])
         else:
-            cmd.extend(["-P", self.config["passlist"]])
+            passlist = self.config["passlist"]
+            # If passlist is a Python list, create a temp file
+            if isinstance(passlist, list):
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+                    for pwd in passlist:
+                        f.write(pwd + '\n')
+                    passlist_file = f.name
+                cmd.extend(["-P", passlist_file])
+            else:
+                # Already a file path
+                cmd.extend(["-P", passlist])
         
         # Port
         if port:

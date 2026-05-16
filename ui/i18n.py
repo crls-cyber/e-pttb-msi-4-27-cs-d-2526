@@ -1,75 +1,62 @@
-"""Internationalization helper for Flask UI."""
+"""Internationalization (i18n) system for UI."""
 import json
 import os
-from flask import session, request
+from flask import request, session
 
-TRANSLATIONS_DIR = os.path.join(os.path.dirname(__file__), 'translations')
 SUPPORTED_LANGUAGES = ['en', 'fr']
 DEFAULT_LANGUAGE = 'en'
 
-_translations_cache = {}
-
-def load_translations(lang):
-    """Load translations for a given language."""
-    if lang not in _translations_cache:
-        filepath = os.path.join(TRANSLATIONS_DIR, f'{lang}.json')
-        if os.path.exists(filepath):
-            with open(filepath, 'r', encoding='utf-8') as f:
-                _translations_cache[lang] = json.load(f)
-        else:
-            _translations_cache[lang] = {}
-    return _translations_cache[lang]
-
 def get_locale():
-    """Get current locale from session or request."""
+    """Determine the user's preferred language."""
     # 1. Check session
-    if 'lang' in session:
-        lang = session['lang']
-        if lang in SUPPORTED_LANGUAGES:
-            return lang
+    if 'lang' in session and session['lang'] in SUPPORTED_LANGUAGES:
+        return session['lang']
     
-    # 2. Check URL prefix
+    # 2. Check URL path
     if request.path.startswith('/fr/'):
+        session['lang'] = 'fr'
         return 'fr'
     elif request.path.startswith('/en/'):
+        session['lang'] = 'en'
         return 'en'
     
-    # 3. Check browser Accept-Language header
+    # 3. Check Accept-Language header
     lang = request.accept_languages.best_match(SUPPORTED_LANGUAGES)
     if lang:
+        session['lang'] = lang
         return lang
     
     # 4. Default
+    session['lang'] = DEFAULT_LANGUAGE
     return DEFAULT_LANGUAGE
 
 def get_translations():
-    """Get translations for current locale."""
-    locale = get_locale()
-    return load_translations(locale)
-
-def t(key, **kwargs):
-    """Translate a key. Supports nested keys with dot notation.
+    """Load translations for the current locale."""
+    lang = get_locale()
+    translations_file = os.path.join(
+        os.path.dirname(__file__),
+        'translations',
+        f'{lang}.json'
+    )
     
-    Example:
-        t('nav.dashboard')  # Returns "Dashboard" in EN or "Tableau de bord" in FR
-        t('hello', name='John')  # Supports formatting
-    """
+    try:
+        with open(translations_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def t(key, default=None):
+    """Translate a key with support for nested keys (e.g., 'nav.dashboard')."""
     translations = get_translations()
     
-    # Support nested keys (e.g., 'nav.dashboard')
+    # Support nested keys like 'nav.dashboard'
     keys = key.split('.')
     value = translations
+    
     for k in keys:
-        if isinstance(value, dict):
-            value = value.get(k, key)
+        if isinstance(value, dict) and k in value:
+            value = value[k]
         else:
-            return key
+            return default if default is not None else key
     
-    # Format if kwargs provided
-    if kwargs and isinstance(value, str):
-        try:
-            return value.format(**kwargs)
-        except:
-            return value
-    
-    return value if value else key
+    return value

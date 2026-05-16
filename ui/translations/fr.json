@@ -2,39 +2,59 @@
   "app_title": "Pentest Toolbox M1",
   "nav": {
     "dashboard": "Tableau de bord",
-    "jobs": "Tâches",
+    "jobs": "Jobs",
     "findings": "Découvertes",
     "workflows": "Workflows",
-    "upload": "Importer",
-    "settings": "Paramètres",
+    "upload": "Upload",
     "logout": "Déconnexion"
   },
   "dashboard": {
-    "title": "Tableau de bord sécurité",
+    "title": "Tableau de bord",
     "kpi": {
       "critical": "Découvertes critiques",
-      "high": "Découvertes élevées",
-      "completed": "Tâches terminées",
+      "high": "Découvertes hautes",
+      "completed": "Jobs terminés",
       "plugins": "Plugins actifs"
     },
     "charts": {
       "severity": "Découvertes par sévérité",
-      "status": "Statut des tâches",
-      "recent": "Activité récente",
-      "plugins": "Plugins les plus utilisés"
-    }
+      "status": "Statut des jobs",
+      "plugins": "Top plugins"
+    },
+    "recent_activity": "Activité récente"
   },
-  "severity": {
-    "critical": "Critique",
-    "high": "Élevée",
-    "medium": "Moyenne",
-    "low": "Faible",
-    "info": "Info"
+  "jobs": {
+    "title": "Tous les jobs",
+    "new_scan": "Nouveau scan",
+    "id": "ID",
+    "plugin": "Plugin",
+    "target": "Cible",
+    "status": "Statut",
+    "date": "Date",
+    "actions": "Actions",
+    "details": "Détails"
+  },
+  "findings": {
+    "title": "Découvertes",
+    "all": "Toutes les découvertes",
+    "severity": "Sévérité",
+    "job_id": "Job ID",
+    "description": "Description"
+  },
+  "workflows": {
+    "title": "Workflows"
   },
   "status": {
     "completed": "Terminé",
     "failed": "Échoué",
     "running": "En cours",
     "pending": "En attente"
+  },
+  "severity": {
+    "critical": "Critique",
+    "high": "Haute",
+    "medium": "Moyenne",
+    "low": "Basse",
+    "info": "Info"
   }
 }

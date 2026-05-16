@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.findings') }} - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 30px;">
+    <h1 class="page-title">{{ t('findings.title') }}</h1>
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header" style="margin-bottom: 20px;">{{ t('findings.all') }}</div>
+    <div id="findingsList" style="overflow-x: auto;">Loading findings...</div>
+</div>
+
+<style>
+.findings-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.findings-table thead th {
+    padding: 15px 12px;
+    background: #f5f7fa;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.findings-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.findings-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.findings-table tbody td {
+    padding: 15px 12px;
+    vertical-align: top;
+}
+
+.finding-title {
+    font-size: 0.95rem;
+    font-weight: normal;
+    color: #333;
+}
+
+.severity-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.severity-critical {
+    background: #dc3545;
+    color: white;
+}
+
+.severity-high {
+    background: #fd7e14;
+    color: white;
+}
+
+.severity-medium {
+    background: #ffc107;
+    color: #333;
+}
+
+.severity-low {
+    background: #17a2b8;
+    color: white;
+}
+
+.severity-info {
+    background: #6c757d;
+    color: white;
+}
+</style>
+
+<script>
+const severityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4, 'info': 5 };
+
+fetch('/api/findings')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('findingsList');
+        
+        let findings = Array.isArray(data) ? data : (data.findings || []);
+        
+        findings.sort((a, b) => {
+            const severityA = severityOrder[a.severity] || 999;
+            const severityB = severityOrder[b.severity] || 999;
+            return severityA - severityB;
+        });
+        
+        if (findings.length > 0) {
+            let html = '<table class="findings-table">';
+            html += '<thead><tr>';
+            html += '<th style="width: 30%;">Title</th>';
+            html += '<th style="width: 12%;">{{ t("findings.severity") }}</th>';
+            html += '<th style="width: 10%;">{{ t("findings.job_id") }}</th>';
+            html += '<th style="width: 48%;">{{ t("findings.description") }}</th>';
+            html += '</tr></thead><tbody>';
+            
+            findings.forEach(finding => {
+                const severity = finding.severity || 'info';
+                const title = finding.title || 'N/A';
+                const jobId = finding.job_id ? finding.job_id.substring(0, 8) : 'N/A';
+                const fullJobId = finding.job_id || '';
+                const description = (finding.description || 'No description').substring(0, 120);
+                
+                html += `<tr>
+                    <td><span class="finding-title">${title}</span></td>
+                    <td><span class="severity-badge severity-${severity}">${severity}</span></td>
+                    <td><a href="/{{ lang }}/jobs/${fullJobId}" style="font-size: 0.9rem; color: #006BB4; text-decoration: none;"><code>${jobId}</code></a></td>
+                    <td style="font-size: 0.95rem; color: #555;">${description}...</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            document.querySelector('.chart-card-header').textContent = `{{ t("findings.all") }} (${findings.length})`;
+        } else {
+            container.innerHTML = '<p>No findings yet. Run some scans first!</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading findings:', error);
+        document.getElementById('findingsList').innerHTML = `<p>Error: ${error.message}</p>`;
+    });
+</script>
+{% endblock %}

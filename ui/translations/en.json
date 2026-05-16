@@ -6,11 +6,10 @@
     "findings": "Findings",
     "workflows": "Workflows",
     "upload": "Upload",
-    "settings": "Settings",
     "logout": "Logout"
   },
   "dashboard": {
-    "title": "Security Dashboard",
+    "title": "Dashboard",
     "kpi": {
       "critical": "Critical Findings",
       "high": "High Findings",
@@ -20,9 +19,36 @@
     "charts": {
       "severity": "Findings by Severity",
       "status": "Jobs Status",
-      "recent": "Recent Activity",
-      "plugins": "Top Plugins Used"
-    }
+      "plugins": "Top Plugins"
+    },
+    "recent_activity": "Recent Activity"
+  },
+  "jobs": {
+    "title": "All Jobs",
+    "new_scan": "New Scan",
+    "id": "ID",
+    "plugin": "Plugin",
+    "target": "Target",
+    "status": "Status",
+    "date": "Date",
+    "actions": "Actions",
+    "details": "Details"
+  },
+  "findings": {
+    "title": "Findings",
+    "all": "All Findings",
+    "severity": "Severity",
+    "job_id": "Job ID",
+    "description": "Description"
+  },
+  "workflows": {
+    "title": "Workflows"
+  },
+  "status": {
+    "completed": "Completed",
+    "failed": "Failed",
+    "running": "Running",
+    "pending": "Pending"
   },
   "severity": {
     "critical": "Critical",
@@ -30,11 +56,5 @@
     "medium": "Medium",
     "low": "Low",
     "info": "Info"
-  },
-  "status": {
-    "completed": "Completed",
-    "failed": "Failed",
-    "running": "Running",
-    "pending": "Pending"
   }
 }

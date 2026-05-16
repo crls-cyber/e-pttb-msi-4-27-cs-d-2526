@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Nouveau Scan - ToolBox Pentest{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>➕ Nouveau Scan</h2>
+    <form method="POST" id="scanForm">
+        <div class="form-group">
+            <label for="plugin">Plugin</label>
+            <select id="plugin" name="plugin" required>
+                <option value="">-- Choisir un plugin --</option>
+                <option value="nmap">Nmap (Scan réseau)</option>
+                <option value="nuclei">Nuclei (Scan web)</option>
+                <option value="sqlmap">SQLmap (Injection SQL)</option>
+                <option value="theharvester">theHarvester (OSINT)</option>
+                <option value="hydra">Hydra (Brute-force) ⚠️</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="target">Cible (IP ou URL)</label>
+            <input type="text" id="target" name="target" placeholder="192.168.145.102 ou http://example.com" required>
+            <small id="targetHint" style="color: #666; display: none; margin-top: 5px;"></small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-success" style="flex: 1;">
+                🚀 Lancer le Scan
+            </button>
+            <a href="{{ url_for('ui.jobs') }}" class="btn" style="background: #95a5a6; color: white;">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Validation dynamique
+const pluginSelect = document.getElementById('plugin');
+const targetInput = document.getElementById('target');
+const targetHint = document.getElementById('targetHint');
+const form = document.getElementById('scanForm');
+
+// Afficher hint selon plugin sélectionné
+pluginSelect.addEventListener('change', function() {
+    if (this.value === 'nuclei') {
+        targetHint.style.display = 'block';
+        targetHint.textContent = '💡 Nuclei nécessite le protocole (http:// ou https://)';
+        targetInput.placeholder = 'Ex: http://192.168.145.102';
+    } else if (this.value === 'sqlmap') {
+        targetHint.style.display = 'block';
+        targetHint.textContent = '💡 SQLmap nécessite un paramètre GET ou POST (ex: ?id=1)';
+        targetInput.placeholder = 'Ex: http://192.168.145.102/page.php?id=1';
+    } else {
+        targetHint.style.display = 'none';
+        targetInput.placeholder = 'Ex: 192.168.145.102 ou http://example.com';
+    }
+});
+
+// Validation avant submit
+form.addEventListener('submit', function(e) {
+    const plugin = pluginSelect.value;
+    const target = targetInput.value.trim();
+    
+    // Validation Nuclei : doit avoir http:// ou https://
+    if (plugin === 'nuclei') {
+        if (!target.startsWith('http://') && !target.startsWith('https://')) {
+            e.preventDefault();
+            alert('⚠️ Nuclei nécessite le protocole complet !\n\nExemple : http://192.168.145.102');
+            targetInput.focus();
+            return false;
+        }
+    }
+    
+    // Validation SQLmap : doit avoir un paramètre (? dans l'URL)
+    if (plugin === 'sqlmap') {
+        if (!target.includes('?')) {
+            e.preventDefault();
+            alert('⚠️ SQLmap nécessite un paramètre dans l\'URL !\n\nExemple : http://192.168.145.102/page.php?id=1\n\nSans paramètre, SQLmap ne peut rien tester.');
+            targetInput.focus();
+            return false;
+        }
+    }
+    
+    // Désactiver le bouton pour éviter double submit
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Lancement en cours...';
+});
+</script>
+
+<script>
+// Redirect to warning page if Hydra is selected
+document.getElementById('plugin').addEventListener('change', function() {
+    if (this.value === 'hydra') {
+        if (confirm('⚠️ HYDRA est un outil dangereux nécessitant des précautions spéciales.\n\nVous allez être redirigé vers une page d\'avertissement.\n\nContinuer ?')) {
+            window.location.href = '{{ url_for("ui.hydra_launch") }}';
+        } else {
+            this.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}

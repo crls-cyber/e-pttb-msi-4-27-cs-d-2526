@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.workflows') }} - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ t('nav.workflows') }}</h1>
+</div>
+
+<div class="row">
+    <!-- Workflow 1: Recon-to-Exploit -->
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fas fa-rocket"></i> Recon-to-Exploit
+            </div>
+            <p>Automated workflow: Nmap → Nuclei → Metasploit</p>
+            <form id="workflow1-form">
+                <div class="mb-3">
+                    <label class="form-label">Target IP:</label>
+                    <input type="text" class="form-control" name="target" placeholder="192.168.200.133" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Exploit (optional):</label>
+                    <input type="text" class="form-control" name="exploit" placeholder="exploit/unix/ftp/vsftpd_234_backdoor">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Payload (optional):</label>
+                    <input type="text" class="form-control" name="payload" placeholder="cmd/unix/interact">
+                </div>
+                <button type="submit" class="btn btn-primary">Launch Workflow</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Workflow 2: Web Pentest -->
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fas fa-globe"></i> Web Pentest Advanced
+            </div>
+            <p>Automated workflow: Nmap → Nuclei → SQLmap</p>
+            <form id="workflow2-form">
+                <div class="mb-3">
+                    <label class="form-label">Target:</label>
+                    <input type="text" class="form-control" name="target" placeholder="192.168.200.133" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">SQLi URL (optional):</label>
+                    <input type="text" class="form-control" name="sqli_url" placeholder="http://target/page?id=1">
+                </div>
+                <button type="submit" class="btn btn-primary">Launch Workflow</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Workflow 3: Network Bruteforce -->
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fas fa-network-wired"></i> Network Bruteforce
+            </div>
+            <p>Automated workflow: Nmap → Hydra</p>
+            <form id="workflow3-form">
+                <div class="mb-3">
+                    <label class="form-label">Target IP:</label>
+                    <input type="text" class="form-control" name="target" placeholder="192.168.200.133" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Service:</label>
+                    <select class="form-control" name="service">
+                        <option value="ssh">SSH</option>
+                        <option value="ftp">FTP</option>
+                        <option value="telnet">Telnet</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Launch Workflow</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Workflow 4: OSINT Recon -->
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <i class="fas fa-search"></i> OSINT Reconnaissance
+            </div>
+            <p>Automated workflow: theHarvester → subfinder</p>
+            <form id="workflow4-form">
+                <div class="mb-3">
+                    <label class="form-label">Domain:</label>
+                    <input type="text" class="form-control" name="domain" placeholder="example.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Launch Workflow</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="workflow-result" class="mt-4"></div>
+
+<script>
+// Workflow 1: Recon-to-Exploit
+document.getElementById('workflow1-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+        target: formData.get('target'),
+        exploit: formData.get('exploit') || undefined,
+        payload: formData.get('payload') || undefined
+    };
+    
+    const response = await fetch('/api/workflows/recon-to-exploit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    showResult(result);
+});
+
+// Workflow 2: Web Pentest
+document.getElementById('workflow2-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+        target: formData.get('target'),
+        sqli_url: formData.get('sqli_url') || undefined
+    };
+    
+    const response = await fetch('/api/workflows/web-pentest-advanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    showResult(result);
+});
+
+// Workflow 3: Network Bruteforce
+document.getElementById('workflow3-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+        target: formData.get('target'),
+        service: formData.get('service')
+    };
+    
+    const response = await fetch('/api/workflows/network-bruteforce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    showResult(result);
+});
+
+// Workflow 4: OSINT
+document.getElementById('workflow4-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = { domain: formData.get('domain') };
+    
+    const response = await fetch('/api/workflows/osint-recon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    showResult(result);
+});
+
+function showResult(result) {
+    const container = document.getElementById('workflow-result');
+    container.innerHTML = `
+        <div class="alert alert-success">
+            <h4>Workflow Started!</h4>
+            <p>${result.message}</p>
+            <p>Workflow ID: <code>${result.workflow_id}</code></p>
+            <p>Check the <a href="/{{ lang }}/dashboard">Dashboard</a> for progress.</p>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

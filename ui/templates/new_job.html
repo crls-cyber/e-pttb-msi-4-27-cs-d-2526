@@ -1,100 +1,130 @@
 {% extends "base.html" %}
-{% block title %}Nouveau Scan - ToolBox Pentest{% endblock %}
+
+{% block title %}New Scan - {{ t('app_title') }}{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 600px; margin: 0 auto;">
-    <h2>➕ Nouveau Scan</h2>
-    <form method="POST" id="scanForm">
-        <div class="form-group">
-            <label for="plugin">Plugin</label>
-            <select id="plugin" name="plugin" required>
-                <option value="">-- Choisir un plugin --</option>
-                <option value="nmap">Nmap (Scan réseau)</option>
-                <option value="nuclei">Nuclei (Scan web)</option>
-                <option value="sqlmap">SQLmap (Injection SQL)</option>
-                <option value="theharvester">theHarvester (OSINT)</option>
-                <option value="hydra">Hydra (Brute-force) ⚠️</option>
-            </select>
+<div class="page-header">
+    <h1 class="page-title">New Scan</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <div class="chart-card-header">Configure Scan</div>
+            
+            <form method="POST" action="/{{ lang }}/jobs/new">
+                <div class="mb-3">
+                    <label for="plugin" class="form-label">Plugin:</label>
+                    <select class="form-control" id="plugin" name="plugin" required>
+                        <option value="">-- Select a plugin --</option>
+                        <option value="nmap">Nmap (Network Scan)</option>
+                        <option value="nuclei">Nuclei (Web Vulnerabilities)</option>
+                        <option value="sqlmap">SQLmap (SQL Injection)</option>
+                        <option value="hydra">Hydra (Brute Force)</option>
+                        <option value="subfinder">Subfinder (Subdomain Enumeration)</option>
+                        <option value="theharvester">theHarvester (OSINT)</option>
+                        <option value="zap">OWASP ZAP (Web Scan)</option>
+                        <option value="metasploit">Metasploit (Exploitation)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="target" class="form-label">Target:</label>
+                    <input type="text" class="form-control" id="target" name="target" placeholder="192.168.200.133 or example.com" required>
+                    <small class="form-text text-muted">IP address or domain name</small>
+                </div>
+
+                <!-- Nmap Options -->
+                <div id="nmap-options" class="plugin-options" style="display: none;">
+                    <h5>Nmap Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Ports:</label>
+                        <input type="text" class="form-control" name="ports" placeholder="80,443,22 or 1-1000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scan Type:</label>
+                        <select class="form-control" name="scan_type">
+                            <option value="-sV">Version Detection (-sV)</option>
+                            <option value="-sS">SYN Scan (-sS)</option>
+                            <option value="-sT">TCP Connect (-sT)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nuclei Options -->
+                <div id="nuclei-options" class="plugin-options" style="display: none;">
+                    <h5>Nuclei Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Severity:</label>
+                        <input type="text" class="form-control" name="severity" value="critical,high,medium" placeholder="critical,high,medium,low,info">
+                    </div>
+                </div>
+
+                <!-- SQLmap Options -->
+                <div id="sqlmap-options" class="plugin-options" style="display: none;">
+                    <h5>SQLmap Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Mode:</label>
+                        <select class="form-control" name="mode">
+                            <option value="detect">Detect Only</option>
+                            <option value="exploit">Exploit</option>
+                            <option value="dump">Dump Data</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hydra Options -->
+                <div id="hydra-options" class="plugin-options" style="display: none;">
+                    <h5>Hydra Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Service:</label>
+                        <select class="form-control" name="service">
+                            <option value="ssh">SSH</option>
+                            <option value="ftp">FTP</option>
+                            <option value="telnet">Telnet</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username:</label>
+                        <input type="text" class="form-control" name="username" placeholder="admin">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password:</label>
+                        <input type="text" class="form-control" name="password" placeholder="Single password">
+                        <small class="form-text text-muted">Or leave empty to use default list</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Launch Scan</button>
+                <a href="/{{ lang }}/jobs" class="btn btn-secondary">Cancel</a>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="target">Cible (IP ou URL)</label>
-            <input type="text" id="target" name="target" placeholder="192.168.145.102 ou http://example.com" required>
-            <small id="targetHint" style="color: #666; display: none; margin-top: 5px;"></small>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Quick Tips</div>
+            <ul>
+                <li>Always test on authorized targets only</li>
+                <li>Start with reconnaissance (Nmap, subfinder)</li>
+                <li>Use Nuclei for quick vulnerability detection</li>
+                <li>Check the Dashboard for scan progress</li>
+            </ul>
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button type="submit" class="btn btn-success" style="flex: 1;">
-                🚀 Lancer le Scan
-            </button>
-            <a href="{{ url_for('ui.jobs') }}" class="btn" style="background: #95a5a6; color: white;">
-                Annuler
-            </a>
-        </div>
-    </form>
+    </div>
 </div>
 
 <script>
-// Validation dynamique
-const pluginSelect = document.getElementById('plugin');
-const targetInput = document.getElementById('target');
-const targetHint = document.getElementById('targetHint');
-const form = document.getElementById('scanForm');
-
-// Afficher hint selon plugin sélectionné
-pluginSelect.addEventListener('change', function() {
-    if (this.value === 'nuclei') {
-        targetHint.style.display = 'block';
-        targetHint.textContent = '💡 Nuclei nécessite le protocole (http:// ou https://)';
-        targetInput.placeholder = 'Ex: http://192.168.145.102';
-    } else if (this.value === 'sqlmap') {
-        targetHint.style.display = 'block';
-        targetHint.textContent = '💡 SQLmap nécessite un paramètre GET ou POST (ex: ?id=1)';
-        targetInput.placeholder = 'Ex: http://192.168.145.102/page.php?id=1';
-    } else {
-        targetHint.style.display = 'none';
-        targetInput.placeholder = 'Ex: 192.168.145.102 ou http://example.com';
-    }
-});
-
-// Validation avant submit
-form.addEventListener('submit', function(e) {
-    const plugin = pluginSelect.value;
-    const target = targetInput.value.trim();
-    
-    // Validation Nuclei : doit avoir http:// ou https://
-    if (plugin === 'nuclei') {
-        if (!target.startsWith('http://') && !target.startsWith('https://')) {
-            e.preventDefault();
-            alert('⚠️ Nuclei nécessite le protocole complet !\n\nExemple : http://192.168.145.102');
-            targetInput.focus();
-            return false;
-        }
-    }
-    
-    // Validation SQLmap : doit avoir un paramètre (? dans l'URL)
-    if (plugin === 'sqlmap') {
-        if (!target.includes('?')) {
-            e.preventDefault();
-            alert('⚠️ SQLmap nécessite un paramètre dans l\'URL !\n\nExemple : http://192.168.145.102/page.php?id=1\n\nSans paramètre, SQLmap ne peut rien tester.');
-            targetInput.focus();
-            return false;
-        }
-    }
-    
-    // Désactiver le bouton pour éviter double submit
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '⏳ Lancement en cours...';
-});
-</script>
-
-<script>
-// Redirect to warning page if Hydra is selected
+// Show/hide plugin-specific options
 document.getElementById('plugin').addEventListener('change', function() {
-    if (this.value === 'hydra') {
-        if (confirm('⚠️ HYDRA est un outil dangereux nécessitant des précautions spéciales.\n\nVous allez être redirigé vers une page d\'avertissement.\n\nContinuer ?')) {
-            window.location.href = '{{ url_for("ui.hydra_launch") }}';
-        } else {
-            this.value = '';
-        }
+    // Hide all plugin options
+    document.querySelectorAll('.plugin-options').forEach(el => el.style.display = 'none');
+    
+    // Show selected plugin options
+    const plugin = this.value;
+    const optionsDiv = document.getElementById(plugin + '-options');
+    if (optionsDiv) {
+        optionsDiv.style.display = 'block';
     }
 });
 </script>

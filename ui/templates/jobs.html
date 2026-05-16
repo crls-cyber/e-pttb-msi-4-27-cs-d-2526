@@ -1,50 +1,73 @@
 {% extends "base.html" %}
 
-{% block title %}Jobs - ToolBox Pentest{% endblock %}
+{% block title %}{{ t('nav.jobs') }} - {{ t('app_title') }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>📋 Tous les Jobs</h2>
-    
-    <div style="margin-bottom: 20px;">
-        <a href="{{ url_for('ui.new_job') }}" class="btn btn-success">
-            ➕ Nouveau Scan
-        </a>
-    </div>
-    
-    {% if jobs %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Plugin</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td><code>{{ (job.id|string)[:8] }}</code></td>
-                <td><strong>{{ job.plugin_name }}</strong></td>
-                <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>
-                    <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
-                </td>
-                <td>
-                    <a href="{{ url_for('ui.job_detail', job_id=job.id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">
-                        Détails
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="text-align: center; color: #95a5a6; padding: 40px;">
-        Aucun job pour le moment.
-    </p>
-    {% endif %}
+<div class="page-header">
+    <h1 class="page-title">{{ t('jobs.title') }}</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-success">
+        <i class="fas fa-plus"></i> {{ t('jobs.new_scan') }}
+    </a>
 </div>
+
+<div class="chart-card">
+    <div class="chart-card-header">{{ t('jobs.title') }}</div>
+    <div id="jobsList" style="overflow-x: auto;">Loading jobs...</div>
+</div>
+
+<script>
+fetch('/api/jobs')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('jobsList');
+        
+        let jobs = Array.isArray(data) ? data : (data.jobs || []);
+        
+        // Tri par date décroissante (plus récent en premier)
+        jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        if (jobs.length > 0) {
+            let html = '<table class="jobs-table" style="width: 100%; table-layout: auto;">';
+            html += '<thead><tr>';
+            html += '<th style="width: 10%;">{{ t("jobs.id") }}</th>';
+            html += '<th style="width: 12%;">{{ t("jobs.plugin") }}</th>';
+            html += '<th style="width: 20%;">{{ t("jobs.target") }}</th>';
+            html += '<th style="width: 12%;">{{ t("jobs.status") }}</th>';
+            html += '<th style="width: 18%;">{{ t("jobs.date") }}</th>';
+            html += '<th style="width: 10%;">{{ t("jobs.actions") }}</th>';
+            html += '</tr></thead><tbody>';
+            
+            jobs.forEach(job => {
+                const jobId = job.id ? job.id.substring(0, 8) : 'N/A';
+                const fullJobId = job.id || '';
+                const status = job.status || 'unknown';
+                const statusClass = status === 'completed' ? 'badge bg-success' : 
+                                   status === 'failed' ? 'badge bg-danger' : 
+                                   status === 'running' ? 'badge bg-primary' : 'badge bg-secondary';
+                const date = job.created_at ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+                const target = job.config?.target || job.config?.targets || 'N/A';
+                
+                html += `<tr>
+                    <td><code style="font-size: 0.9rem;">${jobId}</code></td>
+                    <td><strong style="font-size: 1rem;">${job.plugin || 'N/A'}</strong></td>
+                    <td style="font-size: 0.95rem;">${target}</td>
+                    <td><span class="${statusClass}" style="font-size: 0.9rem;">${status}</span></td>
+                    <td style="font-size: 0.9rem;">${date}</td>
+                    <td><a href="/{{ lang }}/jobs/${fullJobId}" class="btn btn-sm btn-primary">{{ t("jobs.details") }}</a></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            document.querySelector('.chart-card-header').textContent = `{{ t("jobs.title") }} (${jobs.length})`;
+        } else {
+            container.innerHTML = '<p>No jobs yet. Create your first scan!</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading jobs:', error);
+        document.getElementById('jobsList').innerHTML = `<p>Error: ${error.message}</p>`;
+    });
+</script>
 {% endblock %}

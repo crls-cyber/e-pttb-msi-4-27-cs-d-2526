@@ -1,6 +1,6 @@
 """UI routes for the Pentest Toolbox."""
 from flask import Blueprint, render_template, request, redirect, session
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
 from ui.i18n import get_locale, get_translations
 
 ui_bp = Blueprint('ui', __name__, template_folder='templates', static_folder='static')
@@ -82,11 +82,86 @@ def job_detail(job_id):
 @login_required
 def new_job():
     if request.method == 'POST':
-        # Handle job creation (to be implemented)
-        pass
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+        
+        # Récupérer les données du formulaire
+        plugin = request.form.get('plugin')
+        target = request.form.get('target')
+        
+        if not plugin or not target:
+            flash('Plugin and target are required', 'error')
+            return render_template('new_job.html')
+        
+        # Construire la config selon le plugin
+        config = {'target': target}
+        
+        # Options spécifiques par plugin
+        if plugin == 'nmap':
+            if request.form.get('ports'):
+                config['ports'] = request.form.get('ports')
+            if request.form.get('scan_type'):
+                config['scan_type'] = request.form.get('scan_type')
+        
+        elif plugin == 'nuclei':
+            if request.form.get('severity'):
+                config['severity'] = request.form.get('severity')
+        
+        elif plugin == 'sqlmap':
+            if request.form.get('mode'):
+                config['mode'] = request.form.get('mode')
+            config['url'] = target  # SQLmap needs 'url' not 'target'
+        
+        elif plugin == 'hydra':
+            if request.form.get('service'):
+                config['service'] = request.form.get('service')
+            if request.form.get('username'):
+                config['username'] = request.form.get('username')
+            # Si password fourni, l'utiliser, sinon utiliser passlist par défaut
+            password = request.form.get('password')
+            if password:
+                config['password'] = password
+            else:
+                config['passlist'] = '/usr/share/wordlists/rockyou.txt'  # Wordlist par défaut
+        
+        elif plugin == 'subfinder':
+            config['domain'] = target  # subfinder attend 'domain' pas 'target'
+        
+        elif plugin == 'theharvester':
+            config['domain'] = target  # theHarvester attend aussi 'domain'
+        
+        # Créer le job directement en BDD
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name=plugin,
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            
+            db.session.add(job)
+            db.session.commit()
+            
+            # Lancer la tâche Celery
+            run_plugin.delay(str(job.id), plugin, config)
+            
+            flash(f'Job created successfully! ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating job: {str(e)}', 'error')
+            return render_template('new_job.html')
+    
     return render_template('new_job.html')
 
-# Findings - EN/FR
 @ui_bp.route('/en/findings')
 @ui_bp.route('/fr/findings')
 @login_required

@@ -3,7 +3,7 @@
 {% block title %}Job Details - {{ t('app_title') }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header" style="margin-bottom: 30px;">
     <h1 class="page-title">Job Details</h1>
     <a href="/{{ lang }}/jobs" class="btn btn-secondary">← Back to Jobs</a>
 </div>
@@ -24,9 +24,79 @@
 </div>
 
 <div class="chart-card mt-4">
-    <div class="chart-card-header">Findings from this Job</div>
+    <div class="chart-card-header" id="findingsHeader" style="margin-bottom: 20px;">Findings from this Job</div>
     <div id="jobFindings">Loading findings...</div>
 </div>
+
+<style>
+.findings-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.findings-table thead th {
+    padding: 15px 12px;
+    background: #f5f7fa;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.findings-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.findings-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.findings-table tbody td {
+    padding: 15px 12px;
+    vertical-align: top;
+}
+
+.finding-title {
+    font-size: 0.95rem;
+    font-weight: normal;
+    color: #333;
+}
+
+.severity-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.severity-critical {
+    background: #dc3545;
+    color: white;
+}
+
+.severity-high {
+    background: #fd7e14;
+    color: white;
+}
+
+.severity-medium {
+    background: #ffc107;
+    color: #333;
+}
+
+.severity-low {
+    background: #17a2b8;
+    color: white;
+}
+
+.severity-info {
+    background: #6c757d;
+    color: white;
+}
+</style>
 
 <script>
 const jobId = "{{ job_id }}";
@@ -41,20 +111,24 @@ fetch(`/api/jobs/${jobId}`)
                            status === 'failed' ? 'text-danger' : 
                            status === 'running' ? 'text-primary' : 'text-secondary';
         
+        const created = job.created_at ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+        const started = job.started_at ? new Date(job.started_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+        const completed = job.completed_at ? new Date(job.completed_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+        
         document.getElementById('jobInfo').innerHTML = `
             <table class="table">
-                <tr><th>ID:</th><td><code>${job.id}</code></td></tr>
+                <tr><th style="width: 30%;">ID:</th><td><code>${job.id}</code></td></tr>
                 <tr><th>Plugin:</th><td><strong>${job.plugin}</strong></td></tr>
-                <tr><th>Status:</th><td><span class="${statusClass}">${status}</span></td></tr>
-                <tr><th>Created:</th><td>${new Date(job.created_at).toLocaleString('fr-FR')}</td></tr>
-                <tr><th>Started:</th><td>${job.started_at ? new Date(job.started_at).toLocaleString('fr-FR') : 'N/A'}</td></tr>
-                <tr><th>Completed:</th><td>${job.completed_at ? new Date(job.completed_at).toLocaleString('fr-FR') : 'N/A'}</td></tr>
+                <tr><th>Status:</th><td><span class="${statusClass}" style="font-weight: bold; font-size: 1.1rem;">${status.toUpperCase()}</span></td></tr>
+                <tr><th>Created:</th><td>${created}</td></tr>
+                <tr><th>Started:</th><td>${started}</td></tr>
+                <tr><th>Completed:</th><td>${completed}</td></tr>
             </table>
         `;
         
         // Job Config
         document.getElementById('jobConfig').innerHTML = `
-            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 0.9rem;">${JSON.stringify(job.config, null, 2)}</pre>
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 0.9rem; overflow-x: auto;">${JSON.stringify(job.config, null, 2)}</pre>
         `;
     })
     .catch(error => {
@@ -67,18 +141,42 @@ fetch(`/api/findings?job_id=${jobId}`)
     .then(data => {
         let findings = Array.isArray(data) ? data : (data.findings || []);
         
+        // Tri par sévérité (Critical → High → Medium → Low → Info)
+        const severityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4, 'info': 5 };
+        findings.sort((a, b) => {
+            const severityA = severityOrder[a.severity] || 999;
+            const severityB = severityOrder[b.severity] || 999;
+            return severityA - severityB;
+        });
+        
         if (findings.length > 0) {
-            let html = '<table class="jobs-table"><thead><tr><th>Title</th><th>Severity</th><th>Description</th></tr></thead><tbody>';
+            let html = '<table class="findings-table">';
+            html += '<thead><tr>';
+            html += '<th style="width: 35%;">Title</th>';
+            html += '<th style="width: 15%;">Severity</th>';
+            html += '<th style="width: 50%;">Description</th>';
+            html += '</tr></thead><tbody>';
+            
             findings.forEach(f => {
-                const severityClass = 'kpi-' + (f.severity || 'info');
+                const severity = f.severity || 'info';
+                const title = f.title || 'N/A';
+                const description = (f.description || 'No description').substring(0, 150);
+                
                 html += `<tr>
-                    <td><strong>${f.title}</strong></td>
-                    <td><span class="kpi-value ${severityClass}" style="font-size: 0.9rem;">${f.severity || 'info'}</span></td>
-                    <td style="font-size: 0.95rem;">${(f.description || '').substring(0, 150)}...</td>
+                    <td><span class="finding-title">${title}</span></td>
+                    <td><span class="severity-badge severity-${severity}">${severity}</span></td>
+                    <td style="font-size: 0.95rem; color: #555;">${description}...</td>
                 </tr>`;
             });
+            
             html += '</tbody></table>';
             document.getElementById('jobFindings').innerHTML = html;
+            
+            // Mettre à jour le header avec le compte
+            const header = document.getElementById('findingsHeader');
+            if (header) {
+                header.textContent = `Findings from this Job (${findings.length})`;
+            }
         } else {
             document.getElementById('jobFindings').innerHTML = '<p>No findings for this job.</p>';
         }

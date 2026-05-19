@@ -1,24 +1,28 @@
 """
-PDF Report Generator
+PDF Report Generator with MinIO persistence
 """
 from weasyprint import HTML
 from datetime import datetime
 import os
+import tempfile
+import uuid
 from jinja2 import Environment, FileSystemLoader
 
 
-def generate_pdf_report(job_id):
+def generate_pdf_report(job_id, save_to_minio=True):
     """
-    Generate PDF report for a job
+    Generate PDF report for a job and optionally save to MinIO
     
     Args:
         job_id: UUID of the job
-        
+        save_to_minio: If True, upload to MinIO and create Artifact entry
+    
     Returns:
         bytes: PDF content
     """
     from core.models.job import Job
     from core.models.finding import Finding
+    from core.models.artifact import Artifact
     from core.api.app import create_app
     
     # Create Flask app context
@@ -29,6 +33,7 @@ def generate_pdf_report(job_id):
         
         # Get job from database
         job = db.session.query(Job).filter_by(id=job_id).first()
+        
         if not job:
             raise ValueError(f"Job {job_id} not found")
         
@@ -69,7 +74,46 @@ def generate_pdf_report(job_id):
             generated_at=datetime.utcnow()
         )
         
-        # Convert HTML to PDF (CSS inclus dans le HTML)
+        # Convert HTML to PDF
         pdf_bytes = HTML(string=html_content).write_pdf()
+        
+        # Upload to MinIO if requested
+        if save_to_minio:
+            from core.storage import upload_artifact
+            
+            # Check if artifact already exists for this job (type: application/pdf)
+            existing = db.session.query(Artifact).filter_by(
+                job_id=job_id,
+                content_type='application/pdf'
+            ).first()
+            
+            if not existing:
+                # Save to temporary file
+                with tempfile.NamedTemporaryFile(mode='wb', suffix='.pdf', delete=False) as tmp:
+                    tmp.write(pdf_bytes)
+                    tmp_path = tmp.name
+                
+                try:
+                    # Upload to MinIO
+                    filename = f'report_{str(job_id)[:8]}.pdf'
+                    artifact_key = upload_artifact(tmp_path, job_id, filename)
+                    
+                    # Create Artifact entry in database
+                    artifact = Artifact(
+                        id=str(uuid.uuid4()),
+                        job_id=job_id,
+                        filename=filename,
+                        content_type='application/pdf',
+                        minio_bucket='artifacts',
+                        minio_key=artifact_key,
+                        size_bytes=len(pdf_bytes)
+                    )
+                    db.session.add(artifact)
+                    db.session.commit()
+                    
+                finally:
+                    # Cleanup temp file
+                    if os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
         
         return pdf_bytes

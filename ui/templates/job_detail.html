@@ -23,6 +23,40 @@
     </div>
 </div>
 
+<!-- NOUVELLE SECTION REPORTS -->
+<div class="chart-card mt-4">
+    <div class="chart-card-header">📊 Reports & Downloads</div>
+    <div style="padding: 20px;">
+        <p style="margin-bottom: 15px; color: #666; font-size: 0.95rem;">
+            Generate and download reports for this job in different formats:
+        </p>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a id="htmlReportBtn" 
+               href="#" 
+               target="_blank" 
+               class="btn btn-primary"
+               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                <i class="fas fa-file-code"></i> HTML Report
+            </a>
+            <a id="pdfReportBtn" 
+               href="#" 
+               class="btn btn-danger"
+               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                <i class="fas fa-file-pdf"></i> PDF Report
+            </a>
+            <a id="csvExportBtn" 
+               href="#" 
+               class="btn btn-success"
+               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                <i class="fas fa-file-csv"></i> CSV Export
+            </a>
+        </div>
+        <p style="margin-top: 15px; color: #999; font-size: 0.85rem;">
+            <i class="fas fa-info-circle"></i> Reports are generated on-demand and may take a few seconds.
+        </p>
+    </div>
+</div>
+
 <div class="chart-card mt-4">
     <div class="chart-card-header" id="findingsHeader" style="margin-bottom: 20px;">Findings from this Job</div>
     <div id="jobFindings">Loading findings...</div>
@@ -96,25 +130,79 @@
     background: #6c757d;
     color: white;
 }
+
+/* Styles boutons reports */
+.btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #006BB4;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #005a94;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
 </style>
 
 <script>
 const jobId = "{{ job_id }}";
 
+// Update report buttons URLs when job is loaded
+function updateReportButtons(jobId) {
+    document.getElementById('htmlReportBtn').href = `/api/reports/${jobId}/html`;
+    document.getElementById('pdfReportBtn').href = `/api/reports/${jobId}/pdf`;
+    document.getElementById('csvExportBtn').href = `/api/findings/export/csv?job_id=${jobId}&format=csv`;
+}
+
 // Fetch job details
 fetch(`/api/jobs/${jobId}`)
     .then(response => response.json())
     .then(job => {
+        // Update report buttons
+        updateReportButtons(job.id);
+        
         // Job Info
         const status = job.status || 'unknown';
-        const statusClass = status === 'completed' ? 'text-success' : 
-                           status === 'failed' ? 'text-danger' : 
+        const statusClass = status === 'completed' ? 'text-success' :
+                           status === 'failed' ? 'text-danger' :
                            status === 'running' ? 'text-primary' : 'text-secondary';
-        
+
         const created = job.created_at ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
         const started = job.started_at ? new Date(job.started_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
         const completed = job.completed_at ? new Date(job.completed_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
-        
+
         document.getElementById('jobInfo').innerHTML = `
             <table class="table">
                 <tr><th style="width: 30%;">ID:</th><td><code>${job.id}</code></td></tr>
@@ -125,7 +213,7 @@ fetch(`/api/jobs/${jobId}`)
                 <tr><th>Completed:</th><td>${completed}</td></tr>
             </table>
         `;
-        
+
         // Job Config
         document.getElementById('jobConfig').innerHTML = `
             <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 0.9rem; overflow-x: auto;">${JSON.stringify(job.config, null, 2)}</pre>
@@ -140,7 +228,7 @@ fetch(`/api/findings?job_id=${jobId}`)
     .then(response => response.json())
     .then(data => {
         let findings = Array.isArray(data) ? data : (data.findings || []);
-        
+
         // Tri par sévérité (Critical → High → Medium → Low → Info)
         const severityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4, 'info': 5 };
         findings.sort((a, b) => {
@@ -148,7 +236,7 @@ fetch(`/api/findings?job_id=${jobId}`)
             const severityB = severityOrder[b.severity] || 999;
             return severityA - severityB;
         });
-        
+
         if (findings.length > 0) {
             let html = '<table class="findings-table">';
             html += '<thead><tr>';
@@ -156,22 +244,22 @@ fetch(`/api/findings?job_id=${jobId}`)
             html += '<th style="width: 15%;">Severity</th>';
             html += '<th style="width: 50%;">Description</th>';
             html += '</tr></thead><tbody>';
-            
+
             findings.forEach(f => {
                 const severity = f.severity || 'info';
                 const title = f.title || 'N/A';
                 const description = (f.description || 'No description').substring(0, 150);
-                
+
                 html += `<tr>
                     <td><span class="finding-title">${title}</span></td>
                     <td><span class="severity-badge severity-${severity}">${severity}</span></td>
                     <td style="font-size: 0.95rem; color: #555;">${description}...</td>
                 </tr>`;
             });
-            
+
             html += '</tbody></table>';
             document.getElementById('jobFindings').innerHTML = html;
-            
+
             // Mettre à jour le header avec le compte
             const header = document.getElementById('findingsHeader');
             if (header) {

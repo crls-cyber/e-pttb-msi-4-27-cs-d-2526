@@ -24,12 +24,12 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    
+
     if not username or not password:
         return jsonify({'error': 'Username and password required'}), 400
-    
+
     user = authenticate_user(username, password)
-    
+
     if user:
         audit_log('user.login', 'user', user.id)  #  AJOUT AUDIT
         return jsonify({
@@ -39,7 +39,7 @@ def login():
                 'username': user.username
             }
         }), 200
-    
+
     return jsonify({'error': 'Invalid credentials'}), 401
 
 
@@ -75,10 +75,10 @@ def create_job():
     data = request.get_json()
     plugin_name = data.get('plugin')
     config = data.get('config', {})
-    
+
     if not plugin_name:
         return jsonify({'error': 'Plugin name required'}), 400
-    
+
     # Create job in database
     job = Job(
         id=uuid.uuid4(),
@@ -87,15 +87,15 @@ def create_job():
         config=config,
         status='pending'
     )
-    
+
     db.session.add(job)
     db.session.commit()
-    
+
     # Send task to Celery
     task = run_plugin.delay(str(job.id), plugin_name, config)
-    
+
     audit_log('job.create', 'job', job.id)
-    
+
     return jsonify({
         'job_id': str(job.id),
         'task_id': task.id,
@@ -108,7 +108,7 @@ def create_job():
 def list_jobs():
     """List user's jobs."""
     jobs = db.session.query(Job).filter_by(user_id=current_user.id).all()
-    
+
     return jsonify({
         'jobs': [{
             'id': str(job.id),
@@ -124,10 +124,10 @@ def list_jobs():
 def get_job(job_id):
     """Get job details."""
     job = db.session.query(Job).filter_by(id=job_id, user_id=current_user.id).first()
-    
+
     if not job:
         return jsonify({'error': 'Job not found'}), 404
-    
+
     return jsonify({
         'id': str(job.id),
         'plugin': job.plugin_name,
@@ -144,9 +144,9 @@ def get_job(job_id):
 def get_job_findings(job_id):
     """Get findings for a specific job"""
     from core.models.finding import Finding
-    
+
     findings = db.session.query(Finding).filter_by(job_id=job_id).all()
-    
+
     return jsonify({
         'job_id': job_id,
         'findings': [
@@ -167,19 +167,19 @@ def get_job_findings(job_id):
 def get_findings():
     """Get findings with optional filters"""
     from core.models.finding import Finding
-    
+
     job_id = request.args.get('job_id')
     severity = request.args.get('severity')
-    
+
     query = db.session.query(Finding)
-    
+
     if job_id:
         query = query.filter_by(job_id=job_id)
     if severity:
         query = query.filter_by(severity=severity)
-    
+
     findings = query.order_by(Finding.created_at.desc()).all()
-    
+
     return jsonify([{
         'id': str(f.id),
         'job_id': str(f.job_id),
@@ -191,14 +191,73 @@ def get_findings():
     } for f in findings])
 
 
+# ============================================
+# MOVED HERE: Export CSV (must be before <finding_id> route)
+# ============================================
+@api_bp.route('/findings/export/csv', methods=['GET'])
+@login_required
+def export_findings_csv():
+    """Export all findings to CSV."""
+    import csv
+    from io import StringIO
+    from flask import make_response
+
+    # Get filters
+    job_id = request.args.get('job_id')
+    severity = request.args.get('severity')
+
+    # Query findings
+    from core.models import Finding
+
+    query = db.session.query(Finding)
+    if job_id:
+        query = query.filter_by(job_id=job_id)
+    if severity:
+        query = query.filter_by(severity=severity)
+
+    findings = query.order_by(Finding.created_at.desc()).all()
+
+    # Create CSV
+    si = StringIO()
+    writer = csv.writer(si)
+
+    # Header
+    writer.writerow([
+        'ID', 'Job ID', 'Title', 'Severity',
+        'Description', 'CVE', 'CVSS Score',
+        'Remediation', 'Created At'
+    ])
+
+    # Data
+    for f in findings:
+        writer.writerow([
+            str(f.id),
+            str(f.job_id),
+            f.title,
+            f.severity,
+            f.description[:200] if f.description else '',
+            f.cve_id or '',
+            f.cvss_score or '',
+            f.remediation[:200] if f.remediation else '',
+            f.created_at.isoformat()
+        ])
+
+    # Response
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=findings.csv"
+    output.headers["Content-type"] = "text/csv"
+
+    return output
+
+
 @api_bp.route('/findings/<finding_id>', methods=['GET'])
 @login_required
 def get_finding(finding_id):
     """Get a specific finding"""
     from core.models.finding import Finding
-    
+
     finding = db.session.query(Finding).filter_by(id=finding_id).first_or_404()
-    
+
     return jsonify({
         'id': str(finding.id),
         'job_id': str(finding.job_id),
@@ -217,18 +276,18 @@ def get_finding(finding_id):
 def run_web_pentest_workflow():
     """Launch web pentest workflow: Nmap → Nuclei → SQLmap"""
     from core.orchestrator.workflows import web_pentest_workflow
-    
+
     data = request.get_json()
     target = data.get('target')
-    
+
     if not target:
         return jsonify({'error': 'Target required'}), 400
-    
+
     # Launch workflow
     workflow_result = web_pentest_workflow(target, current_user.id)
-    
+
     audit_log('workflow.start', 'workflow', workflow_result.id)
-    
+
     return jsonify({
         'workflow_id': workflow_result.id,
         'target': target,
@@ -242,7 +301,7 @@ def run_web_pentest_workflow():
 def get_html_report(job_id):
     """Generate and return HTML report for a job"""
     from core.reporting.html_generator import generate_html_report
-    
+
     try:
         html = generate_html_report(job_id)
         return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
@@ -257,16 +316,16 @@ def get_html_report(job_id):
 def get_pdf_report(job_id):
     """Generate and return PDF report for a job"""
     from core.reporting.pdf_generator import generate_pdf_report
-    
+
     try:
         pdf_bytes = generate_pdf_report(job_id)
-        
+
         # Create response with PDF content
         from flask import make_response
         response = make_response(pdf_bytes)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename=pentest_report_{job_id[:8]}.pdf'
-        
+
         return response
     except ValueError as e:
         return jsonify({'error': str(e)}), 404
@@ -281,21 +340,21 @@ def upload_external_file():
     from werkzeug.utils import secure_filename
     import tempfile
     import shutil
-    
+
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
-    
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'Empty filename'}), 400
-    
+
     # Get parser type
     parser_type = request.form.get('parser_type', 'auto')
-    
+
     # Secure filename
     filename = secure_filename(file.filename)
     ext = os.path.splitext(filename)[1].lower()
-    
+
     # Auto-detect parser
     if parser_type == 'auto':
         if ext in ['.pcap', '.pcapng', '.cap']:
@@ -310,7 +369,7 @@ def upload_external_file():
             parser = EttercapParser()
         else:
             return jsonify({'error': f'Unsupported file type: {ext}'}), 400
-    
+
     # Select parser
     if parser_type == 'wireshark':
         parser = WiresharkParser()
@@ -322,16 +381,16 @@ def upload_external_file():
         parser = EttercapParser()
     else:
         return jsonify({'error': f'Unknown parser type: {parser_type}'}), 400
-    
+
     # Save to temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
         file.save(tmp.name)
         tmp_path = tmp.name
-    
+
     try:
         # Parse file
         result = parser.parse(tmp_path, current_user.id)
-        
+
         # Create Job in database
         job = Job(
             id=str(uuid.uuid4()),
@@ -341,7 +400,7 @@ def upload_external_file():
             status='completed'
         )
         db.session.add(job)
-        
+
         # Create Findings
         for finding_data in result['findings']:
             finding = Finding(
@@ -352,11 +411,11 @@ def upload_external_file():
                 description=finding_data['description']
             )
             db.session.add(finding)
-        
+
         # Upload original file to MinIO as artifact
         from core.storage import upload_artifact
         artifact_key = upload_artifact(tmp_path, job.id, filename)
-        
+
         artifact = Artifact(
             id=str(uuid.uuid4()),
             job_id=job.id,
@@ -367,11 +426,11 @@ def upload_external_file():
             size_bytes=os.path.getsize(tmp_path)
         )
         db.session.add(artifact)
-        
+
         db.session.commit()
-        
+
         audit_log('external.upload', 'job', job.id)
-        
+
         return jsonify({
             'success': True,
             'job_id': job.id,
@@ -379,70 +438,14 @@ def upload_external_file():
             'summary': result['summary'],
             'message': f'{parser_type.capitalize()} file parsed successfully'
         })
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        
+
     finally:
         # Cleanup temp file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
-
-
-@api_bp.route('/findings/export/csv', methods=['GET'])
-@login_required
-def export_findings_csv():
-    """Export all findings to CSV."""
-    import csv
-    from io import StringIO
-    from flask import make_response
-    
-    # Get filters
-    job_id = request.args.get('job_id')
-    severity = request.args.get('severity')
-    
-    # Query findings
-    from core.models import Finding
-    
-    query = db.session.query(Finding)
-    if job_id:
-        query = query.filter_by(job_id=job_id)
-    if severity:
-        query = query.filter_by(severity=severity)
-    
-    findings = query.order_by(Finding.created_at.desc()).all()
-    
-    # Create CSV
-    si = StringIO()
-    writer = csv.writer(si)
-    
-    # Header
-    writer.writerow([
-        'ID', 'Job ID', 'Title', 'Severity', 
-        'Description', 'CVE', 'CVSS Score', 
-        'Remediation', 'Created At'
-    ])
-    
-    # Data
-    for f in findings:
-        writer.writerow([
-            str(f.id),
-            str(f.job_id),
-            f.title,
-            f.severity,
-            f.description[:200] if f.description else '',
-            f.cve_id or '',
-            f.cvss_score or '',
-            f.remediation[:200] if f.remediation else '',
-            f.created_at.isoformat()
-        ])
-    
-    # Response
-    output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=findings.csv"
-    output.headers["Content-type"] = "text/csv"
-    
-    return output
 
 
 # ============================================
@@ -454,7 +457,7 @@ def export_findings_csv():
 def trigger_recon_to_exploit():
     """
     Trigger recon-to-exploit workflow: Nmap → Nuclei → Metasploit
-    
+
     Request body:
     {
         "target": "192.168.200.133",
@@ -463,20 +466,20 @@ def trigger_recon_to_exploit():
     }
     """
     from core.orchestrator.workflows import recon_to_exploit_workflow
-    
+
     data = request.get_json()
-    
+
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
-    
+
     target = data['target']
     exploit = data.get('exploit')
     payload = data.get('payload')
-    
+
     # Validate: if exploit provided, payload is required
     if exploit and not payload:
         return jsonify({'error': 'Payload required when exploit is specified'}), 400
-    
+
     try:
         result = recon_to_exploit_workflow(
             target=target,
@@ -484,11 +487,11 @@ def trigger_recon_to_exploit():
             exploit_path=exploit,
             payload=payload
         )
-        
+
         stages = ['nmap', 'nuclei']
         if exploit:
             stages.append('metasploit')
-        
+
         return jsonify({
             'message': 'Recon-to-exploit workflow started',
             'workflow_id': result['workflow_id'],
@@ -498,7 +501,7 @@ def trigger_recon_to_exploit():
             'target': target,
             'stages': stages
         }), 202
-        
+
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
@@ -510,7 +513,7 @@ def trigger_recon_to_exploit():
 def trigger_web_pentest_advanced():
     """
     Trigger advanced web pentest: Nmap → Nuclei → SQLmap
-    
+
     Request body:
     {
         "target": "192.168.200.133",
@@ -518,22 +521,22 @@ def trigger_web_pentest_advanced():
     }
     """
     from core.orchestrator.workflows import web_pentest_advanced
-    
+
     data = request.get_json()
-    
+
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
-    
+
     target = data['target']
     sqli_url = data.get('sqli_url')
-    
+
     try:
         result = web_pentest_advanced(
             target=target,
             user_id=current_user.id,
             sqli_url=sqli_url
         )
-        
+
         return jsonify({
             'message': 'Web pentest workflow started',
             'workflow_id': result['workflow_id'],
@@ -543,7 +546,7 @@ def trigger_web_pentest_advanced():
             'target': target,
             'stages': ['nmap', 'nuclei', 'sqlmap']
         }), 202
-        
+
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
@@ -555,7 +558,7 @@ def trigger_web_pentest_advanced():
 def trigger_network_bruteforce():
     """
     Trigger network bruteforce: Nmap → Hydra
-    
+
     Request body:
     {
         "target": "192.168.200.133",
@@ -565,17 +568,17 @@ def trigger_network_bruteforce():
     }
     """
     from core.orchestrator.workflows import network_bruteforce
-    
+
     data = request.get_json()
-    
+
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
-    
+
     target = data['target']
     service = data.get('service', 'ssh')
     username = data.get('username', 'msfadmin')
     password_list = data.get('password_list')
-    
+
     try:
         result = network_bruteforce(
             target=target,
@@ -584,7 +587,7 @@ def trigger_network_bruteforce():
             username=username,
             password_list=password_list
         )
-        
+
         return jsonify({
             'message': 'Network bruteforce workflow started',
             'workflow_id': result['workflow_id'],
@@ -593,7 +596,7 @@ def trigger_network_bruteforce():
             'target': target,
             'stages': ['nmap', 'hydra']
         }), 202
-        
+
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
@@ -605,27 +608,27 @@ def trigger_network_bruteforce():
 def trigger_osint_recon():
     """
     Trigger OSINT recon: theHarvester → subfinder
-    
+
     Request body:
     {
         "domain": "example.com"
     }
     """
     from core.orchestrator.workflows import osint_recon
-    
+
     data = request.get_json()
-    
+
     if not data or 'domain' not in data:
         return jsonify({'error': 'Missing required parameter: domain'}), 400
-    
+
     domain = data['domain']
-    
+
     try:
         result = osint_recon(
             domain=domain,
             user_id=current_user.id
         )
-        
+
         return jsonify({
             'message': 'OSINT recon workflow started',
             'workflow_id': result['workflow_id'],
@@ -634,7 +637,7 @@ def trigger_osint_recon():
             'domain': domain,
             'stages': ['theharvester', 'subfinder']
         }), 202
-        
+
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
@@ -646,7 +649,7 @@ def trigger_osint_recon():
 def get_dashboard_stats():
     '''
     Get dashboard statistics
-    
+
     Returns:
     - findings_by_severity: {critical: N, high: N, ...}
     - jobs_by_status: {completed: N, running: N, failed: N}
@@ -654,35 +657,35 @@ def get_dashboard_stats():
     - top_plugins: [most used plugins]
     '''
     from sqlalchemy import func
-    
+
     # Findings by severity
     findings_by_severity = db.session.query(
         Finding.severity,
         func.count(Finding.id).label('count')
     ).group_by(Finding.severity).all()
-    
+
     findings_stats = {sev: count for sev, count in findings_by_severity}
-    
+
     # Jobs by status
     jobs_by_status = db.session.query(
         Job.status,
         func.count(Job.id).label('count')
     ).group_by(Job.status).all()
-    
+
     jobs_stats = {status: count for status, count in jobs_by_status}
-    
+
     # Recent jobs (last 10)
     recent_jobs = db.session.query(Job).order_by(
         Job.created_at.desc()
     ).limit(10).all()
-    
+
     recent_jobs_data = [{
         'id': str(job.id),
         'plugin': job.plugin_name,
         'status': job.status,
         'created_at': job.created_at.isoformat() if job.created_at else None
     } for job in recent_jobs]
-    
+
     # Top plugins used
     top_plugins = db.session.query(
         Job.plugin_name,
@@ -690,9 +693,9 @@ def get_dashboard_stats():
     ).group_by(Job.plugin_name).order_by(
         func.count(Job.id).desc()
     ).limit(5).all()
-    
+
     top_plugins_data = {plugin: count for plugin, count in top_plugins}
-    
+
     return jsonify({
         'findings_by_severity': findings_stats,
         'jobs_by_status': jobs_stats,

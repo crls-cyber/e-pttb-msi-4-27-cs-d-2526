@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Session cookies (ajouté J16 nettoyage)
+cookies.txt
+
+# Backups locaux (ajouté J16 nettoyage)
+*.backup
+*.backup_*
+*.broken
+*.old
+*.save
+
+# Exports temporaires (ajouté J16 nettoyage)
+findings.csv
+*.csv
+
+# Coverage reports (confirmation)
+htmlcov/
+.pytest_cache/

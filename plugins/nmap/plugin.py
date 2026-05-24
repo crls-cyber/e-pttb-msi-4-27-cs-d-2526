@@ -17,8 +17,14 @@ class NmapPlugin(PluginBase):
     
     def validate_config(self) -> None:
         """Validate plugin configuration."""
+        # Vérifier présence de la clé
         if 'targets' not in self.config and 'target' not in self.config:
             raise ValueError("Parameter 'targets' or 'target' is required")
+        
+        # Vérifier que la valeur n'est pas vide
+        target = self.config.get('targets') or self.config.get('target')
+        if not target or (isinstance(target, str) and not target.strip()):
+            raise ValueError("Parameter 'targets' or 'target' cannot be empty")
     
     def run(self) -> Dict[str, Any]:
         """Execute Nmap scan."""

@@ -135,7 +135,9 @@ def get_job(job_id):
         'status': job.status,
         'error': job.error,
         'created_at': job.created_at.isoformat(),
-        'updated_at': job.updated_at.isoformat()
+        'updated_at': job.updated_at.isoformat(),
+        'started_at': job.started_at.isoformat() if job.started_at else None,
+        'completed_at': job.completed_at.isoformat() if job.completed_at else None
     }), 200
 
 

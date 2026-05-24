@@ -1,5 +1,5 @@
 """Job model."""
-from sqlalchemy import Column, String, Text, ForeignKey, JSON
+from sqlalchemy import Column, String, Text, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from .base import Base, UUIDMixin, TimestampMixin
@@ -14,6 +14,10 @@ class Job(Base, UUIDMixin, TimestampMixin):
     config = Column(JSON, nullable=False)
     status = Column(String(20), nullable=False, default='pending')  # pending, running, completed, failed
     error = Column(Text, nullable=True)
+    
+    # Timestamps exécution
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
 
     # Relationships
     user = relationship('User', back_populates='jobs')

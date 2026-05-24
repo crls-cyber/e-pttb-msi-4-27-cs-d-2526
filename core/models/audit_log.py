@@ -1,6 +1,6 @@
 """AuditLog model."""
 from sqlalchemy import Column, String, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, INET
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base, UUIDMixin, TimestampMixin
 
@@ -13,7 +13,7 @@ class AuditLog(Base, UUIDMixin, TimestampMixin):
     action = Column(String(100), nullable=False)
     resource_type = Column(String(50), nullable=True)
     resource_id = Column(UUID(as_uuid=True), nullable=True)
-    ip_address = Column(INET, nullable=True)
+    ip_address = Column(String(45), nullable=True)  # IPv4 max 15, IPv6 max 45
     user_agent = Column(Text, nullable=True)
 
     # Relationships

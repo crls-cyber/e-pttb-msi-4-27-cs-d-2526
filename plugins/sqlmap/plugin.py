@@ -60,8 +60,8 @@ class SQLmapPlugin(PluginBase):
             '--random-agent',
             '--answers', 'crack=N',  # Don't crack hashes
             '--technique', 'BEUSTQ',  # All techniques
-            '--cookie', 'PHPSESSID=b7iksjtet7c6hv0fu04siv9vn5;security=low',   # DVWA cookie
-            '-p', 'id',  # Force test on 'id' parameter only
+            # '--cookie', 'PHPSESSID=b7iksjtet7c6hv0fu04siv9vn5;security=low',   # DVWA cookie
+            # '-p', 'id',  # Force test on 'id' parameter only
         ]
         
         # Mode-specific flags

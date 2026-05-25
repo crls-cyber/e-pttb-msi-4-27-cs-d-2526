@@ -169,3 +169,101 @@ body {
         height: 250px;
     }
 }
+
+/* =========================================
+   COMING SOON & DISABLED STATES (PHASE 1)
+   ========================================= */
+
+.badge-coming-soon {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+
+.badge-coming-soon-large {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* Menu items & Inputs */
+.nav-item.disabled,
+.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  position: relative;
+}
+
+/* Coming soon pages */
+.coming-soon-page {
+  max-width: 800px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 40px;
+}
+
+.coming-soon-icon {
+  font-size: 120px;
+  margin-bottom: 24px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.coming-soon-page h1 {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--kibana-text);
+}
+
+.coming-soon-page .subtitle {
+  font-size: 18px;
+  color: var(--kibana-text-secondary);
+  margin-bottom: 40px;
+}
+
+.feature-preview {
+  background: var(--kibana-card-bg);
+  border: 1px solid var(--kibana-border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 40px 0;
+  text-align: left;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0 0;
+}
+
+.feature-list li {
+  padding: 12px 0;
+  font-size: 16px;
+  border-bottom: 1px solid var(--kibana-border);
+}
+
+.feature-list li:last-child {
+  border-bottom: none;
+}
+
+.roadmap-hint {
+  background: #FEF5E7;
+  border: 1px solid var(--kibana-warning);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 24px 0;
+  color: #7B5400;
+}

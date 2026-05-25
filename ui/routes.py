@@ -181,3 +181,49 @@ def workflows():
 @login_required
 def upload_external():
     return render_template('upload_external.html')
+
+# ==========================================
+# PHASE 1 - PLACEHOLDER ROUTES (UI-FIRST)
+# ==========================================
+
+@ui_bp.route('/en/projects')
+@ui_bp.route('/fr/projects')
+@login_required
+def projects():
+    return render_template('projects.html')
+
+@ui_bp.route('/en/targets')
+@ui_bp.route('/fr/targets')
+@login_required
+def targets():
+    return render_template('targets.html')
+
+@ui_bp.route('/en/reports')
+@ui_bp.route('/fr/reports')
+@login_required
+def reports():
+    return render_template('reports.html')
+
+@ui_bp.route('/en/integrations')
+@ui_bp.route('/fr/integrations')
+@login_required
+def integrations():
+    return render_template('integrations.html')
+
+@ui_bp.route('/en/compliance')
+@ui_bp.route('/fr/compliance')
+@login_required
+def compliance():
+    return render_template('compliance.html')
+
+@ui_bp.route('/en/analytics')
+@ui_bp.route('/fr/analytics')
+@login_required
+def analytics():
+    return render_template('analytics.html')
+
+@ui_bp.route('/en/settings')
+@ui_bp.route('/fr/settings')
+@login_required
+def settings():
+    return render_template('settings.html')

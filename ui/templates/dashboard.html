@@ -11,37 +11,60 @@
     <h1 class="page-title">{{ t('dashboard.title') }}</h1>
 </div>
 
-<!-- KPI Cards Row -->
+<div class="dashboard-alerts mb-4">
+    <div class="alert d-flex justify-content-between align-items-center" style="background-color: #F8E9E9; border-left: 4px solid #BD271E; color: #7B341E; padding: 12px 20px; border-radius: 4px; margin-bottom: 12px;">
+        <div>🚨 <strong>3 new CRITICAL findings</strong> in last 24h</div>
+        <a href="/{{ lang }}/findings" style="color: #BD271E; font-weight: bold; text-decoration: none;">View →</a>
+    </div>
+    <div class="alert d-flex justify-content-between align-items-center" style="background-color: #FEF5E7; border-left: 4px solid #F5A700; color: #7B5400; padding: 12px 20px; border-radius: 4px;">
+        <div>⚠️ <strong>Metasploit exploit available</strong> for vsftpd 2.3.4 on 192.168.200.133</div>
+        <a href="/{{ lang }}/workflows" style="color: #F5A700; font-weight: bold; text-decoration: none;">Exploit →</a>
+    </div>
+</div>
+
 <div class="row mb-4">
-    <div class="col-md-3 mb-3">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card">
             <div class="kpi-value kpi-critical" id="kpi-critical">-</div>
             <div class="kpi-label">{{ t('dashboard.kpi.critical') }}</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card">
             <div class="kpi-value kpi-high" id="kpi-high">-</div>
             <div class="kpi-label">{{ t('dashboard.kpi.high') }}</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card">
             <div class="kpi-value kpi-success" id="kpi-completed">-</div>
             <div class="kpi-label">{{ t('dashboard.kpi.completed') }}</div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card">
             <div class="kpi-value kpi-info" id="kpi-plugins">-</div>
             <div class="kpi-label">{{ t('dashboard.kpi.plugins') }}</div>
         </div>
     </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
+            <div class="badge-coming-soon" style="position: absolute; top: -8px; right: -8px;">SOON</div>
+            <div class="kpi-value" style="color: #adb5bd;">92%</div>
+            <div class="kpi-label">Coverage</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
+            <div class="badge-coming-soon" style="position: absolute; top: -8px; right: -8px;">SOON</div>
+            <div class="kpi-value" style="color: #adb5bd;">4.2</div>
+            <div class="kpi-label">Avg Risk Score</div>
+        </div>
+    </div>
 </div>
 
-<!-- Charts + Recent Jobs Row -->
 <div class="row">
-    <!-- Findings Chart -->
     <div class="col-lg-4 mb-4">
         <div class="chart-card">
             <div class="chart-card-header">{{ t('dashboard.charts.severity') }}</div>
@@ -51,7 +74,6 @@
         </div>
     </div>
 
-    <!-- Jobs Status Chart -->
     <div class="col-lg-4 mb-4">
         <div class="chart-card">
             <div class="chart-card-header">{{ t('dashboard.charts.status') }}</div>
@@ -61,7 +83,6 @@
         </div>
     </div>
 
-    <!-- Recent Jobs -->
     <div class="col-lg-4 mb-4">
         <div class="chart-card">
             <div class="chart-card-header">{{ t('dashboard.charts.recent') }}</div>
@@ -70,13 +91,33 @@
     </div>
 </div>
 
-<!-- Top Plugins Row -->
 <div class="row">
     <div class="col-12">
         <div class="chart-card">
             <div class="chart-card-header">{{ t('dashboard.charts.plugins') }}</div>
             <div class="chart-container-small">
                 <canvas id="pluginsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
+            <div class="badge-coming-soon" style="position: absolute; top: 10px; right: 10px;">📊 PHASE 3</div>
+            <div class="chart-card-header" style="color: #adb5bd;">Timeline Trends (Findings/Week)</div>
+            <div class="chart-container-small" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #dee2e6;">
+                📈
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
+            <div class="badge-coming-soon" style="position: absolute; top: 10px; right: 10px;">📊 PHASE 3</div>
+            <div class="chart-card-header" style="color: #adb5bd;">Vulnerability Heatmap (IPs/Services)</div>
+            <div class="chart-container-small" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #dee2e6;">
+                🗺️
             </div>
         </div>
     </div>

@@ -27,6 +27,9 @@ jobs:
         poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Test with pytest
+      env:
+        # On définit une clé bidon juste pour que les tests passent
+        FERNET_KEY: 'test-key-for-ci-environment'
       run: |
         # On utilise poetry run pour s'assurer que pytest utilise ton environnement virtuel
         poetry run pytest

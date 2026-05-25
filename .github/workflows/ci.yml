@@ -18,7 +18,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install poetry
-        poetry install
+        # Ajout de --no-root pour ignorer l'installation du projet lui-même
+        poetry install --no-root
 
     - name: Lint with flake8
       run: |

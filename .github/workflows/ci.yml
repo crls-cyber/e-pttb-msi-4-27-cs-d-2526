@@ -28,8 +28,8 @@ jobs:
 
     - name: Test with pytest
       env:
-        # On définit une clé bidon juste pour que les tests passent
-        FERNET_KEY: 'test-key-for-ci-environment'
+        # Clé générée pour cette fonction
+        FERNET_KEY: 'XftM-99YCeh-sJXBEvovCnd21TZ0trLH9Zi9Ig1b3gg='
       run: |
         # On utilise poetry run pour s'assurer que pytest utilise ton environnement virtuel
         poetry run pytest

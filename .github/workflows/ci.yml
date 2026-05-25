@@ -9,25 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        # Si vous utilisez un requirements.txt, remplacez par : pip install -r requirements.txt
-        # Sinon, installez vos dépendances ici
-        pip install flake8 pytest
-        
+        pip install poetry
+        poetry install
+
     - name: Lint with flake8
       run: |
-        # Vérifie les erreurs de syntaxe de base
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        
+        # On utilise poetry run pour s'assurer que flake8 est celui du projet
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
     - name: Test with pytest
       run: |
-        # Lance vos tests unitaires (assurez-vous d'avoir un dossier 'tests/')
-        pytest
+        # On utilise poetry run pour s'assurer que pytest utilise ton environnement virtuel
+        poetry run pytest

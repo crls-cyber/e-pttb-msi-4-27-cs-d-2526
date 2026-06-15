@@ -47,7 +47,8 @@ class NucleiPlugin(PluginBase):
                 '-silent'
             ]
 
-            if templates:
+            if templates and templates.strip():
+                cmd.extend(['-t', '/root/nuclei-templates/'])
                 cmd.extend(['-tags', templates])
 
             # Execute Nuclei (timeout 10 minutes)
@@ -83,8 +84,10 @@ class NucleiPlugin(PluginBase):
             raise Exception(f"Nuclei execution failed: {str(e)}")
 
     def parse_output(self, raw_output: str, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
-        """Parse Nuclei JSON output into findings"""
+        """Parse Nuclei JSON output into findings with deduplication."""
         findings = []
+        # Deduplication dict: key = (template-id, matched-at)
+        deduplicated = {}
 
         try:
             results = json.loads(raw_output)
@@ -103,38 +106,83 @@ class NucleiPlugin(PluginBase):
                 cwe_ids = item.get('info', {}).get('classification', {}).get('cwe-id', [])
 
                 severity_map = {
-                    'critical': 'critical',
-                    'high': 'high',
-                    'medium': 'medium',
-                    'low': 'low',
-                    'info': 'info'
+                    'critical': 'critical', 'high': 'high',
+                    'medium': 'medium', 'low': 'low', 'info': 'info'
                 }
                 mapped_severity = severity_map.get(severity, 'info')
-
-                full_description = description
-                if cve_ids:
-                    full_description += f"\n\nCVE IDs: {', '.join(cve_ids)}"
-                if cwe_ids:
-                    full_description += f"\nCWE IDs: {', '.join(cwe_ids)}"
 
                 references = item.get('info', {}).get('reference', [])
                 remediation = "Review the vulnerability details and apply security patches."
                 if references:
                     remediation += f"\n\nReferences:\n" + "\n".join(f"- {ref}" for ref in references[:3])
 
-                finding = {
-                    'title': f"{template_name} - {matched_at}",
-                    'severity': mapped_severity,
-                    'description': full_description,
-                    'remediation': remediation,
-                    'metadata': {
-                        'template_id': template_id,
-                        'matched_at': matched_at,
-                        'cve_ids': cve_ids,
-                        'cwe_ids': cwe_ids
-                    }
-                }
+                # Deduplication key
+                dedup_key = (template_id, matched_at)
 
+                # Extract meta info (credentials, extracted results)
+                meta = item.get('meta', {})
+                extracted = item.get('extracted-results', [])
+
+                if dedup_key in deduplicated:
+                    # Merge: add credentials/extracted results to existing finding
+                    existing = deduplicated[dedup_key]
+                    if meta:
+                        existing['_meta_list'].append(meta)
+                    if extracted:
+                        existing['_extracted_list'].extend(extracted)
+                else:
+                    # New finding
+                    deduplicated[dedup_key] = {
+                        'title': f"{template_name} - {matched_at}",
+                        'severity': mapped_severity,
+                        'description': description,
+                        'remediation': remediation,
+                        '_meta_list': [meta] if meta else [],
+                        '_extracted_list': extracted if extracted else [],
+                        'metadata': {
+                            'template_id': template_id,
+                            'matched_at': matched_at,
+                            'cve_ids': cve_ids,
+                            'cwe_ids': cwe_ids
+                        }
+                    }
+
+            # Build final findings with enriched descriptions
+            for finding in deduplicated.values():
+                meta_list = finding.pop('_meta_list', [])
+                extracted_list = finding.pop('_extracted_list', [])
+
+                full_description = finding['description']
+
+                # Add CVE/CWE info
+                cve_ids = finding['metadata'].get('cve_ids', [])
+                cwe_ids = finding['metadata'].get('cwe_ids', [])
+                if cve_ids:
+                    full_description += f"\n\nCVE IDs: {', '.join(cve_ids)}"
+                if cwe_ids:
+                    full_description += f"\nCWE IDs: {', '.join(cwe_ids)}"
+
+                # Enrich with credentials found (Option C)
+                if meta_list:
+                    creds = []
+                    for m in meta_list:
+                        if 'username' in m and 'password' in m:
+                            creds.append(f"{m['username']}/{m['password']}")
+                        elif 'usernames' in m and 'password' in m:
+                            creds.append(f"{m['usernames']}/{m['password']}")
+                        elif 'usernames' in m and 'passwords' in m:
+                            creds.append(f"{m['usernames']}/{m['passwords']}")
+                    if creds:
+                        full_description += f"\n\n🔑 Credentials found ({len(creds)}):\n"
+                        full_description += "\n".join(f"  • {c}" for c in creds)
+
+                # Enrich with extracted results
+                if extracted_list:
+                    unique_extracted = list(dict.fromkeys(extracted_list))
+                    full_description += f"\n\n📋 Extracted data:\n"
+                    full_description += "\n".join(f"  • {e}" for e in unique_extracted[:10])
+
+                finding['description'] = full_description
                 findings.append(finding)
 
         except json.JSONDecodeError as e:

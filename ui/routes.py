@@ -287,3 +287,74 @@ def nmap_launch():
             return render_template('nmap_launch.html')
 
     return render_template('nmap_launch.html')
+
+# Nuclei dedicated launch page
+@ui_bp.route('/en/jobs/new/nuclei', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/nuclei', methods=['GET', 'POST'])
+@login_required
+def nuclei_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        target = request.form.get('target')
+        if not target:
+            protocol = request.form.get('protocol', 'http://')
+            host = request.form.get('target_host', '')
+            target = protocol + host
+        if not target or target in ['http://', 'https://']:
+            flash('Target URL is required', 'error')
+            return render_template('nuclei_launch.html')
+
+        # Severity : construire la liste cumulative
+        severity_min = request.form.get('severity', 'medium')
+        severity_levels = ['critical', 'high', 'medium', 'low', 'info']
+        idx = severity_levels.index(severity_min) if severity_min in severity_levels else 2
+        severity_str = ','.join(severity_levels[:idx+1])
+
+        # Templates : convertir liste en string pour -tags
+        templates_list = request.form.getlist('templates')
+        templates_str = ','.join(templates_list) if templates_list else ''
+
+        config = {
+            'target': target,
+            'severity': severity_str,
+            'templates': templates_str,
+        }
+
+        if request.form.get('concurrency'):
+            config['concurrency'] = int(request.form.get('concurrency'))
+        if request.form.get('rate_limit'):
+            config['rate_limit'] = int(request.form.get('rate_limit'))
+        if request.form.get('timeout'):
+            config['timeout'] = int(request.form.get('timeout'))
+        if request.form.get('headless'):
+            config['headless'] = True
+        if request.form.get('custom_args'):
+            config['custom_args'] = request.form.get('custom_args')
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='nuclei',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'nuclei', config)
+            flash(f'Nuclei scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('nuclei_launch.html')
+
+    return render_template('nuclei_launch.html')

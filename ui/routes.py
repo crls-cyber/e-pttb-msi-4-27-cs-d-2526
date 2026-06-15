@@ -358,3 +358,64 @@ def nuclei_launch():
             return render_template('nuclei_launch.html')
 
     return render_template('nuclei_launch.html')
+
+# SQLmap dedicated launch page
+@ui_bp.route('/en/jobs/new/sqlmap', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/sqlmap', methods=['GET', 'POST'])
+@login_required
+def sqlmap_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        target = request.form.get('target')
+        if not target:
+            flash('Target URL is required', 'error')
+            return render_template('sqlmap_launch.html')
+
+        config = {
+            'target': target,
+            'mode': request.form.get('mode', 'detect'),
+            'level': int(request.form.get('level', 1)),
+            'risk': int(request.form.get('risk', 1)),
+        }
+        if request.form.get('parameter'):
+            config['parameter'] = request.form.get('parameter')
+        if request.form.get('cookie'):
+            config['cookie'] = request.form.get('cookie')
+        if request.form.get('scan_forms'):
+            config['scan_forms'] = True
+        if request.form.get('headers'):
+            config['headers'] = request.form.get('headers')
+        if request.form.get('database'):
+            config['database'] = request.form.get('database')
+        if request.form.get('table'):
+            config['table'] = request.form.get('table')
+        if request.form.get('tor'):
+            config['tor'] = True
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='sqlmap',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'sqlmap', config)
+            flash(f'SQLmap scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('sqlmap_launch.html')
+
+    return render_template('sqlmap_launch.html')

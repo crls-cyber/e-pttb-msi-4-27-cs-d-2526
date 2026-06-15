@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}SQLmap Scan - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">💉 SQLmap — SQL Injection Scanner</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- Legal Warning -->
+        <div class="alert" style="background:#ffebee;border:2px solid #d32f2f;border-radius:8px;padding:15px;margin-bottom:20px;">
+            🚨 <strong>Critical — Authorized targets only.</strong>
+            SQL injection testing can modify or destroy database content.
+            Only test systems you own or have explicit written permission to test.
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Scan Configuration</div>
+
+            <form id="sqlmapForm" method="POST" action="/{{ lang }}/jobs/new/sqlmap">
+
+                <!-- TARGET URL -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target URL:</strong></label>
+                    <input type="text" class="form-control" id="target" name="target"
+                           placeholder="http://192.168.200.133/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit"
+                           required>
+                    <small class="form-text text-muted">
+                        Include the vulnerable parameter in the URL (e.g., <code>?id=1</code>)
+                    </small>
+                </div>
+
+                <!-- QUICK TARGET EXAMPLES -->
+                <div class="mb-3">
+                    <small class="text-muted">Example targets:</small>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="setTarget('http://192.168.200.133/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit')">
+                            DVWA SQLi
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="setTarget('http://192.168.200.133/mutillidae/index.php?page=user-info.php&username=admin&password=admin&user-info-php-submit-button=View+Account+Details')">
+                            Mutillidae
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="setTarget('http://192.168.200.133/phpMyAdmin/')">
+                            phpMyAdmin
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets:</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="loadPreset('detect')">🔍 Detect Only (safe)</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('dvwa')">🎯 DVWA (with cookie)</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('aggressive')">💥 Aggressive</button>
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                onclick="loadPreset('forms')">📋 Scan Forms</button>
+                    </div>
+                </div>
+
+                <!-- MODE -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Scan Mode:</strong></label>
+                    <select class="form-control" name="mode" id="mode_select" onchange="updateModeHelp()">
+                        <option value="detect" selected>🔍 Detect — Find vulnerabilities only (safe)</option>
+                        <option value="exploit">💥 Exploit — Extract database structure</option>
+                        <option value="dump">🗄️ Dump — Extract all data (aggressive)</option>
+                    </select>
+                    <small class="form-text text-muted" id="mode_help">
+                        💡 <strong>Detect mode</strong>: identifies SQL injection points without extracting data
+                    </small>
+                </div>
+
+                <!-- PARAMETER -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Parameter to Test (optional):</strong></label>
+                    <input type="text" class="form-control" name="parameter"
+                           placeholder="id" id="parameter_input">
+                    <small class="form-text text-muted">
+                        Force testing on a specific parameter. Leave empty to test all parameters.
+                    </small>
+                </div>
+
+                <!-- COOKIE -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Session Cookie (optional):</strong></label>
+                    <input type="text" class="form-control" name="cookie" id="cookie_input"
+                           placeholder="PHPSESSID=abc123; security=low">
+                    <small class="form-text text-muted">
+                        Required for authenticated pages (e.g., DVWA). Copy from browser DevTools → Network → Cookies.
+                    </small>
+                </div>
+
+                <!-- LEVEL & RISK -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Level (1-5):</strong></label>
+                        <select class="form-control" name="level" id="level_select">
+                            <option value="1" selected>1 — Basic (fast, recommended)</option>
+                            <option value="2">2 — Standard</option>
+                            <option value="3">3 — Extended</option>
+                            <option value="4">4 — Thorough</option>
+                            <option value="5">5 — Maximum (slow)</option>
+                        </select>
+                        <small class="form-text text-muted">Tests depth per parameter</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Risk (1-3):</strong></label>
+                        <select class="form-control" name="risk" id="risk_select">
+                            <option value="1" selected>1 — Safe (recommended)</option>
+                            <option value="2">2 — Moderate (may update data)</option>
+                            <option value="3">3 — Aggressive (may damage DB)</option>
+                        </select>
+                        <small class="form-text text-muted">⚠️ Risk 3 can modify database</small>
+                    </div>
+                </div>
+
+                <!-- FORMS OPTION -->
+                <div class="mb-3">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="scan_forms" value="true" id="scan_forms">
+                        <span><strong>Scan Forms (--forms)</strong> — Auto-detect and test HTML forms on the page</span>
+                    </label>
+                </div>
+
+                <!-- ADVANCED OPTIONS -->
+                <details class="mb-3">
+                    <summary style="cursor:pointer;font-weight:bold;padding:8px 0;">⚙️ Advanced Options</summary>
+                    <div style="padding:15px;background:#f8f9fa;border-radius:6px;margin-top:8px;">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Custom Headers:</strong></label>
+                            <input type="text" class="form-control" name="headers"
+                                   placeholder="Authorization: Bearer token123">
+                            <small class="form-text text-muted">Custom HTTP headers (one per line)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Database to Target:</strong></label>
+                            <input type="text" class="form-control" name="database"
+                                   placeholder="dvwa">
+                            <small class="form-text text-muted">Specific database name (for dump mode)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Table to Target:</strong></label>
+                            <input type="text" class="form-control" name="table"
+                                   placeholder="users">
+                            <small class="form-text text-muted">Specific table name (for dump mode)</small>
+                        </div>
+
+                        <div class="mb-2">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <input type="checkbox" name="tor" value="true">
+                                <span><strong>Use Tor</strong> — Route through Tor network (anonymization)</span>
+                            </label>
+                        </div>
+
+                    </div>
+                </details>
+
+                <!-- DURATION ESTIMATE -->
+                <div class="mb-3" id="sqlmap_estimate"
+                     style="padding:10px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;">
+                    ⏱️ Estimated duration: <strong>~2 minutes</strong>
+                </div>
+
+                <!-- CONFIRMATIONS -->
+                <div style="padding:15px;background:#fff3cd;border-radius:6px;border:2px solid #ff9800;margin-bottom:20px;">
+                    <strong>⚠️ Required confirmations:</strong>
+                    <div style="margin-top:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_auth" required>
+                            <span>I have <strong>explicit authorization</strong> to test this target</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="confirm_lab" required>
+                            <span>This is a <strong>lab/test environment</strong> or I accept full responsibility</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-danger" id="launchBtn" disabled>
+                        💉 Launch SQLmap Scan
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Scan Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Mode</td>
+                    <td id="summary_mode"><strong>Detect</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Level</td>
+                    <td id="summary_level"><strong>1 (Basic)</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Risk</td>
+                    <td id="summary_risk"><strong>1 (Safe)</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Est. Duration</td>
+                    <td id="summary_duration"><strong>~2 min</strong></td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card" style="margin-top:15px;">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Always include <code>?param=value</code> in URL</li>
+                <li>For DVWA: set <strong>security=low</strong> in cookie</li>
+                <li>Start with <strong>Detect</strong> mode — never dump without permission</li>
+                <li>Use <strong>--forms</strong> if URL has no visible parameters</li>
+                <li>Level 1 + Risk 1 is sufficient for most lab tests</li>
+            </ul>
+        </div>
+
+        <div class="chart-card" style="margin-top:15px;">
+            <div class="chart-card-header">🎯 DVWA Cookie Example</div>
+            <p style="font-size:12px;font-family:monospace;background:#f5f5f5;padding:8px;border-radius:4px;word-break:break-all;">
+                PHPSESSID=abc123;<br>security=low
+            </p>
+            <small style="font-size:11px;color:#666;">
+                Get from Firefox: F12 → Network → any request → Headers → Cookie
+            </small>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Mode help text ────────────────────────────────────────────────────────
+const modeHelp = {
+    'detect':  '💡 <strong>Detect mode</strong>: identifies SQL injection points without extracting data — safest option',
+    'exploit': '⚠️ <strong>Exploit mode</strong>: extracts database names and table structures — moderate risk',
+    'dump':    '🚨 <strong>Dump mode</strong>: extracts all data from database — aggressive, use with caution'
+};
+
+const modeEstimates = {
+    'detect': '~2 minutes',
+    'exploit': '~5 minutes',
+    'dump': '~10 minutes'
+};
+
+function updateModeHelp() {
+    const mode = document.getElementById('mode_select').value;
+    document.getElementById('mode_help').innerHTML = modeHelp[mode] || '';
+    updateEstimate();
+    document.getElementById('summary_mode').innerHTML =
+        `<strong>${mode.charAt(0).toUpperCase() + mode.slice(1)}</strong>`;
+}
+
+// ── Estimate ──────────────────────────────────────────────────────────────
+function updateEstimate() {
+    const mode = document.getElementById('mode_select').value;
+    const level = parseInt(document.getElementById('level_select').value);
+    const risk = parseInt(document.getElementById('risk_select').value);
+
+    let base = modeEstimates[mode] || '~2 minutes';
+    const numMatch = base.match(/\d+/); let minutes = numMatch ? parseInt(numMatch[0]) : 2;
+    minutes = minutes * (1 + (level - 1) * 0.5) * (1 + (risk - 1) * 0.3);
+    const display = `~${Math.ceil(minutes)} minutes`;
+
+    document.getElementById('sqlmap_estimate').innerHTML =
+        `⏱️ Estimated duration: <strong>${display}</strong>`;
+    document.getElementById('summary_duration').innerHTML =
+        `<strong>${display}</strong>`;
+    document.getElementById('summary_level').innerHTML =
+        `<strong>${level}</strong>`;
+    document.getElementById('summary_risk').innerHTML =
+        `<strong>${risk} ${risk === 3 ? '⚠️' : ''}</strong>`;
+}
+
+// ── Set target ────────────────────────────────────────────────────────────
+function setTarget(url) {
+    document.getElementById('target').value = url;
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────
+function loadPreset(type) {
+    switch(type) {
+        case 'detect':
+            document.getElementById('mode_select').value = 'detect';
+            document.getElementById('level_select').value = '1';
+            document.getElementById('risk_select').value = '1';
+            document.getElementById('scan_forms').checked = false;
+            break;
+        case 'dvwa':
+            document.getElementById('mode_select').value = 'detect';
+            document.getElementById('level_select').value = '2';
+            document.getElementById('risk_select').value = '1';
+            document.getElementById('cookie_input').value = 'PHPSESSID=abc123; security=low';
+            document.getElementById('parameter_input').value = 'id';
+            setTarget('http://192.168.200.133/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit');
+            break;
+        case 'aggressive':
+            document.getElementById('mode_select').value = 'exploit';
+            document.getElementById('level_select').value = '3';
+            document.getElementById('risk_select').value = '2';
+            break;
+        case 'forms':
+            document.getElementById('mode_select').value = 'detect';
+            document.getElementById('level_select').value = '1';
+            document.getElementById('risk_select').value = '1';
+            document.getElementById('scan_forms').checked = true;
+            break;
+    }
+    updateModeHelp();
+    updateEstimate();
+}
+
+// ── Confirmations → enable button ─────────────────────────────────────────
+const confirmBoxes = document.querySelectorAll('#confirm_auth, #confirm_lab');
+confirmBoxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+        const allChecked = Array.from(confirmBoxes).every(c => c.checked);
+        document.getElementById('launchBtn').disabled = !allChecked;
+    });
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+updateModeHelp();
+updateEstimate();
+</script>
+{% endblock %}

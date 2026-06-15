@@ -92,7 +92,14 @@ class HydraPlugin(PluginBase):
             cmd.extend(["-s", str(port)])
         
         # Output format
-        cmd.extend(["-o", "/tmp/hydra_output.txt", "-f"])  # -f = stop on first success
+        cmd.extend(["-o", "/tmp/hydra_output.txt"])
+        # Stop on first success (optionnel)
+        if not self.config.get('find_all', False):
+            cmd.append("-f")
+        # SSH legacy options for old targets (Metasploitable2)
+        if service == 'ssh':
+            cmd.extend(["-u", "-e", "nsr"])
+            cmd.extend(["-m", "KexAlgorithms=+diffie-hellman-group1-sha1,diffie-hellman-group14-sha1"])
         
         # Target and service
         cmd.append(f"{service}://{target}")

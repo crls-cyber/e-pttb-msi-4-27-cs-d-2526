@@ -28,6 +28,12 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
+# SSH legacy config for old targets (Metasploitable2, etc.)
+RUN echo "KexAlgorithms +diffie-hellman-group1-sha1,diffie-hellman-group14-sha1" >> /etc/ssh/ssh_config \
+    && echo "HostKeyAlgorithms +ssh-rsa,ssh-dss" >> /etc/ssh/ssh_config \
+    && echo "PubkeyAcceptedKeyTypes +ssh-rsa,ssh-dss" >> /etc/ssh/ssh_config \
+    && echo "MACs +hmac-md5,hmac-sha1,hmac-ripemd160,hmac-sha1-96,hmac-md5-96" >> /etc/ssh/ssh_config
+
 # Installation Nuclei
 RUN wget -O /tmp/nuclei.zip https://github.com/projectdiscovery/nuclei/releases/download/v3.2.3/nuclei_3.2.3_linux_amd64.zip \
     && unzip /tmp/nuclei.zip -d /tmp/ \

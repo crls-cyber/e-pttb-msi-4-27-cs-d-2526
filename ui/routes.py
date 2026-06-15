@@ -419,3 +419,72 @@ def sqlmap_launch():
             return render_template('sqlmap_launch.html')
 
     return render_template('sqlmap_launch.html')
+
+# Hydra dedicated launch page
+@ui_bp.route('/en/jobs/new/hydra', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/hydra', methods=['GET', 'POST'])
+@login_required
+def hydra_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        target = request.form.get('target')
+        service = request.form.get('service')
+        if not target or not service:
+            flash('Target and service are required', 'error')
+            return render_template('hydra_launch.html')
+
+        config = {
+            'target': target,
+            'service': service,
+            'threads': int(request.form.get('threads', 4)),
+        }
+
+        username = request.form.get('username')
+        userlist = request.form.get('userlist')
+        password = request.form.get('password')
+        passlist = request.form.get('passlist')
+
+        if username:
+            config['username'] = username
+        elif userlist:
+            config['userlist'] = userlist
+        else:
+            config['username'] = 'admin'
+
+        if password:
+            config['password'] = password
+        elif passlist:
+            config['passlist'] = passlist
+        else:
+            config['passlist'] = '/usr/share/wordlists/fasttrack.txt'
+
+        if request.form.get('port'):
+            config['port'] = int(request.form.get('port'))
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='hydra',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'hydra', config)
+            flash(f'Hydra attack launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('hydra_launch.html')
+
+    return render_template('hydra_launch.html')

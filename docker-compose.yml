@@ -69,6 +69,7 @@ services:
     volumes:
       - ./core:/app/core
       - ./plugins:/app/plugins
+      - /usr/share/metasploit-framework/data/wordlists:/usr/share/wordlists/metasploit:ro
     networks:
       - pentest_net
     depends_on:

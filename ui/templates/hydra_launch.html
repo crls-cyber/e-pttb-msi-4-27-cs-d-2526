@@ -1,321 +1,326 @@
 {% extends "base.html" %}
 
-{% block title %}Hydra Brute-Force - ATTENTION{% endblock %}
+{% block title %}Hydra Brute-Force - {{ t('app_title') }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>⚠️ Hydra - Brute-Force Attack</h1>
-    
-    <!-- DANGER ZONE -->
-    <div class="danger-zone">
-        <h2>🚨 AVERTISSEMENT CRITIQUE 🚨</h2>
-        
-        <div class="risk-list">
-            <h3>Risques identifiés :</h3>
-            <ul>
-                <li>❌ <strong>Bannissement IP</strong> : L'IP source peut être bannie définitivement</li>
-                <li>❌ <strong>Détection IDS/IPS</strong> : Déclenchement d'alertes sécurité</li>
-                <li>❌ <strong>Verrouillage de comptes</strong> : Blocage des comptes testés</li>
-                <li>❌ <strong>Traçabilité</strong> : Logs détaillés conservés par la cible</li>
-                <li>⚖️ <strong>Légalité</strong> : ILLÉGAL sans autorisation écrite explicite</li>
+<div class="page-header">
+    <h1 class="page-title">🔐 Hydra — Brute-Force Attack</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- DANGER ZONE -->
+        <div style="background:#ffebee;border:3px solid #d32f2f;padding:20px;margin-bottom:20px;border-radius:8px;">
+            <h4 style="color:#d32f2f;margin:0 0 10px 0;">🚨 CRITICAL WARNING</h4>
+            <ul style="margin:0;padding-left:20px;font-size:13px;">
+                <li>❌ <strong>IP Banning</strong>: Your IP may be permanently banned</li>
+                <li>❌ <strong>IDS/IPS Detection</strong>: Triggers security alerts</li>
+                <li>❌ <strong>Account Lockout</strong>: May lock tested accounts</li>
+                <li>⚖️ <strong>Legal</strong>: ILLEGAL without explicit written authorization (Art. 323-1 Code Pénal)</li>
             </ul>
-        </div>
-        
-        <div class="legal-warning">
-            <h3>⚖️ Cadre légal</h3>
-            <p>
-                <strong>Article 323-1 du Code Pénal français :</strong><br>
-                "Le fait d'accéder ou de se maintenir frauduleusement dans un système de traitement automatisé 
-                de données est puni de deux ans d'emprisonnement et de 60 000 euros d'amende."
+            <p style="margin:10px 0 0 0;font-size:13px;">
+                ✅ <strong>Authorized use only on:</strong> Your own lab VMs (Metasploitable2, DVWA) or environments with written permission.
             </p>
-            <p>
-                <strong>Utilisation autorisée UNIQUEMENT sur :</strong>
-            </p>
-            <ul>
-                <li>✅ Vos propres machines de lab (Host-Only)</li>
-                <li>✅ Environnements de test avec autorisation écrite</li>
-                <li>❌ JAMAIS sur des systèmes de production</li>
-                <li>❌ JAMAIS sur Internet sans contrat de pentest signé</li>
-            </ul>
         </div>
-        
-        <div class="lab-confirmation">
-            <h3>✅ Environnement de lab recommandé</h3>
-            <p>Ce projet est conçu pour un environnement <strong>Host-Only</strong> isolé :</p>
-            <ul>
-                <li>Metasploitable2 (192.168.145.102)</li>
-                <li>WebSRV (192.168.145.133)</li>
-                <li>WS22 (192.168.145.10)</li>
-            </ul>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Attack Configuration</div>
+
+            <form id="hydraForm" method="POST" action="/{{ lang }}/jobs/new/hydra">
+
+                <!-- TARGET -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target (IP or hostname):</strong></label>
+                    <input type="text" class="form-control" id="target" name="target"
+                           placeholder="192.168.200.133" required>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+                        <small class="text-muted">Quick targets:</small>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="document.getElementById('target').value='192.168.200.133'">Metasploitable2</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="document.getElementById('target').value='192.168.200.133'">WebSRV</button>
+                    </div>
+                </div>
+
+                <!-- SERVICE -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Service / Protocol:</strong></label>
+                    <select class="form-control" name="service" id="service_select" onchange="onServiceChange()">
+                        <optgroup label="Remote Access">
+                            <option value="ssh" selected>SSH (port 22)</option>
+                            <option value="rdp">RDP (port 3389)</option>
+                            <option value="telnet">Telnet (port 23)</option>
+                            <option value="vnc">VNC (port 5900)</option>
+                        </optgroup>
+                        <optgroup label="File Transfer">
+                            <option value="ftp">FTP (port 21)</option>
+                            <option value="sftp">SFTP (port 22)</option>
+                        </optgroup>
+                        <optgroup label="Databases">
+                            <option value="mysql">MySQL (port 3306)</option>
+                            <option value="postgres">PostgreSQL (port 5432)</option>
+                            <option value="mssql">MSSQL (port 1433)</option>
+                        </optgroup>
+                        <optgroup label="Web">
+                            <option value="http-get">HTTP GET (port 80)</option>
+                            <option value="http-post-form">HTTP POST Form (port 80)</option>
+                            <option value="https-get">HTTPS GET (port 443)</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                            <option value="smb">SMB (port 445)</option>
+                            <option value="smtp">SMTP (port 25)</option>
+                            <option value="pop3">POP3 (port 110)</option>
+                            <option value="imap">IMAP (port 143)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets:</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="loadPreset('metasploitable_ssh')">🎯 Metasploitable2 SSH</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('metasploitable_ftp')">📁 Metasploitable2 FTP</button>
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                onclick="loadPreset('metasploitable_mysql')">🗄️ Metasploitable2 MySQL</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="loadPreset('quick_test')">⚡ Quick Test (single cred)</button>
+                    </div>
+                </div>
+
+                <!-- USERNAME -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Username:</strong></label>
+                    <input type="text" class="form-control" id="username_input" name="username"
+                           placeholder="msfadmin">
+                    <small class="form-text text-muted">Single username. Leave empty to use a wordlist below.</small>
+                </div>
+
+                <!-- USERNAME WORDLIST -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Username Wordlist (optional):</strong></label>
+                    <select class="form-control" name="userlist" id="userlist_select">
+                        <option value="">— Use single username above —</option>
+                        <option value="/usr/share/wordlists/metasploit/unix_users.txt">Unix Users (Metasploit)</option>
+                        <option value="/usr/share/wordlists/metasploit/default_userpass_for_services_unhashed.txt">Default Users (Metasploit)</option>
+                    </select>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Password:</strong></label>
+                    <input type="text" class="form-control" id="password_input" name="password"
+                           placeholder="msfadmin">
+                    <small class="form-text text-muted">Single password. Leave empty to use a wordlist below.</small>
+                </div>
+
+                <!-- PASSWORD WORDLIST -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Password Wordlist:</strong></label>
+                    <select class="form-control" name="passlist" id="passlist_select" onchange="updateEstimate()">
+                        <option value="">— Use single password above —</option>
+                        <option value="/usr/share/wordlists/metasploit/unix_passwords.txt">Unix Passwords (Metasploit ~1000)</option>
+                        <option value="/usr/share/wordlists/rockyou.txt">RockYou (~14M — slow!)</option>
+                        <option value="/usr/share/wordlists/metasploit/default_pass_for_services_unhashed.txt">Default Service Passwords</option>
+                        <option value="/usr/share/wordlists/fasttrack.txt">FastTrack (~222 common passwords)</option>
+                    </select>
+                </div>
+
+                <!-- PORT (optional) -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Custom Port (optional):</strong></label>
+                    <input type="number" class="form-control" name="port" id="port_input"
+                           placeholder="Leave empty for default port">
+                    <small class="form-text text-muted" id="default_port_hint">Default: 22 (SSH)</small>
+                </div>
+
+                <!-- THREADS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Threads (max 4 — avoid detection):</strong></label>
+                    <select class="form-control" name="threads" onchange="updateEstimate()">
+                        <option value="1">1 — Slowest, most stealthy</option>
+                        <option value="2">2 — Slow</option>
+                        <option value="4" selected>4 — Default (recommended)</option>
+                    </select>
+                </div>
+
+                <!-- DURATION ESTIMATE -->
+                <div class="mb-3" id="hydra_estimate"
+                     style="padding:10px;background:#fff3e0;border-radius:6px;border-left:4px solid #ff9800;">
+                    ⏱️ Estimated duration: <strong>~2 minutes</strong>
+                </div>
+
+                <!-- CONFIRMATIONS -->
+                <div style="padding:15px;background:#ffebee;border-radius:6px;border:2px solid #d32f2f;margin-bottom:20px;">
+                    <strong>🚨 Mandatory confirmations:</strong>
+                    <div style="margin-top:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_lab" required>
+                            <span>✅ This attack is performed on an <strong>isolated lab environment (Host-Only)</strong></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_auth" required>
+                            <span>✅ I have <strong>explicit authorization</strong> from the target system owner</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_legal" required>
+                            <span>✅ I understand the <strong>legal risks</strong> of this attack</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="confirm_responsibility" required>
+                            <span>✅ I take <strong>full responsibility</strong> for the consequences</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-danger" id="launchBtn" disabled>
+                        🔴 Launch Hydra Attack
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
         </div>
     </div>
-    
-    <!-- FORMULAIRE -->
-    <form id="hydraForm" method="POST">
-        <h2>Configuration de l'attaque</h2>
-        
-        <div class="form-group">
-            <label for="target">Cible (IP ou domaine) :</label>
-            <input type="text" id="target" name="target" 
-                   placeholder="192.168.145.102" required>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Attack Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Service</td>
+                    <td id="summary_service"><strong>SSH</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Default Port</td>
+                    <td id="summary_port"><strong>22</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Est. Duration</td>
+                    <td id="summary_duration"><strong>~2 min</strong></td></tr>
+            </table>
         </div>
-        
-        <div class="form-group">
-            <label for="service">Service :</label>
-            <select id="service" name="service" required>
-                <option value="">-- Choisir un service --</option>
-                <option value="ssh">SSH (port 22)</option>
-                <option value="ftp">FTP (port 21)</option>
-                <option value="telnet">Telnet (port 23)</option>
-                <option value="http-get">HTTP GET (port 80)</option>
-                <option value="mysql">MySQL (port 3306)</option>
-                <option value="postgres">PostgreSQL (port 5432)</option>
-                <option value="rdp">RDP (port 3389)</option>
-                <option value="smb">SMB (port 445)</option>
-            </select>
+
+        <div class="chart-card" style="margin-top:15px;">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>For Metasploitable2: try <code>msfadmin/msfadmin</code></li>
+                <li>Use <strong>4 threads max</strong> to avoid detection</li>
+                <li>RockYou = 14M passwords → very slow</li>
+                <li>FastTrack = 222 common passwords → fast</li>
+                <li>SSH keys are safer than passwords</li>
+            </ul>
         </div>
-        
-        <div class="form-group">
-            <label for="username">Username (ou laisser vide pour wordlist) :</label>
-            <input type="text" id="username" name="username" 
-                   placeholder="msfadmin">
+
+        <div class="chart-card" style="margin-top:15px;">
+            <div class="chart-card-header">🎯 Common Credentials</div>
+            <table style="width:100%;font-size:12px;">
+                <tr><th>Service</th><th>User</th><th>Password</th></tr>
+                <tr><td>SSH (Metasploitable)</td><td>msfadmin</td><td>msfadmin</td></tr>
+                <tr><td>FTP (Metasploitable)</td><td>ftp</td><td>ftp</td></tr>
+                <tr><td>MySQL (Metasploitable)</td><td>root</td><td>(empty)</td></tr>
+                <tr><td>PostgreSQL</td><td>postgres</td><td>postgres</td></tr>
+            </table>
         </div>
-        
-        <div class="form-group">
-            <label for="password">Password (ou laisser vide pour wordlist) :</label>
-            <input type="password" id="password" name="password" 
-                   placeholder="msfadmin">
-        </div>
-        
-        <div class="form-group">
-            <label for="threads">Threads (max 4 pour éviter détection) :</label>
-            <input type="number" id="threads" name="threads" 
-                   value="4" min="1" max="4">
-        </div>
-        
-        <!-- CONFIRMATIONS OBLIGATOIRES -->
-        <div class="confirmation-section">
-            <h3>Confirmations obligatoires</h3>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="confirm_lab" required>
-                <label for="confirm_lab">
-                    ✅ J'atteste que cette attaque est effectuée sur un <strong>environnement de lab isolé (Host-Only)</strong>
-                </label>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="confirm_auth" required>
-                <label for="confirm_auth">
-                    ✅ J'atteste avoir <strong>l'autorisation explicite</strong> du propriétaire du système cible
-                </label>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="confirm_legal" required>
-                <label for="confirm_legal">
-                    ✅ Je comprends les <strong>risques légaux</strong> et techniques de cette attaque
-                </label>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="confirm_responsibility" required>
-                <label for="confirm_responsibility">
-                    ✅ J'assume l'<strong>entière responsabilité</strong> des conséquences de cette attaque
-                </label>
-            </div>
-        </div>
-        
-        <button type="submit" id="launchBtn" class="danger-button" disabled>
-            🔴 LANCER L'ATTAQUE HYDRA
-        </button>
-        
-        <a href="{{ url_for('ui.new_job') }}" class="cancel-link">← Annuler et revenir</a>
-    </form>
+    </div>
 </div>
 
 <script>
-// Enable launch button only when all checkboxes are checked
-const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
-const launchBtn = document.getElementById('launchBtn');
+// ── Service defaults ──────────────────────────────────────────────────────
+const serviceDefaults = {
+    'ssh': 22, 'rdp': 3389, 'telnet': 23, 'vnc': 5900,
+    'ftp': 21, 'sftp': 22, 'mysql': 3306, 'postgres': 5432,
+    'mssql': 1433, 'http-get': 80, 'http-post-form': 80,
+    'https-get': 443, 'smb': 445, 'smtp': 25, 'pop3': 110, 'imap': 143
+};
 
-checkboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        launchBtn.disabled = !allChecked;
-        
-        if (allChecked) {
-            launchBtn.classList.add('pulse');
-        } else {
-            launchBtn.classList.remove('pulse');
-        }
+function onServiceChange() {
+    const service = document.getElementById('service_select').value;
+    const port = serviceDefaults[service] || '—';
+    document.getElementById('default_port_hint').textContent = `Default: ${port}`;
+    document.getElementById('summary_service').innerHTML = `<strong>${service.toUpperCase()}</strong>`;
+    document.getElementById('summary_port').innerHTML = `<strong>${port}</strong>`;
+    updateEstimate();
+}
+
+// ── Estimate ──────────────────────────────────────────────────────────────
+function updateEstimate() {
+    const passlist = document.getElementById('passlist_select').value;
+    const threads = parseInt(document.querySelector('[name="threads"]').value) || 4;
+
+    let passwords = 10; // single password
+    if (passlist.includes('unix_passwords')) passwords = 1000;
+    else if (passlist.includes('rockyou')) passwords = 14000000;
+    else if (passlist.includes('fasttrack')) passwords = 222;
+    else if (passlist.includes('default_pass')) passwords = 500;
+
+    const requestsPerSec = threads * 5;
+    const seconds = Math.ceil(passwords / requestsPerSec);
+    let display;
+    if (seconds < 60) display = `~${seconds} seconds`;
+    else if (seconds < 3600) display = `~${Math.ceil(seconds/60)} minutes`;
+    else display = `~${Math.ceil(seconds/3600)} hours`;
+
+    document.getElementById('hydra_estimate').innerHTML =
+        `⏱️ Estimated duration: <strong>${display}</strong> (${passwords.toLocaleString()} passwords)`;
+    document.getElementById('summary_duration').innerHTML = `<strong>${display}</strong>`;
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────
+function loadPreset(type) {
+    switch(type) {
+        case 'metasploitable_ssh':
+            document.getElementById('target').value = '192.168.200.133';
+            document.getElementById('service_select').value = 'ssh';
+            document.getElementById('username_input').value = 'msfadmin';
+            document.getElementById('password_input').value = 'msfadmin';
+            document.getElementById('passlist_select').value = '';
+            break;
+        case 'metasploitable_ftp':
+            document.getElementById('target').value = '192.168.200.133';
+            document.getElementById('service_select').value = 'ftp';
+            document.getElementById('username_input').value = 'ftp';
+            document.getElementById('password_input').value = '';
+            document.getElementById('passlist_select').value = '/usr/share/wordlists/metasploit/unix_passwords.txt';
+            break;
+        case 'metasploitable_mysql':
+            document.getElementById('target').value = '192.168.200.133';
+            document.getElementById('service_select').value = 'mysql';
+            document.getElementById('username_input').value = 'root';
+            document.getElementById('password_input').value = '';
+            document.getElementById('passlist_select').value = '/usr/share/wordlists/fasttrack.txt';
+            break;
+        case 'quick_test':
+            document.getElementById('username_input').value = 'admin';
+            document.getElementById('password_input').value = 'admin';
+            document.getElementById('passlist_select').value = '';
+            break;
+    }
+    onServiceChange();
+    updateEstimate();
+}
+
+// ── Confirmations → enable button ─────────────────────────────────────────
+const confirmBoxes = document.querySelectorAll('#confirm_lab, #confirm_auth, #confirm_legal, #confirm_responsibility');
+confirmBoxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+        const allChecked = Array.from(confirmBoxes).every(c => c.checked);
+        document.getElementById('launchBtn').disabled = !allChecked;
     });
 });
 
-// Form submission
-document.getElementById('hydraForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // Final confirmation popup
-    const confirmed = confirm(
-        '⚠️ DERNIÈRE CONFIRMATION ⚠️\n\n' +
-        'Vous êtes sur le point de lancer une attaque par brute-force.\n\n' +
-        'Êtes-vous absolument certain(e) ?\n\n' +
-        'Cible : ' + document.getElementById('target').value + '\n' +
-        'Service : ' + document.getElementById('service').value
-    );
-    
-    if (!confirmed) {
-        return;
-    }
-    
-    // Prepare data
-    const formData = {
-        plugin: 'hydra',
-        config: {
-            target: document.getElementById('target').value,
-            service: document.getElementById('service').value,
-            username: document.getElementById('username').value || undefined,
-            password: document.getElementById('password').value || undefined,
-            threads: parseInt(document.getElementById('threads').value),
-            confirmed: true
-        }
-    };
-    
-    // Submit to API
-    try {
-        const response = await fetch('/api/jobs', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        const data = await response.json();
-        
-        if (data.job_id) {
-            window.location.href = `/jobs/${data.job_id}`;
-        } else {
-            alert('Erreur : ' + (data.error || 'Unknown error'));
-        }
-        
-    } catch (error) {
-        alert('Erreur : ' + error.message);
-    }
-});
+// ── Init ──────────────────────────────────────────────────────────────────
+onServiceChange();
+updateEstimate();
 </script>
-
-<style>
-.danger-zone {
-    background: #ffebee;
-    border: 3px solid #d32f2f;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-}
-
-.danger-zone h2 {
-    color: #d32f2f;
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-.risk-list, .legal-warning, .lab-confirmation {
-    background: white;
-    padding: 15px;
-    margin: 15px 0;
-    border-radius: 5px;
-    border-left: 4px solid #d32f2f;
-}
-
-.risk-list ul, .legal-warning ul, .lab-confirmation ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.risk-list li, .legal-warning li, .lab-confirmation li {
-    padding: 8px 0;
-    font-size: 14px;
-}
-
-.form-group {
-    margin: 20px 0;
-}
-
-.form-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.confirmation-section {
-    background: #fff3cd;
-    padding: 20px;
-    margin: 30px 0;
-    border-radius: 5px;
-    border: 2px solid #ff9800;
-}
-
-.checkbox-group {
-    margin: 15px 0;
-    display: flex;
-    align-items: center;
-}
-
-.checkbox-group input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-
-.checkbox-group label {
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.danger-button {
-    width: 100%;
-    padding: 15px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-.danger-button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.danger-button.pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-}
-
-.cancel-link {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
-    color: #666;
-    text-decoration: none;
-}
-</style>
 {% endblock %}

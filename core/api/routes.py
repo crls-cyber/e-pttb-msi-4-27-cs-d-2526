@@ -237,10 +237,10 @@ def export_findings_csv():
             str(f.job_id),
             f.title,
             f.severity,
-            f.description[:200] if f.description else '',
+            f.description if f.description else '',
             f.cve_id or '',
             f.cvss_score or '',
-            f.remediation[:200] if f.remediation else '',
+            f.remediation if f.remediation else '',
             f.created_at.isoformat()
         ])
 

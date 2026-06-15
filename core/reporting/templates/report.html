@@ -271,11 +271,7 @@
                     <td>
                         <div class="finding-title">{{ finding.title }}</div>
                         <div class="finding-description">
-                            {% if finding.description|length > 150 %}
-                                {{ finding.description[:150] }}...
-                            {% else %}
-                                {{ finding.description }}
-                            {% endif %}
+                            {{ finding.description|replace('\n', '<br>')|safe }}
                         </div>
                     </td>
                     <td style="color: #7f8c8d; font-size: 13px;">

@@ -228,7 +228,7 @@
                 <td>
                     <div class="finding-title">{{ finding.title }}</div>
                     <div class="finding-description">
-                        {{ finding.description if finding.description else 'Pas de description disponible.' }}
+                        {{ (finding.description if finding.description else 'Pas de description disponible.')|replace('\n', '<br>')|safe }}
                     </div>
                 </td>
             </tr>

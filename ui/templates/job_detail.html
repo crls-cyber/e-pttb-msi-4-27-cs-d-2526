@@ -248,12 +248,19 @@ fetch(`/api/findings?job_id=${jobId}`)
             findings.forEach(f => {
                 const severity = f.severity || 'info';
                 const title = f.title || 'N/A';
-                const description = (f.description || 'No description').substring(0, 150);
+                const descFull = f.description || 'No description';
+                const descShort = descFull.length > 300 ? descFull.substring(0, 300) + '...' : descFull;
+                const descId = 'desc-' + (f.id || Math.random());
 
                 html += `<tr>
                     <td><span class="finding-title">${title}</span></td>
                     <td><span class="severity-badge severity-${severity}">${severity}</span></td>
-                    <td style="font-size: 0.95rem; color: #555;">${description}...</td>
+                    <td style="font-size: 0.95rem; color: #555; white-space: pre-wrap;">
+                        <span id="${descId}-short">${descShort}</span>
+                        ${descFull.length > 300 ? `
+                        <span id="${descId}-full" style="display:none;white-space:pre-wrap;">${descFull}</span>
+                        <br><a href="#" onclick="document.getElementById('${descId}-short').style.display='none';document.getElementById('${descId}-full').style.display='inline';this.style.display='none';return false;" style="font-size:12px;color:#006BB4;">▼ Show full description</a>` : ''}
+                    </td>
                 </tr>`;
             });
 

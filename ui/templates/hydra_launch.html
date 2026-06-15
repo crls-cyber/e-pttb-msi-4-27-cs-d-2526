@@ -151,6 +151,15 @@
                     </select>
                 </div>
 
+                <!-- FIND ALL -->
+                <div class="mb-3">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="find_all" value="true" id="find_all_checkbox">
+                        <span><strong>Find all valid credentials</strong> — Continue after first success (slower but more complete)</span>
+                    </label>
+                    <small class="form-text text-muted">⚠️ By default, Hydra stops at the first valid credential found.</small>
+                </div>
+
                 <!-- DURATION ESTIMATE -->
                 <div class="mb-3" id="hydra_estimate"
                      style="padding:10px;background:#fff3e0;border-radius:6px;border-left:4px solid #ff9800;">

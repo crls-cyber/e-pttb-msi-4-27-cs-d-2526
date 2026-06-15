@@ -443,6 +443,7 @@ def hydra_launch():
             'target': target,
             'service': service,
             'threads': int(request.form.get('threads', 4)),
+            'find_all': request.form.get('find_all') == 'true',
         }
 
         username = request.form.get('username')

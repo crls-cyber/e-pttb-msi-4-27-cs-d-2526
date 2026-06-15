@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, session
 from flask_login import login_required, login_user, logout_user, current_user
 from ui.i18n import get_locale, get_translations
 
-ui_bp = Blueprint('ui', __name__, template_folder='templates', static_folder='static')
+ui_bp = Blueprint('ui', __name__, template_folder='templates', static_folder='static', static_url_path='/static')
 
 @ui_bp.context_processor
 def inject_i18n():

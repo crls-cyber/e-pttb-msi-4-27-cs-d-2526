@@ -11,7 +11,8 @@ login_manager = LoginManager()
 
 def create_app():
     """Create and configure Flask application."""
-    app = Flask(__name__)
+    import os
+    app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), '../../ui/static'), static_url_path='/static')
     app.config.from_object(Config)
     
     # Initialize extensions

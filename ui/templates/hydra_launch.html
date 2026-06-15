@@ -42,14 +42,9 @@
                 <div class="mb-3">
                     <label class="form-label"><strong>Target (IP or hostname):</strong></label>
                     <input type="text" class="form-control" id="target" name="target"
-                           placeholder="192.168.200.133" required>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
-                        <small class="text-muted">Quick targets:</small>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                onclick="document.getElementById('target').value='192.168.200.133'">Metasploitable2</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                onclick="document.getElementById('target').value='192.168.200.133'">WebSRV</button>
-                    </div>
+                           placeholder="e.g. 192.168.1.100 or example.com" required list="targets_datalist">
+                    <datalist id="targets_datalist"></datalist>
+                    <small class="form-text text-muted">💡 Your recent targets will appear as suggestions.</small>
                 </div>
 
                 <!-- SERVICE -->
@@ -319,7 +314,42 @@ confirmBoxes.forEach(cb => {
     });
 });
 
+// ── Load recent targets from job history ──────────────────────────────────
+function loadRecentTargets() {
+    fetch('/api/jobs')
+        .then(r => r.json())
+        .then(data => {
+            const jobs = data.jobs || [];
+            const targets = new Set();
+            // Pour chaque job, on récupère la config pour extraire la cible
+            const fetches = jobs.slice(0, 20).map(job =>
+                fetch(`/api/jobs/${job.id}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        const t = j.config && (j.config.target || j.config.targets);
+                        if (t && typeof t === 'string') {
+                            // Nettoyer l'URL si nécessaire (enlever http://)
+                            const clean = t.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+                            if (clean) targets.add(clean);
+                        }
+                    })
+                    .catch(() => {})
+            );
+            Promise.all(fetches).then(() => {
+                const datalist = document.getElementById('targets_datalist');
+                datalist.innerHTML = '';
+                targets.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t;
+                    datalist.appendChild(option);
+                });
+            });
+        })
+        .catch(() => {});
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
+loadRecentTargets();
 onServiceChange();
 updateEstimate();
 </script>

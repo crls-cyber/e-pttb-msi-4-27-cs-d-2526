@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}theHarvester - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🌾 theHarvester — OSINT Reconnaissance</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- Info -->
+        <div class="alert" style="background:#e8f5e9;border:2px solid #4caf50;border-radius:8px;padding:15px;margin-bottom:20px;">
+            🌿 <strong>Passive OSINT only.</strong>
+            theHarvester collects publicly available information — emails, subdomains, IPs.
+            No direct contact with the target. Legal and safe for any domain.
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Reconnaissance Configuration</div>
+
+            <form id="harvesterForm" method="POST" action="/{{ lang }}/jobs/new/theharvester">
+
+                <!-- DOMAIN -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target Domain:</strong></label>
+                    <input type="text" class="form-control" id="domain" name="domain"
+                           placeholder="example.com" required list="domains_datalist">
+                    <datalist id="domains_datalist"></datalist>
+                    <small class="form-text text-muted">
+                        Root domain — theHarvester will find emails, subdomains and IPs automatically.
+                    </small>
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets:</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="loadPreset('quick')">⚡ Quick Email Hunt</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('subdomains')">🔍 Subdomain Focus</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('full')">🌐 Full OSINT (all sources)</button>
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                onclick="loadPreset('passive_dns')">🗄️ Passive DNS</button>
+                    </div>
+                </div>
+
+                <!-- SOURCE -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Data Source:</strong></label>
+                    <select class="form-control" name="source" id="source_select" onchange="updateSourceInfo()">
+                        <optgroup label="🌐 All Sources">
+                            <option value="all" selected>All sources (comprehensive, slower)</option>
+                        </optgroup>
+                        <optgroup label="📧 Email-focused">
+                            <option value="hunter">Hunter.io (emails)</option>
+                            <option value="baidu">Baidu (emails + subdomains)</option>
+                            <option value="bing">Bing (emails + subdomains)</option>
+                            <option value="yahoo">Yahoo (emails + subdomains)</option>
+                            <option value="duckduckgo">DuckDuckGo (emails + subdomains)</option>
+                        </optgroup>
+                        <optgroup label="🔍 Subdomain-focused">
+                            <option value="crtsh">crt.sh (certificates)</option>
+                            <option value="dnsdumpster">DNSdumpster</option>
+                            <option value="hackertarget">HackerTarget</option>
+                            <option value="rapiddns">RapidDNS</option>
+                            <option value="anubis">Anubis</option>
+                            <option value="certspotter">CertSpotter</option>
+                        </optgroup>
+                        <optgroup label="🛡️ Threat Intelligence">
+                            <option value="virustotal">VirusTotal</option>
+                            <option value="otx">OTX (AlienVault)</option>
+                            <option value="threatminer">ThreatMiner</option>
+                        </optgroup>
+                    </select>
+                    <small class="form-text text-muted" id="source_info">
+                        💡 <strong>All sources</strong>: comprehensive scan using all available data sources
+                    </small>
+                </div>
+
+                <!-- LIMIT -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Result Limit:</strong></label>
+                    <select class="form-control" name="limit" id="limit_select" onchange="updateEstimate()">
+                        <option value="100">100 results — Quick</option>
+                        <option value="250">250 results — Standard</option>
+                        <option value="500" selected>500 results — Recommended</option>
+                        <option value="1000">1000 results — Thorough</option>
+                    </select>
+                </div>
+
+                <!-- DURATION ESTIMATE -->
+                <div class="mb-3" id="harvester_estimate"
+                     style="padding:10px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;">
+                    ⏱️ Estimated duration: <strong>~3 minutes</strong>
+                </div>
+
+                <!-- WHAT DOES IT FIND -->
+                <div class="mb-3" style="padding:12px;background:#f3f8ff;border-radius:6px;font-size:13px;">
+                    <strong>💡 What does theHarvester collect?</strong>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;">
+                        <div style="text-align:center;padding:8px;background:#fff3e0;border-radius:6px;">
+                            <div style="font-size:20px;">📧</div>
+                            <strong>Emails</strong><br>
+                            <small>Corporate email addresses from public sources</small>
+                        </div>
+                        <div style="text-align:center;padding:8px;background:#e8f5e9;border-radius:6px;">
+                            <div style="font-size:20px;">🌐</div>
+                            <strong>Subdomains</strong><br>
+                            <small>Discovered hostnames and subdomains</small>
+                        </div>
+                        <div style="text-align:center;padding:8px;background:#e3f2fd;border-radius:6px;">
+                            <div style="font-size:20px;">🖥️</div>
+                            <strong>IP Addresses</strong><br>
+                            <small>Associated IP ranges and hosts</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">
+                        🌾 Launch theHarvester
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Scan Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Domain</td>
+                    <td id="summary_domain"><strong>—</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Source</td>
+                    <td id="summary_source"><strong>All</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Limit</td>
+                    <td id="summary_limit"><strong>500</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Est. Duration</td>
+                    <td id="summary_duration"><strong>~3 min</strong></td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Use root domain: <code>example.com</code></li>
+                <li><strong>All sources</strong> is most complete but slowest</li>
+                <li>Results feed perfectly into Nmap/Nuclei</li>
+                <li>Emails useful for phishing awareness tests</li>
+                <li>100% passive — no alerts triggered</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 vs Subfinder</div>
+            <table style="width:100%;font-size:12px;">
+                <tr><th></th><th>Subfinder</th><th>theHarvester</th></tr>
+                <tr><td>Emails</td><td>❌</td><td>✅</td></tr>
+                <tr><td>Subdomains</td><td>✅✅</td><td>✅</td></tr>
+                <tr><td>IPs</td><td>❌</td><td>✅</td></tr>
+                <tr><td>Speed</td><td>Fast</td><td>Slower</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Source info texts ─────────────────────────────────────────────────────
+const sourceInfo = {
+    'all': '💡 <strong>All sources</strong>: comprehensive scan using all available data sources',
+    'hunter': '📧 <strong>Hunter.io</strong>: specialized in finding corporate email addresses',
+    'baidu': '🔍 <strong>Baidu</strong>: Chinese search engine, good for Asian targets',
+    'bing': '🔍 <strong>Bing</strong>: Microsoft search engine indexing',
+    'yahoo': '🔍 <strong>Yahoo</strong>: additional search engine coverage',
+    'duckduckgo': '🔍 <strong>DuckDuckGo</strong>: privacy-focused search engine',
+    'crtsh': '🔒 <strong>crt.sh</strong>: SSL certificate transparency logs',
+    'dnsdumpster': '🗄️ <strong>DNSdumpster</strong>: passive DNS database',
+    'hackertarget': '🎯 <strong>HackerTarget</strong>: network intelligence APIs',
+    'rapiddns': '⚡ <strong>RapidDNS</strong>: fast DNS lookup database',
+    'anubis': '🔍 <strong>Anubis</strong>: subdomain discovery database',
+    'certspotter': '🔒 <strong>CertSpotter</strong>: certificate monitoring service',
+    'virustotal': '🛡️ <strong>VirusTotal</strong>: threat intelligence platform',
+    'otx': '🛡️ <strong>OTX</strong>: AlienVault Open Threat Exchange',
+    'threatminer': '🛡️ <strong>ThreatMiner</strong>: threat intelligence data mining'
+};
+
+const sourceEstimates = {
+    'all': 5, 'hunter': 2, 'baidu': 3, 'bing': 2, 'yahoo': 2,
+    'duckduckgo': 2, 'crtsh': 1, 'dnsdumpster': 1, 'hackertarget': 1,
+    'rapiddns': 1, 'anubis': 2, 'certspotter': 1,
+    'virustotal': 2, 'otx': 2, 'threatminer': 2
+};
+
+function updateSourceInfo() {
+    const source = document.getElementById('source_select').value;
+    document.getElementById('source_info').innerHTML = sourceInfo[source] || '';
+    document.getElementById('summary_source').innerHTML = `<strong>${source}</strong>`;
+    updateEstimate();
+}
+
+function updateEstimate() {
+    const source = document.getElementById('source_select').value;
+    const limit = parseInt(document.getElementById('limit_select').value);
+    let minutes = sourceEstimates[source] || 3;
+    if (limit >= 1000) minutes *= 2;
+    else if (limit >= 500) minutes *= 1.5;
+    const display = `~${Math.ceil(minutes)} minute${minutes > 1 ? 's' : ''}`;
+    document.getElementById('harvester_estimate').innerHTML =
+        `⏱️ Estimated duration: <strong>${display}</strong>`;
+    document.getElementById('summary_duration').innerHTML = `<strong>${display}</strong>`;
+    document.getElementById('summary_limit').innerHTML = `<strong>${limit}</strong>`;
+}
+
+// ── Update domain summary ─────────────────────────────────────────────────
+document.getElementById('domain').addEventListener('input', function() {
+    document.getElementById('summary_domain').innerHTML = `<strong>${this.value || '—'}</strong>`;
+});
+
+// ── Load recent domains ───────────────────────────────────────────────────
+function loadRecentDomains() {
+    fetch('/api/jobs')
+        .then(r => r.json())
+        .then(data => {
+            const jobs = data.jobs || [];
+            const domains = new Set();
+            const fetches = jobs.slice(0, 20).map(job =>
+                fetch(`/api/jobs/${job.id}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        const d = j.config && j.config.domain;
+                        if (d && typeof d === 'string') domains.add(d);
+                    })
+                    .catch(() => {})
+            );
+            Promise.all(fetches).then(() => {
+                const datalist = document.getElementById('domains_datalist');
+                datalist.innerHTML = '';
+                domains.forEach(d => {
+                    const option = document.createElement('option');
+                    option.value = d;
+                    datalist.appendChild(option);
+                });
+            });
+        })
+        .catch(() => {});
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────
+function loadPreset(type) {
+    switch(type) {
+        case 'quick':
+            document.getElementById('source_select').value = 'bing';
+            document.getElementById('limit_select').value = '100';
+            break;
+        case 'subdomains':
+            document.getElementById('source_select').value = 'crtsh';
+            document.getElementById('limit_select').value = '500';
+            break;
+        case 'full':
+            document.getElementById('source_select').value = 'all';
+            document.getElementById('limit_select').value = '500';
+            break;
+        case 'passive_dns':
+            document.getElementById('source_select').value = 'dnsdumpster';
+            document.getElementById('limit_select').value = '250';
+            break;
+    }
+    updateSourceInfo();
+    updateEstimate();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadRecentDomains();
+updateSourceInfo();
+updateEstimate();
+</script>
+{% endblock %}

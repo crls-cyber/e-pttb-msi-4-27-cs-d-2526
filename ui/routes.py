@@ -538,3 +538,49 @@ def subfinder_launch():
             return render_template('subfinder_launch.html')
 
     return render_template('subfinder_launch.html')
+
+# theHarvester dedicated launch page
+@ui_bp.route('/en/jobs/new/theharvester', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/theharvester', methods=['GET', 'POST'])
+@login_required
+def theharvester_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        domain = request.form.get('domain')
+        if not domain:
+            flash('Domain is required', 'error')
+            return render_template('theharvester_launch.html')
+
+        config = {
+            'domain': domain,
+            'source': request.form.get('source', 'all'),
+            'limit': int(request.form.get('limit', 500)),
+        }
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='theharvester',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'theharvester', config)
+            flash(f'theHarvester scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('theharvester_launch.html')
+
+    return render_template('theharvester_launch.html')

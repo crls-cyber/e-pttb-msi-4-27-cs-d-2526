@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Subfinder - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🔎 Subfinder — Subdomain Enumeration</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- Info -->
+        <div class="alert" style="background:#e3f2fd;border:2px solid #2196f3;border-radius:8px;padding:15px;margin-bottom:20px;">
+            ℹ️ <strong>Passive reconnaissance only.</strong>
+            Subfinder uses public sources (DNS, APIs) — no direct contact with the target.
+            This is legal and safe for any domain.
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Scan Configuration</div>
+
+            <form id="subfinderForm" method="POST" action="/{{ lang }}/jobs/new/subfinder">
+
+                <!-- DOMAIN -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target Domain:</strong></label>
+                    <input type="text" class="form-control" id="domain" name="domain"
+                           placeholder="example.com" required list="domains_datalist">
+                    <datalist id="domains_datalist"></datalist>
+                    <small class="form-text text-muted">
+                        Root domain only — Subfinder will find all subdomains automatically.
+                        Do not include <code>http://</code> or <code>www.</code>
+                    </small>
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets:</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="loadPreset('quick')">⚡ Quick (2 min)</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('thorough')">🔍 Thorough (5 min)</button>
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                onclick="loadPreset('all_sources')">🌐 All Sources (10 min)</button>
+                    </div>
+                </div>
+
+                <!-- SOURCES -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Sources (optional):</strong></label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="crtsh" id="src_crtsh" checked>
+                            <span>crt.sh (Certificates)</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="dnsdumpster" id="src_dns">
+                            <span>DNSdumpster</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="hackertarget" id="src_hacker">
+                            <span>HackerTarget</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="rapiddns" id="src_rapid">
+                            <span>RapidDNS</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="threatminer" id="src_threat">
+                            <span>ThreatMiner</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" name="sources" value="waybackarchive" id="src_wayback">
+                            <span>Wayback Archive</span>
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">Leave all unchecked to use all available sources.</small>
+                </div>
+
+                <!-- TIMEOUT -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Timeout (seconds):</strong></label>
+                    <select class="form-control" name="timeout" id="timeout_select" onchange="updateEstimate()">
+                        <option value="60">60s — Quick scan</option>
+                        <option value="120">120s — Standard</option>
+                        <option value="300" selected>300s — Thorough (recommended)</option>
+                        <option value="600">600s — Exhaustive</option>
+                    </select>
+                </div>
+
+                <!-- MAX RESULTS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Max Results:</strong></label>
+                    <select class="form-control" name="max_results">
+                        <option value="100">100 subdomains</option>
+                        <option value="500">500 subdomains</option>
+                        <option value="1000" selected>1000 subdomains (recommended)</option>
+                        <option value="5000">5000 subdomains</option>
+                    </select>
+                </div>
+
+                <!-- DURATION ESTIMATE -->
+                <div class="mb-3" id="subfinder_estimate"
+                     style="padding:10px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;">
+                    ⏱️ Estimated duration: <strong>~5 minutes</strong>
+                </div>
+
+                <!-- INFO BOX -->
+                <div class="mb-3" style="padding:12px;background:#f3f8ff;border-radius:6px;font-size:13px;">
+                    <strong>💡 What does Subfinder find?</strong>
+                    <ul style="margin:6px 0 0 0;padding-left:20px;">
+                        <li>Subdomains via <strong>certificate transparency logs</strong> (crt.sh)</li>
+                        <li>Historical DNS records from <strong>passive DNS databases</strong></li>
+                        <li>Subdomains indexed by <strong>search engines and archives</strong></li>
+                        <li>Results from <strong>30+ passive sources</strong> simultaneously</li>
+                    </ul>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">
+                        🔎 Launch Subfinder
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Scan Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Domain</td>
+                    <td id="summary_domain"><strong>—</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Sources</td>
+                    <td id="summary_sources"><strong>All</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Timeout</td>
+                    <td id="summary_timeout"><strong>300s</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Est. Duration</td>
+                    <td id="summary_duration"><strong>~5 min</strong></td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Use root domain only: <code>example.com</code></li>
+                <li>crt.sh is the most reliable source</li>
+                <li>More sources = more results but slower</li>
+                <li>Results are passive — no traffic to target</li>
+                <li>Use results to feed Nmap or Nuclei scans</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 Workflow</div>
+            <p style="font-size:13px;">
+                <strong>Recommended chain:</strong><br>
+                Subfinder → <em>find subdomains</em><br>
+                → Nmap → <em>scan open ports</em><br>
+                → Nuclei → <em>find vulnerabilities</em>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Update domain summary ─────────────────────────────────────────────────
+document.getElementById('domain').addEventListener('input', function() {
+    document.getElementById('summary_domain').innerHTML = `<strong>${this.value || '—'}</strong>`;
+});
+
+// ── Estimate ──────────────────────────────────────────────────────────────
+function updateEstimate() {
+    const timeout = parseInt(document.getElementById('timeout_select').value);
+    const minutes = Math.ceil(timeout / 60);
+    const display = `~${minutes} minute${minutes > 1 ? 's' : ''}`;
+    document.getElementById('subfinder_estimate').innerHTML =
+        `⏱️ Estimated duration: <strong>${display}</strong>`;
+    document.getElementById('summary_duration').innerHTML = `<strong>${display}</strong>`;
+    document.getElementById('summary_timeout').innerHTML = `<strong>${timeout}s</strong>`;
+
+    // Update sources summary
+    const checked = document.querySelectorAll('[name="sources"]:checked');
+    const srcCount = checked.length;
+    document.getElementById('summary_sources').innerHTML =
+        `<strong>${srcCount === 0 ? 'All' : srcCount + ' selected'}</strong>`;
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────
+function loadPreset(type) {
+    // Uncheck all sources first
+    document.querySelectorAll('[name="sources"]').forEach(cb => cb.checked = false);
+
+    switch(type) {
+        case 'quick':
+            document.getElementById('src_crtsh').checked = true;
+            document.getElementById('timeout_select').value = '60';
+            break;
+        case 'thorough':
+            document.getElementById('src_crtsh').checked = true;
+            document.getElementById('src_dns').checked = true;
+            document.getElementById('src_hacker').checked = true;
+            document.getElementById('timeout_select').value = '300';
+            break;
+        case 'all_sources':
+            document.querySelectorAll('[name="sources"]').forEach(cb => cb.checked = true);
+            document.getElementById('timeout_select').value = '600';
+            break;
+    }
+    updateEstimate();
+}
+
+// ── Load recent domains from job history ──────────────────────────────────
+function loadRecentDomains() {
+    fetch('/api/jobs')
+        .then(r => r.json())
+        .then(data => {
+            const jobs = data.jobs || [];
+            const domains = new Set();
+            const fetches = jobs.slice(0, 20).map(job =>
+                fetch(`/api/jobs/${job.id}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        const d = j.config && j.config.domain;
+                        if (d && typeof d === 'string') domains.add(d);
+                    })
+                    .catch(() => {})
+            );
+            Promise.all(fetches).then(() => {
+                const datalist = document.getElementById('domains_datalist');
+                datalist.innerHTML = '';
+                domains.forEach(d => {
+                    const option = document.createElement('option');
+                    option.value = d;
+                    datalist.appendChild(option);
+                });
+            });
+        })
+        .catch(() => {});
+}
+
+// ── Source checkboxes update summary ─────────────────────────────────────
+document.querySelectorAll('[name="sources"]').forEach(cb => {
+    cb.addEventListener('change', updateEstimate);
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadRecentDomains();
+updateEstimate();
+</script>
+{% endblock %}

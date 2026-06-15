@@ -489,3 +489,52 @@ def hydra_launch():
             return render_template('hydra_launch.html')
 
     return render_template('hydra_launch.html')
+
+# Subfinder dedicated launch page
+@ui_bp.route('/en/jobs/new/subfinder', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/subfinder', methods=['GET', 'POST'])
+@login_required
+def subfinder_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        domain = request.form.get('domain')
+        if not domain:
+            flash('Domain is required', 'error')
+            return render_template('subfinder_launch.html')
+
+        config = {
+            'domain': domain,
+            'timeout': int(request.form.get('timeout', 300)),
+            'max_results': int(request.form.get('max_results', 1000)),
+        }
+        sources = request.form.getlist('sources')
+        if sources:
+            config['sources'] = sources
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='subfinder',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'subfinder', config)
+            flash(f'Subfinder scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('subfinder_launch.html')
+
+    return render_template('subfinder_launch.html')

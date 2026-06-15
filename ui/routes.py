@@ -227,3 +227,63 @@ def analytics():
 @login_required
 def settings():
     return render_template('settings.html')
+
+# ==========================================
+# PLUGIN DEDICATED LAUNCH PAGES
+# ==========================================
+
+# Nmap dedicated launch page
+@ui_bp.route('/en/jobs/new/nmap', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/nmap', methods=['GET', 'POST'])
+@login_required
+def nmap_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        target = request.form.get('target')
+        if not target:
+            flash('Target is required', 'error')
+            return render_template('nmap_launch.html')
+
+        config = {'target': target}
+        if request.form.get('ports'):
+            config['ports'] = request.form.get('ports')
+        if request.form.get('scan_type'):
+            config['scan_type'] = request.form.get('scan_type')
+        if request.form.get('timing'):
+            config['timing'] = request.form.get('timing')
+        if request.form.get('enable_os_detection'):
+            config['os_detection'] = True
+        if request.form.get('enable_script_scan'):
+            config['script_scan'] = True
+        if request.form.get('aggressive_scan'):
+            config['aggressive'] = True
+        if request.form.get('custom_args'):
+            config['custom_args'] = request.form.get('custom_args')
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='nmap',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'nmap', config)
+            flash(f'Nmap scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('nmap_launch.html')
+
+    return render_template('nmap_launch.html')

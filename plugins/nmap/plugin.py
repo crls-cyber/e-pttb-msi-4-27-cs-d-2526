@@ -39,7 +39,7 @@ class NmapPlugin(PluginBase):
             xml_output_path = f.name
         
         try:
-            cmd = ['nmap', scan_type, '-p', ports, '-oX', xml_output_path, targets]
+            cmd = ['nmap'] + scan_type.split() + ['-p', ports, '-oX', xml_output_path, targets]
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
             

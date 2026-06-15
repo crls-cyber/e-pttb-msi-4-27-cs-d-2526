@@ -60,6 +60,7 @@ COPY . /app
 WORKDIR /app
 
 # Installation dépendances Python (inclut WeasyPrint via pyproject.toml)
-RUN pip install poetry && poetry install --only main --no-root
+RUN pip install poetry && poetry install --only main --no-root && pip install pymetasploit3
+# RUN pip install poetry && poetry install --only main --no-root
 
 CMD ["poetry", "run", "celery", "-A", "core.orchestrator.celery_app", "worker", "-Q", "default,scan", "--loglevel=info"]

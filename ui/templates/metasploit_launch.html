@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Metasploit - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">💣 Metasploit — Exploitation Framework</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- DANGER ZONE -->
+        <div style="background:#ffebee;border:3px solid #d32f2f;padding:20px;margin-bottom:20px;border-radius:8px;">
+            <h4 style="color:#d32f2f;margin:0 0 10px 0;">🚨 CRITICAL WARNING — ACTIVE EXPLOITATION</h4>
+            <ul style="margin:0;padding-left:20px;font-size:13px;">
+                <li>💣 <strong>This module actively exploits vulnerabilities</strong> — may crash target systems</li>
+                <li>🔓 <strong>Successful exploitation = full system compromise</strong></li>
+                <li>⚖️ <strong>ILLEGAL</strong> without explicit written authorization (Art. 323-1 Code Pénal)</li>
+                <li>🔴 <strong>Requires msfrpcd</strong> running on Kali host</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Exploit Configuration</div>
+
+            <form id="metasploitForm" method="POST" action="/{{ lang }}/jobs/new/metasploit">
+
+                <!-- TARGET -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target IP:</strong></label>
+                    <input type="text" class="form-control" id="target" name="target"
+                           placeholder="e.g. 192.168.200.133" required list="targets_datalist">
+                    <datalist id="targets_datalist"></datalist>
+                    <small class="form-text text-muted">IP address of the target system.</small>
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets (Metasploitable2):</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('vsftpd')">🐟 VSFTPD 2.3.4 Backdoor</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('samba')">📁 Samba usermap_script</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('distcc')">⚙️ DistCC RCE</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('php_cgi')">🐘 PHP CGI Injection</button>
+                    </div>
+                    <small class="form-text text-muted" id="preset_info" style="margin-top:6px;display:block;">
+                        💡 Select a preset to auto-fill exploit, payload and port.
+                    </small>
+                </div>
+
+                <!-- EXPLOIT -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Exploit Module:</strong></label>
+                    <input type="text" class="form-control" id="exploit" name="exploit"
+                           placeholder="exploit/unix/ftp/vsftpd_234_backdoor" required>
+                    <small class="form-text text-muted">Full Metasploit module path.</small>
+                </div>
+
+                <!-- PAYLOAD -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Payload:</strong></label>
+                    <input type="text" class="form-control" id="payload_input" name="payload"
+                           placeholder="cmd/unix/interact" required>
+                    <small class="form-text text-muted">Metasploit payload to use with the exploit.</small>
+                </div>
+
+                <!-- RPORT -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target Port (RPORT):</strong></label>
+                    <input type="number" class="form-control" id="rport" name="rport"
+                           placeholder="21">
+                    <small class="form-text text-muted">Leave empty to use exploit default.</small>
+                </div>
+
+                <!-- LHOST / LPORT -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label"><strong>Local Host (LHOST):</strong></label>
+                        <input type="text" class="form-control" name="lhost"
+                               placeholder="192.168.145.100 (your Kali IP)">
+                        <small class="form-text text-muted">Your Kali IP for reverse shells.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Local Port (LPORT):</strong></label>
+                        <input type="number" class="form-control" name="lport" value="4444">
+                    </div>
+                </div>
+
+                <!-- MSF RPC SETTINGS -->
+                <details class="mb-3">
+                    <summary style="cursor:pointer;font-weight:bold;padding:8px 0;">⚙️ msfrpcd Connection Settings</summary>
+                    <div style="padding:15px;background:#f8f9fa;border-radius:6px;margin-top:8px;">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>msfrpcd Host:</strong></label>
+                            <input type="text" class="form-control" name="msf_host"
+                                   placeholder="192.168.145.100">
+                            <small class="form-text text-muted">IP of the Kali host running msfrpcd.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>msfrpcd Port:</strong></label>
+                            <input type="number" class="form-control" name="msf_port" value="55553">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>msfrpcd Password:</strong></label>
+                            <input type="password" class="form-control" name="msf_password"
+                                   value="mypassword123">
+                        </div>
+                        <div style="padding:10px;background:#fff3cd;border-radius:6px;font-size:12px;">
+                            <strong>⚠️ Start msfrpcd on Kali before launching:</strong><br>
+                            <code>msfrpcd -P mypassword123 -S -a 0.0.0.0</code>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- CONFIRMATIONS -->
+                <div style="padding:15px;background:#ffebee;border-radius:6px;border:2px solid #d32f2f;margin-bottom:20px;">
+                    <strong>🚨 Mandatory confirmations:</strong>
+                    <div style="margin-top:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_lab" required>
+                            <span>✅ This is an <strong>isolated lab environment</strong> (Host-Only network)</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_auth" required>
+                            <span>✅ I have <strong>explicit written authorization</strong> to exploit this target</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="confirm_legal" required>
+                            <span>✅ I understand the <strong>legal risks</strong> of active exploitation</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="confirm_responsibility" required>
+                            <span>✅ I take <strong>full responsibility</strong> for the consequences</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-danger" id="launchBtn" disabled>
+                        💣 Launch Exploit
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Exploit Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Target</td>
+                    <td id="summary_target"><strong>—</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Exploit</td>
+                    <td id="summary_exploit"><strong>—</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Payload</td>
+                    <td id="summary_payload"><strong>—</strong></td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Prerequisites</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Start msfrpcd on Kali:<br>
+                    <code style="font-size:11px;">msfrpcd -P mypassword123 -S -a 0.0.0.0</code>
+                </li>
+                <li>Use findings from <strong>Nmap/Nuclei</strong> to identify exploitable services</li>
+                <li>VSFTPD backdoor → port <strong>6200</strong> opens after trigger</li>
+                <li>Samba exploit → requires port <strong>445</strong> open</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🎯 Known Metasploitable2 Exploits</div>
+            <table style="width:100%;font-size:11px;">
+                <tr><th>Service</th><th>Exploit</th></tr>
+                <tr><td>VSFTPD 2.3.4</td><td>vsftpd_234_backdoor</td></tr>
+                <tr><td>Samba 3.x</td><td>usermap_script</td></tr>
+                <tr><td>DistCC</td><td>distcc_exec</td></tr>
+                <tr><td>PHP CGI</td><td>php_cgi_arg_injection</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Presets ───────────────────────────────────────────────────────────────
+const presets = {
+    vsftpd: {
+        exploit: 'exploit/unix/ftp/vsftpd_234_backdoor',
+        payload: 'cmd/unix/interact',
+        rport: 21,
+        info: '🐟 <strong>VSFTPD 2.3.4 Backdoor</strong>: triggers backdoor on port 21, opens shell on port 6200'
+    },
+    samba: {
+        exploit: 'exploit/multi/samba/usermap_script',
+        payload: 'cmd/unix/interact',
+        rport: 445,
+        info: '📁 <strong>Samba usermap_script</strong>: command injection via username mapping (CVE-2007-2447)'
+    },
+    distcc: {
+        exploit: 'exploit/unix/misc/distcc_exec',
+        payload: 'cmd/unix/interact',
+        rport: 3632,
+        info: '⚙️ <strong>DistCC RCE</strong>: arbitrary command execution via distcc daemon (CVE-2004-2687)'
+    },
+    php_cgi: {
+        exploit: 'exploit/multi/http/php_cgi_arg_injection',
+        payload: 'php/meterpreter/reverse_tcp',
+        rport: 80,
+        info: '🐘 <strong>PHP CGI Injection</strong>: argument injection in PHP CGI mode (CVE-2012-1823)'
+    }
+};
+
+function loadPreset(type) {
+    const p = presets[type];
+    if (!p) return;
+    document.getElementById('exploit').value = p.exploit;
+    document.getElementById('payload_input').value = p.payload;
+    document.getElementById('rport').value = p.rport;
+    document.getElementById('preset_info').innerHTML = p.info;
+    updateSummary();
+}
+
+// ── Update summary ────────────────────────────────────────────────────────
+function updateSummary() {
+    const target = document.getElementById('target').value;
+    const exploit = document.getElementById('exploit').value;
+    const payload = document.getElementById('payload_input').value;
+    document.getElementById('summary_target').innerHTML = `<strong>${target || '—'}</strong>`;
+    const exploitShort = exploit ? exploit.split('/').pop() : '—';
+    document.getElementById('summary_exploit').innerHTML = `<strong>${exploitShort}</strong>`;
+    const payloadShort = payload ? payload.split('/').pop() : '—';
+    document.getElementById('summary_payload').innerHTML = `<strong>${payloadShort}</strong>`;
+}
+
+document.getElementById('target').addEventListener('input', updateSummary);
+document.getElementById('exploit').addEventListener('input', updateSummary);
+document.getElementById('payload_input').addEventListener('input', updateSummary);
+
+// ── Confirmations → enable button ─────────────────────────────────────────
+const confirmBoxes = document.querySelectorAll('#confirm_lab, #confirm_auth, #confirm_legal, #confirm_responsibility');
+confirmBoxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+        const allChecked = Array.from(confirmBoxes).every(c => c.checked);
+        document.getElementById('launchBtn').disabled = !allChecked;
+    });
+});
+
+// ── Load recent targets ───────────────────────────────────────────────────
+function loadRecentTargets() {
+    fetch('/api/jobs')
+        .then(r => r.json())
+        .then(data => {
+            const jobs = data.jobs || [];
+            const targets = new Set();
+            const fetches = jobs.slice(0, 20).map(job =>
+                fetch(`/api/jobs/${job.id}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        const t = j.config && (j.config.target || j.config.targets);
+                        if (t && typeof t === 'string') {
+                            const clean = t.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+                            if (clean) targets.add(clean);
+                        }
+                    })
+                    .catch(() => {})
+            );
+            Promise.all(fetches).then(() => {
+                const datalist = document.getElementById('targets_datalist');
+                targets.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t;
+                    datalist.appendChild(option);
+                });
+            });
+        })
+        .catch(() => {});
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadRecentTargets();
+updateSummary();
+</script>
+{% endblock %}

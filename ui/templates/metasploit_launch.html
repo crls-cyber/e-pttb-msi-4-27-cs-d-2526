@@ -181,7 +181,11 @@
                 <li>Start msfrpcd on Kali:<br>
                     <code style="font-size:11px;">msfrpcd -P mypassword123 -S -a 0.0.0.0</code>
                 </li>
-                <li>Use findings from <strong>Nmap/Nuclei</strong> to identify exploitable services</li>
+                <li>⚠️ <strong>LHOST = IP Kali accessible par la cible</strong><br>
+                    <small>Si cible sur 192.168.200.x → utilise ton IP sur ce même réseau</small>
+                </li>
+                <li>Payload Linux recommandé : <code>cmd/unix/bind_ruby</code></li>
+                <li>Use <strong>Nmap/Nuclei</strong> findings to identify exploitable services</li>
                 <li>VSFTPD backdoor → port <strong>6200</strong> opens after trigger</li>
                 <li>Samba exploit → requires port <strong>445</strong> open</li>
             </ul>

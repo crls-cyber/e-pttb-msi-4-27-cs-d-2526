@@ -54,6 +54,7 @@ services:
     volumes:
       - ./core:/app/core
       - ./ui:/app/ui
+      - ./plugins:/app/plugins
     networks:
       - pentest_net
     depends_on:

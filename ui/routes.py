@@ -762,3 +762,10 @@ def ettercap_launch():
 @login_required
 def wireshark_launch():
     return render_template('wireshark_launch.html')
+
+# Burp Suite dedicated page
+@ui_bp.route('/en/jobs/new/burp', methods=['GET'])
+@ui_bp.route('/fr/jobs/new/burp', methods=['GET'])
+@login_required
+def burp_launch():
+    return render_template('burp_launch.html')

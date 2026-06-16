@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Burp Suite - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🔴 Burp Suite — Web Application Proxy</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- WHY NOT INTEGRATED -->
+        <div class="alert" style="background:#fff3e0;border:2px solid #ff9800;border-radius:8px;padding:20px;margin-bottom:20px;">
+            <h4 style="color:#e65100;margin:0 0 10px 0;">⚠️ Why Burp Suite is not directly integrated</h4>
+            <p style="margin:0 0 8px 0;">Burp Suite Community Edition does not expose a free REST API for automation. The Pro/Enterprise versions do, but are commercial products. Integration via the free version requires manual operation and XML export.</p>
+            <ul style="margin:8px 0 0 0;padding-left:20px;font-size:13px;">
+                <li>Burp Suite Community has no programmable API (unlike ZAP which has a free REST API)</li>
+                <li>Burp requires a GUI to operate — cannot run headless in a Docker container</li>
+                <li>Burp Pro API exists but requires a paid license</li>
+            </ul>
+            <p style="margin:10px 0 0 0;font-size:13px;color:#666;">
+                <strong>Solution:</strong> Run Burp Suite manually on Kali, perform your tests, then export the findings
+                as XML and import them into the Toolbox using the upload feature below.
+            </p>
+        </div>
+
+        <!-- HOW TO USE BURP -->
+        <div class="chart-card">
+            <div class="chart-card-header">🛠️ How to export Burp Suite findings to XML</div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 1 — Launch Burp Suite on Kali</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># Launch Burp Suite Community from terminal</div>
+                <div>burpsuite &</div>
+                <div style="color:#88846f;margin-top:8px;"># Or from the Kali menu:</div>
+                <div style="color:#88846f;"># Applications → Web Application Analysis → burpsuite</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 2 — Configure your browser proxy</h4>
+            <div style="background:#f5f5f5;border:1px solid #ddd;padding:15px;border-radius:6px;font-size:13px;margin-bottom:15px;">
+                <p style="margin:0 0 8px 0;"><strong>In Firefox:</strong></p>
+                <ol style="margin:0;padding-left:20px;">
+                    <li>Settings → Network Settings → Manual proxy configuration</li>
+                    <li>HTTP Proxy: <code>127.0.0.1</code> Port: <code>8080</code></li>
+                    <li>Check "Also use this proxy for HTTPS"</li>
+                    <li>Install Burp CA certificate: browse to <code>http://burpsuite</code> → CA Certificate</li>
+                </ol>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 3 — Run your tests</h4>
+            <div style="background:#f5f5f5;border:1px solid #ddd;padding:15px;border-radius:6px;font-size:13px;margin-bottom:15px;">
+                <p style="margin:0 0 6px 0;"><strong>Spider / Crawl:</strong></p>
+                <ol style="margin:0 0 10px 0;padding-left:20px;">
+                    <li>Target tab → right-click on target → "Scan" or "Spider this host"</li>
+                    <li>Wait for spider to complete</li>
+                </ol>
+                <p style="margin:0 0 6px 0;"><strong>Active Scan (Community — limited):</strong></p>
+                <ol style="margin:0;padding-left:20px;">
+                    <li>Right-click on any request → "Do active scan"</li>
+                    <li>Check Scanner tab for findings</li>
+                </ol>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 4 — Export findings as XML</h4>
+            <div style="background:#f5f5f5;border:1px solid #ddd;padding:15px;border-radius:6px;font-size:13px;margin-bottom:8px;">
+                <ol style="margin:0;padding-left:20px;">
+                    <li>Go to <strong>Target</strong> tab → <strong>Site map</strong></li>
+                    <li>Right-click on your target domain</li>
+                    <li>Select <strong>"Issues"</strong> → <strong>"Report issues for this host"</strong></li>
+                    <li>Format: select <strong>XML</strong></li>
+                    <li>Save to <code>/tmp/burp_report.xml</code></li>
+                </ol>
+            </div>
+            <div style="padding:8px 12px;background:#e3f2fd;border-radius:6px;font-size:13px;margin-bottom:15px;">
+                💡 <strong>Alternative:</strong> Target → right-click → "Save selected items" → XML format
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 5 — Expected XML format</h4>
+            <div style="background:#f5f5f5;border:1px solid #ddd;padding:15px;border-radius:6px;font-family:monospace;font-size:12px;margin-bottom:15px;">
+                <div style="color:#666;">&lt;?xml version="1.0"?&gt;</div>
+                <div style="color:#1a237e;">&lt;issues burpVersion="2023.x" exportTime="..."&gt;</div>
+                <div style="margin-left:16px;color:#2e7d32;">&lt;issue&gt;</div>
+                <div style="margin-left:32px;">&lt;name&gt;SQL injection&lt;/name&gt;</div>
+                <div style="margin-left:32px;">&lt;host ip="192.168.x.x"&gt;http://target&lt;/host&gt;</div>
+                <div style="margin-left:32px;">&lt;severity&gt;High&lt;/severity&gt;</div>
+                <div style="margin-left:32px;">&lt;confidence&gt;Certain&lt;/confidence&gt;</div>
+                <div style="margin-left:32px;">&lt;issueDetail&gt;...&lt;/issueDetail&gt;</div>
+                <div style="margin-left:16px;color:#2e7d32;">&lt;/issue&gt;</div>
+                <div style="color:#1a237e;">&lt;/issues&gt;</div>
+            </div>
+
+            <div style="padding:12px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;margin-bottom:15px;">
+                <strong>✅ Accepted file format:</strong>
+                <ul style="margin:6px 0 0 0;padding-left:20px;font-size:13px;">
+                    <li><code>.xml</code> — Burp Suite XML export (root element must be <code>&lt;issues&gt;</code>)</li>
+                    <li>Maximum file size: <strong>50 MB</strong></li>
+                    <li>Auto-detected by the upload page (no need to select parser manually)</li>
+                </ul>
+            </div>
+
+            <!-- UPLOAD BUTTON -->
+            <div style="text-align:center;padding:20px;background:#f3f8ff;border-radius:8px;border:2px dashed #2196f3;">
+                <p style="font-size:16px;font-weight:bold;margin:0 0 10px 0;">
+                    📤 Ready to import your Burp Suite findings?
+                </p>
+                <p style="font-size:13px;color:#666;margin:0 0 15px 0;">
+                    Upload your .xml export to automatically create findings in the Toolbox
+                </p>
+                <a href="/{{ lang }}/upload-external" class="btn btn-primary" style="font-size:16px;padding:12px 30px;">
+                    📤 Go to Upload Page
+                </a>
+                <p style="font-size:12px;color:#888;margin:10px 0 0 0;">
+                    Select <strong>"Burp Suite"</strong> as parser type — or use <strong>Auto-detect</strong> (.xml files are detected automatically)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+
+        <div class="chart-card">
+            <div class="chart-card-header">📋 Requirements</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Burp Suite installed on Kali:<br>
+                    <code style="font-size:11px;">which burpsuite</code>
+                </li>
+                <li>Firefox proxy configured (127.0.0.1:8080)</li>
+                <li>Burp CA certificate installed in browser</li>
+                <li>Target accessible from Kali</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔍 What Burp Detects</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>SQL injection</li>
+                <li>Cross-site scripting (XSS)</li>
+                <li>CSRF vulnerabilities</li>
+                <li>Path traversal</li>
+                <li>Insecure headers</li>
+                <li>SSL/TLS issues</li>
+                <li>Sensitive data exposure</li>
+                <li>Authentication flaws</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 Burp vs ZAP</div>
+            <table style="width:100%;font-size:12px;">
+                <tr><th></th><th>Burp</th><th>ZAP</th></tr>
+                <tr><td>Free API</td><td>❌ Pro only</td><td>✅</td></tr>
+                <tr><td>GUI</td><td>✅ Excellent</td><td>✅ Good</td></tr>
+                <tr><td>Manual testing</td><td>✅✅</td><td>✅</td></tr>
+                <tr><td>Auto scan</td><td>⚠️ Limited</td><td>✅</td></tr>
+                <tr><td>Toolbox integration</td><td>Upload XML</td><td>Direct</td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Use ZAP for automated scans</li>
+                <li>Use Burp for <strong>manual</strong> web testing</li>
+                <li>Burp Repeater = best for manual exploitation</li>
+                <li>Export after each session — don't lose your findings</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

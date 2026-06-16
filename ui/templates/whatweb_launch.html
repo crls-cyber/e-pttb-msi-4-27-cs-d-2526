@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}WhatWeb - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🌐 WhatWeb — Web Technology Fingerprinting</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- Info -->
+        <div class="alert" style="background:#e3f2fd;border:2px solid #2196f3;border-radius:8px;padding:15px;margin-bottom:20px;">
+            🔍 <strong>Passive/semi-active fingerprinting.</strong>
+            WhatWeb identifies web technologies by analyzing HTTP responses — CMS, frameworks, servers, versions.
+            Safe for any authorized target.
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚙️ Scan Configuration</div>
+
+            <form id="whatwebForm" method="POST" action="/{{ lang }}/jobs/new/whatweb">
+
+                <!-- TARGET -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Target URL:</strong></label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select class="form-control" id="protocol" style="width:130px;flex-shrink:0;" onchange="updateFullURL()">
+                            <option value="http://">http://</option>
+                            <option value="https://">https://</option>
+                        </select>
+                        <input type="text" class="form-control" id="target_host"
+                               placeholder="192.168.200.133 or example.com" required
+                               oninput="updateFullURL()" list="targets_datalist">
+                        <datalist id="targets_datalist"></datalist>
+                    </div>
+                    <small class="form-text text-muted">
+                        Full URL: <code id="full_url">—</code>
+                    </small>
+                    <input type="hidden" id="target" name="target" value="">
+                </div>
+
+                <!-- QUICK PRESETS -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Quick Presets:</strong></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="loadPreset('stealthy')">🤫 Stealthy (level 1)</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                onclick="loadPreset('standard')">📊 Standard (level 2)</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="loadPreset('aggressive')">💥 Aggressive (level 3)</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="loadPreset('dvwa')">🎯 DVWA</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="loadPreset('metasploitable')">🎯 Metasploitable2</button>
+                    </div>
+                </div>
+
+                <!-- AGGRESSION LEVEL -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Aggression Level:</strong></label>
+                    <select class="form-control" name="aggression" id="aggression_select" onchange="updateAggInfo()">
+                        <option value="1" selected>1 — Stealthy (passive, minimal requests)</option>
+                        <option value="2">2 — Standard (follow redirects)</option>
+                        <option value="3">3 — Aggressive (more requests, more info)</option>
+                    </select>
+                    <small class="form-text text-muted" id="agg_info">
+                        💡 <strong>Level 1</strong>: makes 1 HTTP request per target — fastest and most stealthy
+                    </small>
+                </div>
+
+                <!-- TIMEOUT -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Timeout (seconds):</strong></label>
+                    <select class="form-control" name="timeout" id="timeout_select" onchange="updateEstimate()">
+                        <option value="30">30s — Quick</option>
+                        <option value="60" selected>60s — Standard (recommended)</option>
+                        <option value="120">120s — Extended</option>
+                    </select>
+                </div>
+
+                <!-- DURATION ESTIMATE -->
+                <div class="mb-3" id="whatweb_estimate"
+                     style="padding:10px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;">
+                    ⏱️ Estimated duration: <strong>~10 seconds</strong>
+                </div>
+
+                <!-- INFO BOX -->
+                <div class="mb-3" style="padding:12px;background:#f3f8ff;border-radius:6px;font-size:13px;">
+                    <strong>💡 What does WhatWeb identify?</strong>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+                        <div style="text-align:center;padding:8px;background:#fff3e0;border-radius:6px;">
+                            <div style="font-size:18px;">🏗️</div>
+                            <strong>CMS</strong><br>
+                            <small>WordPress, Joomla, Drupal</small>
+                        </div>
+                        <div style="text-align:center;padding:8px;background:#e8f5e9;border-radius:6px;">
+                            <div style="font-size:18px;">🖥️</div>
+                            <strong>Servers</strong><br>
+                            <small>Apache, Nginx, IIS + versions</small>
+                        </div>
+                        <div style="text-align:center;padding:8px;background:#e3f2fd;border-radius:6px;">
+                            <div style="font-size:18px;">⚙️</div>
+                            <strong>Frameworks</strong><br>
+                            <small>PHP, jQuery, Bootstrap</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-primary" onclick="prepareSubmit()">
+                        🌐 Launch WhatWeb Scan
+                    </button>
+                    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+        <div class="chart-card">
+            <div class="chart-card-header">📊 Scan Summary</div>
+            <table style="width:100%;font-size:13px;">
+                <tr><td style="padding:4px 0;color:#888;">Target</td>
+                    <td id="summary_target"><strong>—</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Aggression</td>
+                    <td id="summary_aggression"><strong>Level 1</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#888;">Est. Duration</td>
+                    <td id="summary_duration"><strong>~10s</strong></td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Quick Tips</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Level 1 sufficient for most targets</li>
+                <li>Exposed versions → feed into <strong>Nuclei</strong></li>
+                <li>CMS detected → targeted CVE search</li>
+                <li>Combine with Nmap for full recon</li>
+                <li>No authentication required</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 Workflow</div>
+            <p style="font-size:13px;">
+                <strong>Recommended chain:</strong><br>
+                WhatWeb → <em>identify technologies</em><br>
+                → Nuclei → <em>find CVEs for detected versions</em><br>
+                → SQLmap → <em>if PHP/DB detected</em>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Aggression info ───────────────────────────────────────────────────────
+const aggInfo = {
+    '1': '💡 <strong>Level 1</strong>: makes 1 HTTP request per target — fastest and most stealthy',
+    '2': '📊 <strong>Level 2</strong>: follows redirects, slightly more requests',
+    '3': '💥 <strong>Level 3</strong>: sends many requests to extract maximum information — may trigger IDS'
+};
+
+function updateAggInfo() {
+    const agg = document.getElementById('aggression_select').value;
+    document.getElementById('agg_info').innerHTML = aggInfo[agg] || '';
+    document.getElementById('summary_aggression').innerHTML = `<strong>Level ${agg}</strong>`;
+    updateEstimate();
+}
+
+// ── URL builder ───────────────────────────────────────────────────────────
+function updateFullURL() {
+    const protocol = document.getElementById('protocol').value;
+    const host = document.getElementById('target_host').value || '';
+    const full = host ? protocol + host : '';
+    document.getElementById('full_url').textContent = full || '—';
+    document.getElementById('target').value = full;
+    document.getElementById('summary_target').innerHTML = `<strong>${host || '—'}</strong>`;
+}
+
+// ── Estimate ──────────────────────────────────────────────────────────────
+function updateEstimate() {
+    const agg = parseInt(document.getElementById('aggression_select').value);
+    const seconds = agg === 1 ? 10 : agg === 2 ? 20 : 40;
+    const display = `~${seconds} seconds`;
+    document.getElementById('whatweb_estimate').innerHTML =
+        `⏱️ Estimated duration: <strong>${display}</strong>`;
+    document.getElementById('summary_duration').innerHTML = `<strong>${display}</strong>`;
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────
+function loadPreset(type) {
+    switch(type) {
+        case 'stealthy':
+            document.getElementById('aggression_select').value = '1';
+            break;
+        case 'standard':
+            document.getElementById('aggression_select').value = '2';
+            break;
+        case 'aggressive':
+            document.getElementById('aggression_select').value = '3';
+            break;
+        case 'dvwa':
+            document.getElementById('protocol').value = 'http://';
+            document.getElementById('target_host').value = '192.168.200.133/dvwa';
+            document.getElementById('aggression_select').value = '1';
+            break;
+        case 'metasploitable':
+            document.getElementById('protocol').value = 'http://';
+            document.getElementById('target_host').value = '192.168.200.133';
+            document.getElementById('aggression_select').value = '1';
+            break;
+    }
+    updateFullURL();
+    updateAggInfo();
+    updateEstimate();
+}
+
+// ── Prepare submit ────────────────────────────────────────────────────────
+function prepareSubmit() {
+    updateFullURL();
+}
+
+// ── Load recent targets ───────────────────────────────────────────────────
+function loadRecentTargets() {
+    fetch('/api/jobs')
+        .then(r => r.json())
+        .then(data => {
+            const jobs = data.jobs || [];
+            const targets = new Set();
+            const fetches = jobs.slice(0, 20).map(job =>
+                fetch(`/api/jobs/${job.id}`)
+                    .then(r => r.json())
+                    .then(j => {
+                        const t = j.config && (j.config.target || j.config.targets);
+                        if (t && typeof t === 'string') {
+                            const clean = t.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+                            if (clean) targets.add(clean);
+                        }
+                    })
+                    .catch(() => {})
+            );
+            Promise.all(fetches).then(() => {
+                const datalist = document.getElementById('targets_datalist');
+                targets.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t;
+                    datalist.appendChild(option);
+                });
+            });
+        })
+        .catch(() => {});
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadRecentTargets();
+updateAggInfo();
+updateEstimate();
+</script>
+{% endblock %}

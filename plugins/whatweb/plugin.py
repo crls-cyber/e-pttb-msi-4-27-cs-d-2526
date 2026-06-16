@@ -105,7 +105,7 @@ class WhatWebPlugin(PluginBase):
         target_url = None
         
         for line in stdout.strip().split("\n"):
-            if not line.strip():
+            if not line.strip() or line.strip() in ["[", "]"] or not line.strip().startswith("{"):
                 continue
             
             try:

@@ -695,3 +695,49 @@ def metasploit_launch():
             return render_template('metasploit_launch.html')
 
     return render_template('metasploit_launch.html')
+
+# WhatWeb dedicated launch page
+@ui_bp.route('/en/jobs/new/whatweb', methods=['GET', 'POST'])
+@ui_bp.route('/fr/jobs/new/whatweb', methods=['GET', 'POST'])
+@login_required
+def whatweb_launch():
+    if request.method == 'POST':
+        from core.models import Job
+        from core.api.app import db
+        from core.orchestrator.tasks import run_plugin
+        import uuid
+        from datetime import datetime
+        from flask import flash
+
+        target = request.form.get('target')
+        if not target or target in ['http://', 'https://']:
+            flash('Target URL is required', 'error')
+            return render_template('whatweb_launch.html')
+
+        config = {
+            'target': target,
+            'aggression': int(request.form.get('aggression', 1)),
+            'timeout': int(request.form.get('timeout', 60)),
+        }
+
+        try:
+            job = Job(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                plugin_name='whatweb',
+                config=config,
+                status='pending',
+                created_at=datetime.utcnow()
+            )
+            db.session.add(job)
+            db.session.commit()
+            run_plugin.delay(str(job.id), 'whatweb', config)
+            flash(f'WhatWeb scan launched! Job ID: {job.id}', 'success')
+            lang = get_locale()
+            return redirect(f'/{lang}/jobs/{job.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            return render_template('whatweb_launch.html')
+
+    return render_template('whatweb_launch.html')

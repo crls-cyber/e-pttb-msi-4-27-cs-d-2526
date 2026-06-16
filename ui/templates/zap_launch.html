@@ -106,6 +106,32 @@
                     <small class="form-text text-muted">Default key configured in ZAP daemon. Change only if customized.</small>
                 </div>
 
+                <!-- SESSION COOKIE -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Session Cookie (optional):</strong></label>
+                    <input type="text" class="form-control" name="cookie" id="cookie_input"
+                           placeholder="security=low; PHPSESSID=abc123">
+                    <small class="form-text text-muted">
+                        Required for authenticated scans. Without a cookie, ZAP only scans public pages.
+                        <br>💡 <strong>DVWA:</strong> Open Firefox DevTools (F12) → Storage → Cookies → copy values.
+                    </small>
+                </div>
+
+                <!-- SPIDER DELAY -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Spider Delay (seconds):</strong></label>
+                    <select class="form-control" name="spider_delay">
+                        <option value="2">2s — Fast machine</option>
+                        <option value="5" selected>5s — Standard (recommended)</option>
+                        <option value="10">10s — Slower machine</option>
+                        <option value="15">15s — Very slow / complex app</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        ⏱️ Time ZAP waits before starting the spider — increase on slower machines or complex applications.
+                        With a session cookie, a longer delay helps ZAP properly register the authenticated session.
+                    </small>
+                </div>
+
                 <!-- DURATION ESTIMATE -->
                 <div class="mb-3" id="zap_estimate"
                      style="padding:10px;background:#fff3e0;border-radius:6px;border-left:4px solid #ff9800;">

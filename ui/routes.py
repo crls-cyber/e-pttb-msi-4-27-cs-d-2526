@@ -612,6 +612,8 @@ def zap_launch():
             'scan_mode': request.form.get('scan_mode', 'active'),
             'timeout': int(request.form.get('timeout', 600)),
             'api_key': request.form.get('api_key', 'changeme123'),
+            'cookie': request.form.get('cookie', ''),
+            'spider_delay': int(request.form.get('spider_delay', 5)),
         }
 
         try:

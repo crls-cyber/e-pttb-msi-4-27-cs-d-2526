@@ -639,63 +639,10 @@ def zap_launch():
     return render_template('zap_launch.html')
 
 # Metasploit dedicated launch page
-@ui_bp.route('/en/jobs/new/metasploit', methods=['GET', 'POST'])
-@ui_bp.route('/fr/jobs/new/metasploit', methods=['GET', 'POST'])
+@ui_bp.route('/en/jobs/new/metasploit', methods=['GET'])
+@ui_bp.route('/fr/jobs/new/metasploit', methods=['GET'])
 @login_required
 def metasploit_launch():
-    if request.method == 'POST':
-        from core.models import Job
-        from core.api.app import db
-        from core.orchestrator.tasks import run_plugin
-        import uuid
-        from datetime import datetime
-        from flask import flash
-
-        target = request.form.get('target')
-        exploit = request.form.get('exploit')
-        payload = request.form.get('payload')
-        if not target or not exploit or not payload:
-            flash('Target, exploit and payload are required', 'error')
-            return render_template('metasploit_launch.html')
-
-        config = {
-            'target': target,
-            'exploit': exploit,
-            'payload': payload,
-        }
-        if request.form.get('rport'):
-            config['rport'] = int(request.form.get('rport'))
-        if request.form.get('lhost'):
-            config['lhost'] = request.form.get('lhost')
-        if request.form.get('lport'):
-            config['lport'] = int(request.form.get('lport'))
-        if request.form.get('msf_host'):
-            config['msf_host'] = request.form.get('msf_host')
-        if request.form.get('msf_port'):
-            config['msf_port'] = int(request.form.get('msf_port'))
-        if request.form.get('msf_password'):
-            config['msf_password'] = request.form.get('msf_password')
-
-        try:
-            job = Job(
-                id=uuid.uuid4(),
-                user_id=current_user.id,
-                plugin_name='metasploit',
-                config=config,
-                status='pending',
-                created_at=datetime.utcnow()
-            )
-            db.session.add(job)
-            db.session.commit()
-            run_plugin.delay(str(job.id), 'metasploit', config)
-            flash(f'Metasploit exploit launched! Job ID: {job.id}', 'success')
-            lang = get_locale()
-            return redirect(f'/{lang}/jobs/{job.id}')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error: {str(e)}', 'error')
-            return render_template('metasploit_launch.html')
-
     return render_template('metasploit_launch.html')
 
 # WhatWeb dedicated launch page

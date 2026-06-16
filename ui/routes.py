@@ -741,3 +741,17 @@ def whatweb_launch():
             return render_template('whatweb_launch.html')
 
     return render_template('whatweb_launch.html')
+
+# Aircrack dedicated page
+@ui_bp.route('/en/jobs/new/aircrack', methods=['GET'])
+@ui_bp.route('/fr/jobs/new/aircrack', methods=['GET'])
+@login_required
+def aircrack_launch():
+    return render_template('aircrack_launch.html')
+
+# Ettercap dedicated page
+@ui_bp.route('/en/jobs/new/ettercap', methods=['GET'])
+@ui_bp.route('/fr/jobs/new/ettercap', methods=['GET'])
+@login_required
+def ettercap_launch():
+    return render_template('ettercap_launch.html')

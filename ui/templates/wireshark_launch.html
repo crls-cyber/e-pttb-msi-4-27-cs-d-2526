@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Wireshark - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🦈 Wireshark — Network Traffic Analysis</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+
+        <!-- WHY NOT INTEGRATED -->
+        <div class="alert" style="background:#fff3e0;border:2px solid #ff9800;border-radius:8px;padding:20px;margin-bottom:20px;">
+            <h4 style="color:#e65100;margin:0 0 10px 0;">⚠️ Why Wireshark is not directly integrated</h4>
+            <p style="margin:0 0 8px 0;">Wireshark/tshark requires <strong>direct access to a physical network interface</strong> of the host machine to capture live traffic. Running inside a Docker container with network isolation prevents it from capturing traffic between other hosts.</p>
+            <ul style="margin:8px 0 0 0;padding-left:20px;font-size:13px;">
+                <li>Live packet capture requires raw socket access at kernel level</li>
+                <li>Docker containers are isolated in their own network namespace</li>
+                <li>The Docker Worker can only see its own container traffic, not host network traffic</li>
+            </ul>
+            <p style="margin:10px 0 0 0;font-size:13px;color:#666;">
+                <strong>Solution:</strong> Capture traffic directly on Kali using <code>tcpdump</code> or Wireshark,
+                then import the .pcap file into the Toolbox using the upload feature below.
+                The Toolbox will automatically parse the file and create findings.
+            </p>
+        </div>
+
+        <!-- HOW TO CAPTURE -->
+        <div class="chart-card">
+            <div class="chart-card-header">🛠️ How to capture traffic on Kali</div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 1 — One-time setup: allow tcpdump without sudo</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:8px;">
+                <div style="color:#88846f;"># Grant tcpdump the capability to capture packets without sudo</div>
+                <div style="color:#88846f;"># Only needs to be done once (persists until tcpdump is updated)</div>
+                <div>sudo setcap cap_net_raw+eip $(which tcpdump)</div>
+            </div>
+            <div style="padding:8px 12px;background:#e8f5e9;border-radius:6px;font-size:13px;margin-bottom:15px;">
+                ✅ After this, <code>tcpdump</code> runs without <code>sudo</code> — professional and secure approach.
+                If tcpdump is updated by <code>apt upgrade</code>, run this command again.
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 2 — Identify your network interface</h4>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># List all interfaces</div>
+                <div>ip addr show</div>
+                <div style="color:#88846f;margin-top:8px;"># Common interfaces in this lab:</div>
+                <div style="color:#88846f;"># eth0 → Host-Only (192.168.145.x) → WebSRV, WS22</div>
+                <div style="color:#88846f;"># eth1 → NAT (192.168.200.x)      → Metasploitable2</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 3 — Capture traffic (choose your scenario)</h4>
+
+            <p style="font-size:13px;font-weight:bold;margin:10px 0 5px 0;">📡 General capture (all traffic on interface):</p>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:10px;">
+                <div style="color:#88846f;"># Capture all traffic on eth1 (NAT network)</div>
+                <div>tcpdump -i eth1 -w /tmp/capture.pcap</div>
+                <div style="color:#88846f;margin-top:4px;"># Press Ctrl+C to stop</div>
+            </div>
+
+            <p style="font-size:13px;font-weight:bold;margin:10px 0 5px 0;">🎯 Targeted capture (specific host and protocol):</p>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:10px;">
+                <div style="color:#88846f;"># Capture FTP traffic to/from Metasploitable2</div>
+                <div>tcpdump -i eth1 host 192.168.200.133 and port 21 -w /tmp/ftp_capture.pcap</div>
+                <div style="color:#88846f;margin-top:8px;"># Capture HTTP traffic</div>
+                <div>tcpdump -i eth1 host 192.168.200.133 and port 80 -w /tmp/http_capture.pcap</div>
+                <div style="color:#88846f;margin-top:8px;"># Capture a limited number of packets</div>
+                <div>tcpdump -i eth1 -c 100 -w /tmp/capture.pcap</div>
+            </div>
+
+            <p style="font-size:13px;font-weight:bold;margin:10px 0 5px 0;">🔍 Capture with Wireshark GUI:</p>
+            <div style="background:#1e1e1e;color:#f8f8f2;padding:15px;border-radius:6px;font-family:monospace;font-size:13px;margin-bottom:15px;">
+                <div style="color:#88846f;"># Launch Wireshark GUI (if installed)</div>
+                <div>wireshark &</div>
+                <div style="color:#88846f;margin-top:4px;"># Select interface → Start capture → Stop → File → Save as .pcap</div>
+            </div>
+
+            <h4 style="margin:15px 0 8px 0;">Step 4 — What the Toolbox detects in your PCAP</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
+                <div style="padding:10px;background:#ffebee;border-radius:6px;border-left:4px solid #d32f2f;">
+                    <strong style="color:#d32f2f;">🔴 HIGH severity</strong>
+                    <ul style="margin:6px 0 0 0;padding-left:16px;font-size:12px;">
+                        <li>FTP credentials in clear text</li>
+                        <li>Telnet passwords</li>
+                        <li>HTTP Basic Auth</li>
+                    </ul>
+                </div>
+                <div style="padding:10px;background:#fff3e0;border-radius:6px;border-left:4px solid #ff9800;">
+                    <strong style="color:#e65100;">🟠 MEDIUM severity</strong>
+                    <ul style="margin:6px 0 0 0;padding-left:16px;font-size:12px;">
+                        <li>Unencrypted HTTP traffic</li>
+                        <li>Sensitive URLs in clear text</li>
+                        <li>Unencrypted protocols</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="padding:12px;background:#e8f5e9;border-radius:6px;border-left:4px solid #4caf50;margin-bottom:15px;">
+                <strong>✅ Accepted file formats:</strong>
+                <ul style="margin:6px 0 0 0;padding-left:20px;font-size:13px;">
+                    <li><code>.pcap</code> — Standard Wireshark/tcpdump format</li>
+                    <li><code>.pcapng</code> — Next-generation PCAP format</li>
+                    <li><code>.cap</code> — Alternative capture format</li>
+                    <li>Maximum file size: <strong>100 MB</strong></li>
+                </ul>
+            </div>
+
+            <!-- UPLOAD BUTTON -->
+            <div style="text-align:center;padding:20px;background:#f3f8ff;border-radius:8px;border:2px dashed #2196f3;">
+                <p style="font-size:16px;font-weight:bold;margin:0 0 10px 0;">
+                    📤 Ready to import your capture file?
+                </p>
+                <p style="font-size:13px;color:#666;margin:0 0 15px 0;">
+                    Upload your .pcap file to automatically extract findings
+                </p>
+                <a href="/{{ lang }}/upload-external" class="btn btn-primary" style="font-size:16px;padding:12px 30px;">
+                    📤 Go to Upload Page
+                </a>
+                <p style="font-size:12px;color:#888;margin:10px 0 0 0;">
+                    On the upload page, select <strong>"Wireshark (PCAP)"</strong> as parser type
+                    or use <strong>Auto-detect</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-md-4" style="display:flex;flex-direction:column;gap:15px;align-self:flex-start;">
+
+        <div class="chart-card">
+            <div class="chart-card-header">📋 Setup Checklist</div>
+            <ul style="font-size:13px;padding-left:20px;">
+                <li>Run <strong>setcap once</strong>:<br>
+                    <code style="font-size:11px;">sudo setcap cap_net_raw+eip $(which tcpdump)</code>
+                </li>
+                <li>Know your interface (<code>eth0</code> or <code>eth1</code>)</li>
+                <li>Target machine must be active</li>
+                <li>Generate traffic (FTP, HTTP, etc.)</li>
+                <li>Stop capture → upload .pcap here</li>
+            </ul>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🌐 Lab Network Reference</div>
+            <table style="width:100%;font-size:12px;">
+                <tr><th>Interface</th><th>Network</th><th>Targets</th></tr>
+                <tr><td><code>eth0</code></td><td>145.x</td><td>WebSRV, WS22</td></tr>
+                <tr><td><code>eth1</code></td><td>200.x</td><td>Metasploitable2</td></tr>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">🔗 Workflow</div>
+            <p style="font-size:13px;">
+                <strong>Best practice:</strong><br>
+                Run Hydra/SQLmap → <em>generates FTP/HTTP traffic</em><br>
+                → tcpdump captures it → upload PCAP<br>
+                → Toolbox extracts credentials<br><br>
+                <strong>Combine with:</strong><br>
+                Nmap (find open ports) → tcpdump (capture service traffic)
+            </p>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">⚡ Quick Commands</div>
+            <div style="font-size:11px;font-family:monospace;background:#f5f5f5;padding:10px;border-radius:4px;">
+                <div style="color:#888;"># One-time setup</div>
+                <div>sudo setcap cap_net_raw+eip $(which tcpdump)</div>
+                <div style="color:#888;margin-top:4px;"># Capture FTP</div>
+                <div>tcpdump -i eth1 port 21 -w ftp.pcap</div>
+                <div style="color:#888;margin-top:4px;"># Capture HTTP</div>
+                <div>tcpdump -i eth1 port 80 -w http.pcap</div>
+                <div style="color:#888;margin-top:4px;"># Verify capture</div>
+                <div>tcpdump -r capture.pcap | head -10</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

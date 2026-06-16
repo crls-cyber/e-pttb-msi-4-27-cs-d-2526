@@ -755,3 +755,10 @@ def aircrack_launch():
 @login_required
 def ettercap_launch():
     return render_template('ettercap_launch.html')
+
+# Wireshark dedicated page
+@ui_bp.route('/en/jobs/new/wireshark', methods=['GET'])
+@ui_bp.route('/fr/jobs/new/wireshark', methods=['GET'])
+@login_required
+def wireshark_launch():
+    return render_template('wireshark_launch.html')

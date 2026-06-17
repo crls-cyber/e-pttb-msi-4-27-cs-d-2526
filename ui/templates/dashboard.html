@@ -1,293 +1,86 @@
 {% extends "base.html" %}
-
 {% block title %}{{ t('dashboard.title') }} - {{ t('app_title') }}{% endblock %}
-
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/kibana-style.css') }}">
-{% endblock %}
-
 {% block content %}
 <div class="page-header">
     <h1 class="page-title">{{ t('dashboard.title') }}</h1>
 </div>
-
 <div class="dashboard-alerts mb-4">
-    <div class="alert d-flex justify-content-between align-items-center" style="background-color: #F8E9E9; border-left: 4px solid #BD271E; color: #7B341E; padding: 12px 20px; border-radius: 4px; margin-bottom: 12px;">
+    <div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,51,102,0.08);border-left:3px solid #ff3366;color:#ff8099;padding:12px 20px;margin-bottom:10px;">
         <div>🚨 <strong>3 new CRITICAL findings</strong> in last 24h</div>
-        <a href="/{{ lang }}/findings" style="color: #BD271E; font-weight: bold; text-decoration: none;">View →</a>
+        <a href="/{{ lang }}/findings" style="color:#00d4ff;font-weight:bold;">View →</a>
     </div>
-    <div class="alert d-flex justify-content-between align-items-center" style="background-color: #FEF5E7; border-left: 4px solid #F5A700; color: #7B5400; padding: 12px 20px; border-radius: 4px;">
+    <div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;color:#ffaa88;padding:12px 20px;">
         <div>⚠️ <strong>Metasploit exploit available</strong> for vsftpd 2.3.4 on 192.168.200.133</div>
-        <a href="/{{ lang }}/workflows" style="color: #F5A700; font-weight: bold; text-decoration: none;">Exploit →</a>
+        <a href="/{{ lang }}/workflows" style="color:#00d4ff;font-weight:bold;">Exploit →</a>
     </div>
 </div>
-
 <div class="row mb-4">
     <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card">
-            <div class="kpi-value kpi-critical" id="kpi-critical">-</div>
-            <div class="kpi-label">{{ t('dashboard.kpi.critical') }}</div>
+        <div class="kpi-card"><div class="kpi-value kpi-critical" id="kpi-critical">-</div><div class="kpi-label">{{ t('dashboard.kpi.critical') }}</div></div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-high" id="kpi-high">-</div><div class="kpi-label">{{ t('dashboard.kpi.high') }}</div></div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-success" id="kpi-completed">-</div><div class="kpi-label">{{ t('dashboard.kpi.completed') }}</div></div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-info" id="kpi-plugins">-</div><div class="kpi-label">{{ t('dashboard.kpi.plugins') }}</div></div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="kpi-card disabled" style="position:relative;">
+            <div class="badge-coming-soon" style="position:absolute;top:-8px;right:-8px;">SOON</div>
+            <div class="kpi-value">92%</div><div class="kpi-label">Coverage</div>
         </div>
     </div>
     <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card">
-            <div class="kpi-value kpi-high" id="kpi-high">-</div>
-            <div class="kpi-label">{{ t('dashboard.kpi.high') }}</div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card">
-            <div class="kpi-value kpi-success" id="kpi-completed">-</div>
-            <div class="kpi-label">{{ t('dashboard.kpi.completed') }}</div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card">
-            <div class="kpi-value kpi-info" id="kpi-plugins">-</div>
-            <div class="kpi-label">{{ t('dashboard.kpi.plugins') }}</div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
-            <div class="badge-coming-soon" style="position: absolute; top: -8px; right: -8px;">SOON</div>
-            <div class="kpi-value" style="color: #adb5bd;">92%</div>
-            <div class="kpi-label">Coverage</div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-        <div class="kpi-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
-            <div class="badge-coming-soon" style="position: absolute; top: -8px; right: -8px;">SOON</div>
-            <div class="kpi-value" style="color: #adb5bd;">4.2</div>
-            <div class="kpi-label">Avg Risk Score</div>
+        <div class="kpi-card disabled" style="position:relative;">
+            <div class="badge-coming-soon" style="position:absolute;top:-8px;right:-8px;">SOON</div>
+            <div class="kpi-value">4.2</div><div class="kpi-label">Avg Risk Score</div>
         </div>
     </div>
 </div>
-
 <div class="row">
     <div class="col-lg-4 mb-4">
-        <div class="chart-card">
-            <div class="chart-card-header">{{ t('dashboard.charts.severity') }}</div>
-            <div class="chart-container-small">
-                <canvas id="severityChart"></canvas>
-            </div>
-        </div>
+        <div class="chart-card"><div class="chart-card-header">{{ t('dashboard.charts.severity') }}</div><div class="chart-container-small"><canvas id="severityChart"></canvas></div></div>
     </div>
-
     <div class="col-lg-4 mb-4">
-        <div class="chart-card">
-            <div class="chart-card-header">{{ t('dashboard.charts.status') }}</div>
-            <div class="chart-container-small">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
+        <div class="chart-card"><div class="chart-card-header">{{ t('dashboard.charts.status') }}</div><div class="chart-container-small"><canvas id="statusChart"></canvas></div></div>
     </div>
-
     <div class="col-lg-4 mb-4">
-        <div class="chart-card">
-            <div class="chart-card-header">{{ t('dashboard.charts.recent') }}</div>
-            <div id="recentJobs">Loading...</div>
-        </div>
+        <div class="chart-card"><div class="chart-card-header">{{ t('dashboard.charts.recent') }}</div><div id="recentJobs" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading...</div></div>
     </div>
 </div>
-
 <div class="row">
     <div class="col-12">
-        <div class="chart-card">
-            <div class="chart-card-header">{{ t('dashboard.charts.plugins') }}</div>
-            <div class="chart-container-small">
-                <canvas id="pluginsChart"></canvas>
-            </div>
-        </div>
+        <div class="chart-card"><div class="chart-card-header">{{ t('dashboard.charts.plugins') }}</div><div class="chart-container-small"><canvas id="pluginsChart"></canvas></div></div>
     </div>
 </div>
-
-<div class="row mt-4">
-    <div class="col-lg-6 mb-4">
-        <div class="chart-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
-            <div class="badge-coming-soon" style="position: absolute; top: 10px; right: 10px;">📊 PHASE 3</div>
-            <div class="chart-card-header" style="color: #adb5bd;">Timeline Trends (Findings/Week)</div>
-            <div class="chart-container-small" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #dee2e6;">
-                📈
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="chart-card disabled" style="background: #f8f9fa; border: 2px dashed #dee2e6; opacity: 0.7; position: relative;">
-            <div class="badge-coming-soon" style="position: absolute; top: 10px; right: 10px;">📊 PHASE 3</div>
-            <div class="chart-card-header" style="color: #adb5bd;">Vulnerability Heatmap (IPs/Services)</div>
-            <div class="chart-container-small" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #dee2e6;">
-                🗺️
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 <script>
-// Translations for JavaScript
-const i18n = {
-    severity: {
-        critical: "{{ t('severity.critical') }}",
-        high: "{{ t('severity.high') }}",
-        medium: "{{ t('severity.medium') }}",
-        low: "{{ t('severity.low') }}",
-        info: "{{ t('severity.info') }}"
-    },
-    status: {
-        completed: "{{ t('status.completed') }}",
-        failed: "{{ t('status.failed') }}",
-        running: "{{ t('status.running') }}",
-        pending: "{{ t('status.pending') }}"
-    }
-};
-
-// Kibana color palette
-const kibanaColors = {
-    critical: '#7B341E',
-    high: '#BD271E',
-    medium: '#F5A700',
-    low: '#017D73',
-    info: '#006BB4',
-    completed: '#017D73',
-    failed: '#BD271E',
-    running: '#F5A700',
-    pending: '#69707D'
-};
-
-// Fetch dashboard data
-fetch('/api/stats/dashboard')
-    .then(response => response.json())
-    .then(data => {
-        // Update KPI cards
-        document.getElementById('kpi-critical').textContent = data.findings_by_severity.critical || 0;
-        document.getElementById('kpi-high').textContent = data.findings_by_severity.high || 0;
-        document.getElementById('kpi-completed').textContent = data.jobs_by_status.completed || 0;
-        document.getElementById('kpi-plugins').textContent = Object.keys(data.top_plugins).length;
-
-        // Severity Chart
-        const severityCtx = document.getElementById('severityChart').getContext('2d');
-        new Chart(severityCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    i18n.severity.critical,
-                    i18n.severity.high,
-                    i18n.severity.medium,
-                    i18n.severity.low,
-                    i18n.severity.info
-                ],
-                datasets: [{
-                    data: [
-                        data.findings_by_severity.critical || 0,
-                        data.findings_by_severity.high || 0,
-                        data.findings_by_severity.medium || 0,
-                        data.findings_by_severity.low || 0,
-                        data.findings_by_severity.info || 0
-                    ],
-                    backgroundColor: [
-                        kibanaColors.critical,
-                        kibanaColors.high,
-                        kibanaColors.medium,
-                        kibanaColors.low,
-                        kibanaColors.info
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                cutout: '70%'
-            }
-        });
-
-        // Status Chart
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    i18n.status.completed,
-                    i18n.status.failed,
-                    i18n.status.running,
-                    i18n.status.pending
-                ],
-                datasets: [{
-                    data: [
-                        data.jobs_by_status.completed || 0,
-                        data.jobs_by_status.failed || 0,
-                        data.jobs_by_status.running || 0,
-                        data.jobs_by_status.pending || 0
-                    ],
-                    backgroundColor: [
-                        kibanaColors.completed,
-                        kibanaColors.failed,
-                        kibanaColors.running,
-                        kibanaColors.pending
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                cutout: '70%'
-            }
-        });
-
-        // Plugins Chart
-        const pluginsCtx = document.getElementById('pluginsChart').getContext('2d');
-        const pluginNames = Object.keys(data.top_plugins);
-        const pluginCounts = Object.values(data.top_plugins);
-
-        new Chart(pluginsCtx, {
-            type: 'bar',
-            data: {
-                labels: pluginNames,
-                datasets: [{
-                    label: 'Usage',
-                    data: pluginCounts,
-                    backgroundColor: kibanaColors.info,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { beginAtZero: true, grid: { color: '#E8E8E8' } },
-                    y: { grid: { display: false } }
-                }
-            }
-        });
-
-        // Recent Jobs Table
-        const recentJobsDiv = document.getElementById('recentJobs');
-        let html = '<table class="jobs-table"><thead><tr><th>Plugin</th><th>Status</th><th>Time</th></tr></thead><tbody>';
-
-        data.recent_jobs.slice(0, 5).forEach(job => {
-            const statusClass = 'status-' + job.status;
-            const statusText = i18n.status[job.status] || job.status;
-            const date = new Date(job.created_at);
-            const timeStr = date.toLocaleTimeString('{{ lang }}', { hour: '2-digit', minute: '2-digit' });
-
-            html += `<tr>
-                <td><strong>${job.plugin}</strong></td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${timeStr}</td>
-            </tr>`;
-        });
-
-        html += '</tbody></table>';
-        recentJobsDiv.innerHTML = html;
-    })
-    .catch(error => {
-        console.error('Error loading dashboard:', error);
+const i18n={severity:{critical:"{{ t('severity.critical') }}",high:"{{ t('severity.high') }}",medium:"{{ t('severity.medium') }}",low:"{{ t('severity.low') }}",info:"{{ t('severity.info') }}"},status:{completed:"{{ t('status.completed') }}",failed:"{{ t('status.failed') }}",running:"{{ t('status.running') }}",pending:"{{ t('status.pending') }}"}};
+const dc={critical:'#ff3366',high:'#ff6b35',medium:'#ffd700',low:'#00ff88',info:'#00d4ff',completed:'#00ff88',failed:'#ff3366',running:'#00d4ff',pending:'#4a7a8a'};
+Chart.defaults.color='#4a7a8a';
+Chart.defaults.borderColor='#0e3a52';
+fetch('/api/stats/dashboard').then(r=>r.json()).then(data=>{
+    document.getElementById('kpi-critical').textContent=data.findings_by_severity.critical||0;
+    document.getElementById('kpi-high').textContent=data.findings_by_severity.high||0;
+    document.getElementById('kpi-completed').textContent=data.jobs_by_status.completed||0;
+    document.getElementById('kpi-plugins').textContent=Object.keys(data.top_plugins).length;
+    new Chart(document.getElementById('severityChart'),{type:'doughnut',data:{labels:[i18n.severity.critical,i18n.severity.high,i18n.severity.medium,i18n.severity.low,i18n.severity.info],datasets:[{data:[data.findings_by_severity.critical||0,data.findings_by_severity.high||0,data.findings_by_severity.medium||0,data.findings_by_severity.low||0,data.findings_by_severity.info||0],backgroundColor:[dc.critical,dc.high,dc.medium,dc.low,dc.info],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'70%'}});
+    new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:[i18n.status.completed,i18n.status.failed,i18n.status.running,i18n.status.pending],datasets:[{data:[data.jobs_by_status.completed||0,data.jobs_by_status.failed||0,data.jobs_by_status.running||0,data.jobs_by_status.pending||0],backgroundColor:[dc.completed,dc.failed,dc.running,dc.pending],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'70%'}});
+    new Chart(document.getElementById('pluginsChart'),{type:'bar',data:{labels:Object.keys(data.top_plugins),datasets:[{label:'Usage',data:Object.values(data.top_plugins),backgroundColor:'rgba(0,212,255,0.25)',borderColor:'#00d4ff',borderWidth:1,borderRadius:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'#0e3a52'},ticks:{color:'#4a7a8a'}},y:{grid:{display:false},ticks:{color:'#7faec0'}}}}});
+    const stStyle={completed:'color:#00ff88',failed:'color:#ff3366',running:'color:#00d4ff',pending:'color:#4a7a8a'};
+    let html='<table style="width:100%;border-collapse:collapse;">';
+    ['Plugin','Status','Time'].forEach(h=>html+=`<th style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#00d4ff;letter-spacing:2px;text-transform:uppercase;padding:6px 0;border-bottom:1px solid #0e3a52;">${h}</th>`);
+    html+='</tr></thead><tbody>';
+    data.recent_jobs.slice(0,5).forEach(job=>{
+        const st=stStyle[job.status]||'color:#7faec0';
+        const t2=new Date(job.created_at).toLocaleTimeString('{{ lang }}',{hour:'2-digit',minute:'2-digit'});
+        html+=`<tr><td style="padding:7px 0;border-bottom:1px solid #0e3a52;font-family:'Share Tech Mono',monospace;font-size:11px;color:#c8e6f0;">${job.plugin}</td><td style="padding:7px 0;border-bottom:1px solid #0e3a52;font-family:'Share Tech Mono',monospace;font-size:10px;${st};text-transform:uppercase;">${i18n.status[job.status]||job.status}</td><td style="padding:7px 0;border-bottom:1px solid #0e3a52;font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a7a8a;">${t2}</td></tr>`;
     });
+    html+='</tbody></table>';
+    document.getElementById('recentJobs').innerHTML=html;
+}).catch(err=>console.error('Dashboard error:',err));
 </script>
 {% endblock %}

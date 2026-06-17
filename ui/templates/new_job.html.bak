@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}New Scan - {{ t('app_title') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">New Scan</h1>
+</div>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <div class="chart-card-header">Configure Scan</div>
+            
+            <form method="POST" action="/{{ lang }}/jobs/new">
+                <div class="mb-3">
+                    <label for="plugin" class="form-label">Plugin:</label>
+                    <select class="form-control" id="plugin" name="plugin" required>
+                        <option value="">-- Select a plugin --</option>
+                        <option value="nmap">Nmap (Network Scan)</option>
+                        <option value="nuclei">Nuclei (Web Vulnerabilities)</option>
+                        <option value="sqlmap">SQLmap (SQL Injection)</option>
+                        <option value="hydra">Hydra (Brute Force)</option>
+                        <option value="subfinder">Subfinder (Subdomain Enumeration)</option>
+                        <option value="theharvester">theHarvester (OSINT)</option>
+                        <option value="zap">OWASP ZAP (Web Scan)</option>
+                        <option value="metasploit">Metasploit (Exploitation)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="target" class="form-label">Target:</label>
+                    <input type="text" class="form-control" id="target" name="target" placeholder="192.168.200.133 or example.com" required>
+                    <small class="form-text text-muted">IP address or domain name</small>
+                </div>
+
+                <!-- Nmap Options -->
+                <div id="nmap-options" class="plugin-options" style="display: none;">
+                    <h5>Nmap Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Ports:</label>
+                        <input type="text" class="form-control" name="ports" placeholder="80,443,22 or 1-1000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scan Type:</label>
+                        <select class="form-control" name="scan_type">
+                            <option value="-sV">Version Detection (-sV)</option>
+                            <option value="-sS">SYN Scan (-sS)</option>
+                            <option value="-sT">TCP Connect (-sT)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nuclei Options -->
+                <div id="nuclei-options" class="plugin-options" style="display: none;">
+                    <h5>Nuclei Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Severity:</label>
+                        <input type="text" class="form-control" name="severity" value="critical,high,medium" placeholder="critical,high,medium,low,info">
+                    </div>
+                </div>
+
+                <!-- SQLmap Options -->
+                <div id="sqlmap-options" class="plugin-options" style="display: none;">
+                    <h5>SQLmap Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Mode:</label>
+                        <select class="form-control" name="mode">
+                            <option value="detect">Detect Only</option>
+                            <option value="exploit">Exploit</option>
+                            <option value="dump">Dump Data</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hydra Options -->
+                <div id="hydra-options" class="plugin-options" style="display: none;">
+                    <h5>Hydra Options</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Service:</label>
+                        <select class="form-control" name="service">
+                            <option value="ssh">SSH</option>
+                            <option value="ftp">FTP</option>
+                            <option value="telnet">Telnet</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username:</label>
+                        <input type="text" class="form-control" name="username" placeholder="admin">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password:</label>
+                        <input type="text" class="form-control" name="password" placeholder="Single password">
+                        <small class="form-text text-muted">Or leave empty to use default list</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i> Launch Scan
+                </button>
+                <a href="/{{ lang }}/jobs" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Quick Tips</div>
+            <ul>
+                <li>Always test on authorized targets only</li>
+                <li>Start with reconnaissance (Nmap, subfinder)</li>
+                <li>Use Nuclei for quick vulnerability detection</li>
+                <li>Check the Dashboard for scan progress</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide plugin-specific options
+document.getElementById('plugin').addEventListener('change', function() {
+    // Hide all plugin options
+    document.querySelectorAll('.plugin-options').forEach(el => el.style.display = 'none');
+    
+    // Show selected plugin options
+    const plugin = this.value;
+    const optionsDiv = document.getElementById(plugin + '-options');
+    if (optionsDiv) {
+        optionsDiv.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

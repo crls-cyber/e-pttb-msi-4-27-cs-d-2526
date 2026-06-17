@@ -1,73 +1,51 @@
 {% extends "base.html" %}
-
 {% block title %}{{ t('nav.jobs') }} - {{ t('app_title') }}{% endblock %}
-
 {% block content %}
 <div class="page-header">
     <h1 class="page-title">{{ t('jobs.title') }}</h1>
-    <a href="/{{ lang }}/jobs/new" class="btn btn-success">
-        <i class="fas fa-plus"></i> {{ t('jobs.new_scan') }}
-    </a>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-success"><i class="fas fa-plus"></i> {{ t('jobs.new_scan') }}</a>
 </div>
-
 <div class="chart-card">
     <div class="chart-card-header">{{ t('jobs.title') }}</div>
-    <div id="jobsList" style="overflow-x: auto;">Loading jobs...</div>
+    <div id="jobsList" style="overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading jobs...</div>
 </div>
-
 <script>
-fetch('/api/jobs')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('jobsList');
-        
-        let jobs = Array.isArray(data) ? data : (data.jobs || []);
-        
-        // Tri par date décroissante (plus récent en premier)
-        jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
-        if (jobs.length > 0) {
-            let html = '<table class="jobs-table" style="width: 100%; table-layout: auto;">';
-            html += '<thead><tr>';
-            html += '<th style="width: 10%;">{{ t("jobs.id") }}</th>';
-            html += '<th style="width: 12%;">{{ t("jobs.plugin") }}</th>';
-            html += '<th style="width: 20%;">{{ t("jobs.target") }}</th>';
-            html += '<th style="width: 12%;">{{ t("jobs.status") }}</th>';
-            html += '<th style="width: 18%;">{{ t("jobs.date") }}</th>';
-            html += '<th style="width: 10%;">{{ t("jobs.actions") }}</th>';
-            html += '</tr></thead><tbody>';
-            
-            jobs.forEach(job => {
-                const jobId = job.id ? job.id.substring(0, 8) : 'N/A';
-                const fullJobId = job.id || '';
-                const status = job.status || 'unknown';
-                const statusClass = status === 'completed' ? 'badge bg-success' : 
-                                   status === 'failed' ? 'badge bg-danger' : 
-                                   status === 'running' ? 'badge bg-primary' : 'badge bg-secondary';
-                const date = job.created_at ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
-                const target = job.config?.target || job.config?.targets || 'N/A';
-                
-                html += `<tr>
-                    <td><code style="font-size: 0.9rem;">${jobId}</code></td>
-                    <td><strong style="font-size: 1rem;">${job.plugin || 'N/A'}</strong></td>
-                    <td style="font-size: 0.95rem;">${target}</td>
-                    <td><span class="${statusClass}" style="font-size: 0.9rem;">${status}</span></td>
-                    <td style="font-size: 0.9rem;">${date}</td>
-                    <td><a href="/{{ lang }}/jobs/${fullJobId}" class="btn btn-sm btn-primary">{{ t("jobs.details") }}</a></td>
-                </tr>`;
-            });
-            
-            html += '</tbody></table>';
-            container.innerHTML = html;
-            
-            document.querySelector('.chart-card-header').textContent = `{{ t("jobs.title") }} (${jobs.length})`;
-        } else {
-            container.innerHTML = '<p>No jobs yet. Create your first scan!</p>';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading jobs:', error);
-        document.getElementById('jobsList').innerHTML = `<p>Error: ${error.message}</p>`;
+const sevColor={completed:'#00ff88',failed:'#ff3366',running:'#00d4ff',pending:'#4a7a8a',unknown:'#7faec0'};
+const sevBg={completed:'rgba(0,255,136,0.12)',failed:'rgba(255,51,102,0.12)',running:'rgba(0,212,255,0.12)',pending:'rgba(74,122,138,0.2)',unknown:'rgba(74,122,138,0.15)'};
+fetch('/api/jobs').then(r=>r.json()).then(data=>{
+    const container=document.getElementById('jobsList');
+    let jobs=Array.isArray(data)?data:(data.jobs||[]);
+    jobs.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(!jobs.length){container.innerHTML='<p style="color:#4a7a8a;padding:20px;">// No jobs yet. Create your first scan!</p>';return;}
+    const thS='font-family:"Share Tech Mono",monospace;font-size:9px;color:#00d4ff;letter-spacing:2px;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid #0e3a52;white-space:nowrap;';
+    let html=`<table style="width:100%;border-collapse:collapse;table-layout:auto;"><thead><tr>
+        <th style="${thS}">{{ t("jobs.id") }}</th>
+        <th style="${thS}">{{ t("jobs.plugin") }}</th>
+        <th style="${thS}">{{ t("jobs.target") }}</th>
+        <th style="${thS}">{{ t("jobs.status") }}</th>
+        <th style="${thS}">{{ t("jobs.date") }}</th>
+        <th style="${thS}">{{ t("jobs.actions") }}</th>
+    </tr></thead><tbody>`;
+    jobs.forEach(job=>{
+        const jobId=job.id?job.id.substring(0,8):'N/A';
+        const fullId=job.id||'';
+        const status=job.status||'unknown';
+        const col=sevColor[status]||'#7faec0';
+        const bg=sevBg[status]||'rgba(74,122,138,0.15)';
+        const date=job.created_at?new Date(job.created_at).toLocaleString('{{ lang }}'==='fr'?'fr-FR':'en-US'):'N/A';
+        const target=job.config?.target||job.config?.targets||'N/A';
+        html+=`<tr style="border-bottom:1px solid #0e3a52;" onmouseover="this.style.background='rgba(0,212,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:10px 12px;"><code style="color:#00d4ff;font-size:11px;">${jobId}</code></td>
+            <td style="padding:10px 12px;color:#c8e6f0;font-weight:bold;">${job.plugin||'N/A'}</td>
+            <td style="padding:10px 12px;color:#7faec0;">${target}</td>
+            <td style="padding:10px 12px;"><span style="display:inline-block;padding:3px 8px;background:${bg};color:${col};border:1px solid ${col};font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;">${status}</span></td>
+            <td style="padding:10px 12px;color:#4a7a8a;font-size:11px;">${date}</td>
+            <td style="padding:10px 12px;"><a href="/{{ lang }}/jobs/${fullId}" class="btn btn-sm btn-primary">{{ t("jobs.details") }}</a></td>
+        </tr>`;
     });
+    html+='</tbody></table>';
+    container.innerHTML=html;
+    document.querySelector('.chart-card-header').textContent=`{{ t("jobs.title") }} (${jobs.length})`;
+}).catch(err=>{document.getElementById('jobsList').innerHTML=`<p style="color:#ff3366;padding:20px;">Error: ${err.message}</p>`;});
 </script>
 {% endblock %}

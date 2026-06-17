@@ -4,10 +4,10 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">New Scan</h1>
+    <h1 class="page-title">NEW SCAN</h1>
 </div>
 
-<!-- Messages flash -->
+<!-- Flash messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
@@ -18,127 +18,209 @@
   {% endif %}
 {% endwith %}
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="chart-card">
-            <div class="chart-card-header">Configure Scan</div>
-            
-            <form method="POST" action="/{{ lang }}/jobs/new">
-                <div class="mb-3">
-                    <label for="plugin" class="form-label">Plugin:</label>
-                    <select class="form-control" id="plugin" name="plugin" required>
-                        <option value="">-- Select a plugin --</option>
-                        <option value="nmap">Nmap (Network Scan)</option>
-                        <option value="nuclei">Nuclei (Web Vulnerabilities)</option>
-                        <option value="sqlmap">SQLmap (SQL Injection)</option>
-                        <option value="hydra">Hydra (Brute Force)</option>
-                        <option value="subfinder">Subfinder (Subdomain Enumeration)</option>
-                        <option value="theharvester">theHarvester (OSINT)</option>
-                        <option value="zap">OWASP ZAP (Web Scan)</option>
-                        <option value="metasploit">Metasploit (Exploitation)</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="target" class="form-label">Target:</label>
-                    <input type="text" class="form-control" id="target" name="target" placeholder="192.168.200.133 or example.com" required>
-                    <small class="form-text text-muted">IP address or domain name</small>
-                </div>
-
-                <!-- Nmap Options -->
-                <div id="nmap-options" class="plugin-options" style="display: none;">
-                    <h5>Nmap Options</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Ports:</label>
-                        <input type="text" class="form-control" name="ports" placeholder="80,443,22 or 1-1000">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Scan Type:</label>
-                        <select class="form-control" name="scan_type">
-                            <option value="-sV">Version Detection (-sV)</option>
-                            <option value="-sS">SYN Scan (-sS)</option>
-                            <option value="-sT">TCP Connect (-sT)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Nuclei Options -->
-                <div id="nuclei-options" class="plugin-options" style="display: none;">
-                    <h5>Nuclei Options</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Severity:</label>
-                        <input type="text" class="form-control" name="severity" value="critical,high,medium" placeholder="critical,high,medium,low,info">
-                    </div>
-                </div>
-
-                <!-- SQLmap Options -->
-                <div id="sqlmap-options" class="plugin-options" style="display: none;">
-                    <h5>SQLmap Options</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Mode:</label>
-                        <select class="form-control" name="mode">
-                            <option value="detect">Detect Only</option>
-                            <option value="exploit">Exploit</option>
-                            <option value="dump">Dump Data</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Hydra Options -->
-                <div id="hydra-options" class="plugin-options" style="display: none;">
-                    <h5>Hydra Options</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Service:</label>
-                        <select class="form-control" name="service">
-                            <option value="ssh">SSH</option>
-                            <option value="ftp">FTP</option>
-                            <option value="telnet">Telnet</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Username:</label>
-                        <input type="text" class="form-control" name="username" placeholder="admin">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password:</label>
-                        <input type="text" class="form-control" name="password" placeholder="Single password">
-                        <small class="form-text text-muted">Or leave empty to use default list</small>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-rocket"></i> Launch Scan
-                </button>
-                <a href="/{{ lang }}/jobs" class="btn btn-secondary">Cancel</a>
-            </form>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="chart-card">
-            <div class="chart-card-header">Quick Tips</div>
-            <ul>
-                <li>Always test on authorized targets only</li>
-                <li>Start with reconnaissance (Nmap, subfinder)</li>
-                <li>Use Nuclei for quick vulnerability detection</li>
-                <li>Check the Dashboard for scan progress</li>
-            </ul>
-        </div>
-    </div>
+<!-- MITRE ATT&CK intro -->
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:14px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Tools are organized following the <strong style="color:#e0f0ff;">MITRE ATT&CK</strong> framework — a globally recognized knowledge base
+    mapping adversary tactics from initial reconnaissance to post-exploitation.
+    Each column represents a phase of an attack chain, from left (passive recon) to right (exploitation).
 </div>
 
-<script>
-// Show/hide plugin-specific options
-document.getElementById('plugin').addEventListener('change', function() {
-    // Hide all plugin options
-    document.querySelectorAll('.plugin-options').forEach(el => el.style.display = 'none');
-    
-    // Show selected plugin options
-    const plugin = this.value;
-    const optionsDiv = document.getElementById(plugin + '-options');
-    if (optionsDiv) {
-        optionsDiv.style.display = 'block';
-    }
-});
-</script>
+<!-- Legal warning -->
+<div style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;padding:8px 14px;margin-bottom:20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.5px;">
+    ⚠️ AUTHORIZED TARGETS ONLY — Unauthorized scanning is illegal (Art. 323-1 Code Pénal)
+</div>
+
+<style>
+.kanban {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+}
+.col-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.col-header {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 8px;
+    border-radius: 6px;
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 2px;
+}
+.tool-card {
+    display: block;
+    border-radius: 6px;
+    padding: 11px 10px;
+    border: 1px solid;
+    text-decoration: none;
+    position: relative;
+    transition: filter 0.15s, transform 0.15s;
+}
+.tool-card:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+.t-icon { font-size: 17px; margin-bottom: 6px; }
+.t-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+.t-desc {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    opacity: 0.72;
+    line-height: 1.4;
+}
+.t-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+}
+
+/* Phase 1 — Reconnaissance — vert */
+.c1h { background: rgba(0,200,100,0.15); color: #00c864; }
+.c1  { background: rgba(0,200,100,0.07); border-color: rgba(0,200,100,0.3); color: #00c864; }
+/* Phase 2 — Discovery — cyan */
+.c2h { background: rgba(0,180,230,0.15); color: #00b4e6; }
+.c2  { background: rgba(0,180,230,0.07); border-color: rgba(0,180,230,0.3); color: #00b4e6; }
+/* Phase 3 — Vuln Analysis — bleu */
+.c3h { background: rgba(60,140,255,0.15); color: #3c8cff; }
+.c3  { background: rgba(60,140,255,0.07); border-color: rgba(60,140,255,0.3); color: #3c8cff; }
+/* Phase 4 — Web Exploitation — violet */
+.c4h { background: rgba(160,80,240,0.15); color: #a050f0; }
+.c4  { background: rgba(160,80,240,0.07); border-color: rgba(160,80,240,0.3); color: #a050f0; }
+/* Phase 5 — Credential Access — or */
+.c5h { background: rgba(220,180,0,0.15); color: #dcb400; }
+.c5  { background: rgba(220,180,0,0.07); border-color: rgba(220,180,0,0.3); color: #dcb400; }
+/* Phase 6 — Network / Traffic — orange */
+.c6h { background: rgba(240,130,0,0.15); color: #f08200; }
+.c6  { background: rgba(240,130,0,0.07); border-color: rgba(240,130,0,0.3); color: #f08200; }
+/* Phase 7 — Post-Exploitation — rouge */
+.c7h { background: rgba(230,40,80,0.15); color: #e62850; }
+.c7  { background: rgba(230,40,80,0.07); border-color: rgba(230,40,80,0.3); color: #e62850; }
+</style>
+
+<div class="kanban">
+
+    <!-- 01 Reconnaissance -->
+    <div class="col-wrap">
+        <div class="col-header c1h">// 01<br>Reconnaissance</div>
+        <a href="/{{ lang }}/jobs/new/subfinder" class="tool-card c1">
+            <div class="t-icon">🌐</div>
+            <div class="t-name">Subfinder</div>
+            <div class="t-desc">Subdomain enumeration via passive sources</div>
+        </a>
+        <a href="/{{ lang }}/jobs/new/theharvester" class="tool-card c1">
+            <div class="t-icon">🌾</div>
+            <div class="t-name">theHarvester</div>
+            <div class="t-desc">OSINT — emails, subdomains, IPs</div>
+        </a>
+    </div>
+
+    <!-- 02 Discovery -->
+    <div class="col-wrap">
+        <div class="col-header c2h">// 02<br>Discovery</div>
+        <a href="/{{ lang }}/jobs/new/nmap" class="tool-card c2">
+            <div class="t-icon">🔍</div>
+            <div class="t-name">Nmap</div>
+            <div class="t-desc">Network scanner — ports, services, OS</div>
+        </a>
+        <a href="/{{ lang }}/jobs/new/whatweb" class="tool-card c2">
+            <div class="t-icon">🕵️</div>
+            <div class="t-name">WhatWeb</div>
+            <div class="t-desc">Web tech fingerprinting — CMS, versions</div>
+        </a>
+    </div>
+
+    <!-- 03 Vuln Analysis -->
+    <div class="col-wrap">
+        <div class="col-header c3h">// 03<br>Vuln Analysis</div>
+        <a href="/{{ lang }}/jobs/new/nuclei" class="tool-card c3">
+            <div class="t-icon">☢️</div>
+            <div class="t-name">Nuclei</div>
+            <div class="t-desc">Template-based vuln scanner</div>
+        </a>
+        <a href="/{{ lang }}/jobs/new/zap" class="tool-card c3">
+            <div class="t-icon">🛡️</div>
+            <div class="t-name">OWASP ZAP</div>
+            <div class="t-desc">Web app scanner — XSS, SQLi, CSRF</div>
+        </a>
+        <a href="/{{ lang }}/jobs/new/burp" class="tool-card c3">
+            <div class="t-icon">🔬</div>
+            <div class="t-name">Burp Suite</div>
+            <div class="t-desc">HTTP proxy — web testing</div>
+            <span class="t-badge">📤 upload</span>
+        </a>
+    </div>
+
+    <!-- 04 Web Exploitation -->
+    <div class="col-wrap">
+        <div class="col-header c4h">// 04<br>Web Exploit</div>
+        <a href="/{{ lang }}/jobs/new/sqlmap" class="tool-card c4">
+            <div class="t-icon">💉</div>
+            <div class="t-name">SQLmap</div>
+            <div class="t-desc">SQL injection detection &amp; exploitation</div>
+        </a>
+    </div>
+
+    <!-- 05 Credential Access -->
+    <div class="col-wrap">
+        <div class="col-header c5h">// 05<br>Cred Access</div>
+        <a href="/{{ lang }}/jobs/new/hydra" class="tool-card c5">
+            <div class="t-icon">🔑</div>
+            <div class="t-name">Hydra</div>
+            <div class="t-desc">Brute force — SSH, FTP, MySQL, RDP</div>
+        </a>
+        <a href="/{{ lang }}/jobs/new/aircrack" class="tool-card c5">
+            <div class="t-icon">📡</div>
+            <div class="t-name">Aircrack-ng</div>
+            <div class="t-desc">WiFi WPA/WEP cracking</div>
+            <span class="t-badge">📤 upload</span>
+        </a>
+    </div>
+
+    <!-- 06 Network / Traffic -->
+    <div class="col-wrap">
+        <div class="col-header c6h">// 06<br>Network</div>
+        <a href="/{{ lang }}/jobs/new/wireshark" class="tool-card c6">
+            <div class="t-icon">🦈</div>
+            <div class="t-name">Wireshark</div>
+            <div class="t-desc">PCAP — credentials in cleartext</div>
+            <span class="t-badge">📤 upload</span>
+        </a>
+        <a href="/{{ lang }}/jobs/new/ettercap" class="tool-card c6">
+            <div class="t-icon">🕸️</div>
+            <div class="t-name">Ettercap</div>
+            <div class="t-desc">MITM — ARP poisoning</div>
+            <span class="t-badge">📤 upload</span>
+        </a>
+    </div>
+
+    <!-- 07 Post-Exploitation -->
+    <div class="col-wrap">
+        <div class="col-header c7h">// 07<br>Post-Exploit</div>
+        <a href="/{{ lang }}/jobs/new/metasploit" class="tool-card c7">
+            <div class="t-icon">💀</div>
+            <div class="t-name">Metasploit</div>
+            <div class="t-desc">Exploitation framework — native Kali</div>
+            <span class="t-badge">📤 upload</span>
+        </a>
+    </div>
+
+</div>
+
 {% endblock %}

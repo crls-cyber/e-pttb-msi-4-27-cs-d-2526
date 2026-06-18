@@ -134,7 +134,7 @@ code{padding:2px 6px!important;font-size:11px!important}
                 <i class="fas fa-upload"></i><span>{{ t('nav.upload') }}</span>
             </a>
             <a href="/{{ lang }}/targets" class="nav-item {% if 'targets' in request.path %}active{% endif %}"><i class="fas fa-bullseye"></i><span>Targets</span></a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-file-alt"></i><span>Reports</span><span class="badge-coming-soon">SOON</span></a>
+            <a href="/{{ lang }}/reports" class="nav-item {% if 'reports' in request.path %}active{% endif %}"><i class="fas fa-file-alt"></i><span>Reports</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-plug"></i><span>Integrations</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-shield-alt"></i><span>Compliance</span><span class="badge-coming-soon">SOON</span></a>
             <a href="/{{ lang }}/analytics" class="nav-item {% if 'analytics' in request.path %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>

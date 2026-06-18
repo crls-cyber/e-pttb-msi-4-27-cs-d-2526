@@ -1,9 +1,194 @@
 {% extends "base.html" %}
+{% block title %}Reports - {{ t('app_title') }}{% endblock %}
 {% block content %}
-<div style="max-width:800px;margin:60px auto;text-align:center;padding:40px;">
-    <div style="font-size:80px;margin-bottom:24px;">🚧</div>
-    <h1 style="font-family:'Share Tech Mono',monospace;font-size:32px;color:#00d4ff;letter-spacing:4px;margin-bottom:16px;text-transform:uppercase;">COMING SOON</h1>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;letter-spacing:2px;margin-bottom:32px;">// THIS MODULE IS UNDER DEVELOPMENT</p>
-    <a href="/en/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+<div class="page-header">
+    <h1 class="page-title">Reports</h1>
 </div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:20px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Generate aggregated reports across multiple jobs.
+    For individual job reports, see
+    <a href="/{{ lang }}/jobs" style="color:#00d4ff;">Jobs</a> → Details → HTML/PDF Report.
+</div>
+
+<div class="row">
+
+    <!-- Global Report -->
+    <div class="col-md-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🌐 Global Report</div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
+                // All findings from all completed jobs — full campaign overview.
+            </p>
+            <div id="global-stats" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#4a7a8a;margin-bottom:16px;">
+                Loading stats...
+            </div>
+            <a href="/api/reports/global" target="_blank"
+               style="display:block;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;text-decoration:none;margin-bottom:8px;">
+                → HTML REPORT
+            </a>
+            <a href="/api/reports/global/pdf" target="_blank"
+               style="display:block;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;text-decoration:none;">
+                → PDF REPORT
+            </a>
+        </div>
+    </div>
+
+    <!-- Report by Target -->
+    <div class="col-md-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🎯 Report by Target</div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
+                // All findings on a specific IP or domain — ideal client deliverable.
+            </p>
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Target</label>
+            <select id="target-select"
+                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;">
+                <option value="">-- Select a target --</option>
+            </select>
+            <button onclick="openTargetReport('html')"
+                style="display:block;width:100%;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;margin-bottom:8px;">
+                → HTML REPORT
+            </button>
+            <button onclick="openTargetReport('pdf')"
+                style="display:block;width:100%;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;">
+                → PDF REPORT
+            </button>
+        </div>
+    </div>
+
+    <!-- Report by Plugin -->
+    <div class="col-md-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔌 Report by Plugin</div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
+                // All findings from a specific tool — methodology statistics.
+            </p>
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Plugin</label>
+            <select id="plugin-select"
+                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;">
+                <option value="">-- Select a plugin --</option>
+            </select>
+            <button onclick="openPluginReport('html')"
+                style="display:block;width:100%;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;margin-bottom:8px;">
+                → HTML REPORT
+            </button>
+            <button onclick="openPluginReport('pdf')"
+                style="display:block;width:100%;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;">
+                → PDF REPORT
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Recent jobs with report links -->
+<div class="chart-card mt-2">
+    <div class="chart-card-header" id="jobsHeader">Recent Jobs — Individual Reports</div>
+    <div id="jobsList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+        Loading...
+    </div>
+</div>
+
+<style>
+.jobs-table { width:100%; border-collapse:separate; border-spacing:0; }
+.jobs-table thead th { padding:10px 12px; background:rgba(0,212,255,0.04); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#4a7a8a; text-align:left; border-bottom:1px solid #0e3a52; }
+.jobs-table tbody tr { border-bottom:1px solid #0a2a3a; }
+.jobs-table tbody tr:hover { background:rgba(0,212,255,0.03); }
+.jobs-table tbody td { padding:10px 12px; vertical-align:middle; font-family:'Share Tech Mono',monospace; font-size:11px; color:#7faec0; }
+.report-btn { display:inline-block; padding:3px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; text-decoration:none; margin-right:4px; }
+.btn-html { background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.3); color:#00d4ff; }
+.btn-pdf  { background:rgba(255,51,102,0.08); border:1px solid rgba(255,51,102,0.3); color:#ff4d6d; }
+.btn-csv  { background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.3); color:#00ff88; }
+</style>
+
+<script>
+// Load jobs and stats
+Promise.all([
+    fetch('/api/jobs').then(r => r.json()),
+    fetch('/api/stats/dashboard').then(r => r.json())
+]).then(([jobsData, stats]) => {
+    const jobs = Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []);
+
+    // Global stats
+    const total = Object.values(stats.findings_by_severity).reduce((a,b) => a+b, 0);
+    document.getElementById('global-stats').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div>Jobs completed: <span style="color:#00d4ff;">${stats.jobs_by_status.completed||0}</span></div>
+            <div>Total findings: <span style="color:#ff3366;">${total}</span></div>
+            <div>Critical: <span style="color:#ff3366;">${stats.findings_by_severity.critical||0}</span></div>
+            <div>High: <span style="color:#ff6b35;">${stats.findings_by_severity.high||0}</span></div>
+        </div>
+    `;
+
+    // Populate target select
+    const targets = [...new Set(jobs.map(j => j.config?.target || j.config?.domain || '').filter(Boolean))].sort();
+    const targetSel = document.getElementById('target-select');
+    targets.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t; opt.textContent = t;
+        targetSel.appendChild(opt);
+    });
+
+    // Populate plugin select
+    const plugins = [...new Set(jobs.map(j => j.plugin || j.plugin_name || '').filter(Boolean))].sort();
+    const pluginSel = document.getElementById('plugin-select');
+    plugins.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p; opt.textContent = p;
+        pluginSel.appendChild(opt);
+    });
+
+    // Jobs table
+    const completed = jobs.filter(j => j.status === 'completed').slice(0, 20);
+    document.getElementById('jobsHeader').textContent = `Recent Jobs — Individual Reports (${completed.length})`;
+
+    if (completed.length === 0) {
+        document.getElementById('jobsList').innerHTML = '<p style="color:#4a7a8a;padding:8px 0;">// No completed jobs yet.</p>';
+        return;
+    }
+
+    const statusColor = { completed:'#00ff88', failed:'#ff3366', running:'#00d4ff', pending:'#4a7a8a' };
+
+    let html = '<table class="jobs-table"><thead><tr>';
+    html += '<th style="width:10%;">ID</th><th style="width:12%;">Plugin</th>';
+    html += '<th style="width:20%;">Target</th><th style="width:15%;">Date</th>';
+    html += '<th style="width:12%;">Status</th><th style="width:31%;">Reports</th>';
+    html += '</tr></thead><tbody>';
+
+    completed.forEach(j => {
+        const target = j.config?.target || j.config?.domain || 'N/A';
+        const date   = j.created_at ? new Date(j.created_at).toLocaleDateString('en-GB') : 'N/A';
+        const color  = statusColor[j.status] || '#7faec0';
+        html += `<tr>
+            <td><code style="color:#00d4ff;">${j.id.substring(0,8)}</code></td>
+            <td>${j.plugin || j.plugin_name || 'N/A'}</td>
+            <td style="color:#ff6b35;">${target}</td>
+            <td style="color:#4a7a8a;">${date}</td>
+            <td style="color:${color};">${j.status.toUpperCase()}</td>
+            <td>
+                <a href="/api/reports/${j.id}/html" target="_blank" class="report-btn btn-html">HTML</a>
+                <a href="/api/reports/${j.id}/pdf"  target="_blank" class="report-btn btn-pdf">PDF</a>
+                <a href="/api/findings/export/csv?job_id=${j.id}&format=csv" class="report-btn btn-csv">CSV</a>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('jobsList').innerHTML = html;
+
+}).catch(err => console.error('Reports error:', err));
+
+function openTargetReport(format) {
+    const target = document.getElementById('target-select').value;
+    if (!target) { alert('Please select a target'); return; }
+    window.open(`/api/reports/target/${encodeURIComponent(target)}${format === 'pdf' ? '/pdf' : ''}`, '_blank');
+}
+
+function openPluginReport(format) {
+    const plugin = document.getElementById('plugin-select').value;
+    if (!plugin) { alert('Please select a plugin'); return; }
+    window.open(`/api/reports/plugin/${plugin}${format === 'pdf' ? '/pdf' : ''}`, '_blank');
+}
+</script>
 {% endblock %}

@@ -779,6 +779,42 @@ def update_target(target_id):
     audit_log('target.update', 'target', target_id)
     return jsonify({'message': 'Target updated'}), 200
 
+
+@api_bp.route('/reports/global', methods=['GET'])
+@login_required
+def get_global_report():
+    """Generate global aggregate report — all completed jobs."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_global_report
+        html = generate_global_report()
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/target/<path:target>', methods=['GET'])
+@login_required
+def get_target_report(target):
+    """Generate report for all findings on a specific target."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_target_report
+        html = generate_target_report(target)
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/plugin/<plugin_name>', methods=['GET'])
+@login_required
+def get_plugin_report(plugin_name):
+    """Generate report for all findings from a specific plugin."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_plugin_report
+        html = generate_plugin_report(plugin_name)
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

@@ -1,9 +1,314 @@
 {% extends "base.html" %}
+{% block title %}Analytics - {{ t('app_title') }}{% endblock %}
 {% block content %}
-<div style="max-width:800px;margin:60px auto;text-align:center;padding:40px;">
-    <div style="font-size:80px;margin-bottom:24px;">🚧</div>
-    <h1 style="font-family:'Share Tech Mono',monospace;font-size:32px;color:#00d4ff;letter-spacing:4px;margin-bottom:16px;text-transform:uppercase;">COMING SOON</h1>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;letter-spacing:2px;margin-bottom:32px;">// THIS MODULE IS UNDER DEVELOPMENT</p>
-    <a href="/en/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+<div class="page-header">
+    <h1 class="page-title">Analytics</h1>
 </div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:20px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Advanced statistics — findings trends, plugin efficiency, target coverage.
+    For live findings and severity breakdown, see
+    <a href="/{{ lang }}/dashboard" style="color:#00d4ff;">Dashboard</a> and
+    <a href="/{{ lang }}/findings" style="color:#00d4ff;">Findings</a>.
+</div>
+
+<!-- KPI row -->
+<div class="row mb-4" id="kpiRow">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-critical" id="kpi-risk-score">-</div><div class="kpi-label">// Risk Score</div></div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-success" id="kpi-success-rate">-</div><div class="kpi-label">// Success Rate</div></div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-info" id="kpi-total-findings">-</div><div class="kpi-label">// Total Findings</div></div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card"><div class="kpi-value kpi-high" id="kpi-total-jobs">-</div><div class="kpi-label">// Total Jobs</div></div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Findings over time -->
+    <div class="col-lg-8 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Findings — Last 30 Days</div>
+            <div class="chart-container-small"><canvas id="timelineChart"></canvas></div>
+        </div>
+    </div>
+    <!-- Risk profile -->
+    <div class="col-lg-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Risk Profile</div>
+            <div class="chart-container-small"><canvas id="riskChart"></canvas></div>
+            <div id="riskLegend" style="padding:10px 0;font-family:'Share Tech Mono',monospace;font-size:10px;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Findings per plugin -->
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Findings per Plugin</div>
+            <div class="chart-container-small"><canvas id="findingsPerPluginChart"></canvas></div>
+        </div>
+    </div>
+    <!-- Success rate per plugin -->
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Plugin Efficiency (Completed Jobs)</div>
+            <div class="chart-container-small"><canvas id="efficiencyChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Top targets -->
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Top Scanned Targets</div>
+            <div id="topTargets" style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading...</div>
+        </div>
+    </div>
+    <!-- Jobs over time -->
+    <div class="col-lg-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">Jobs — Last 30 Days</div>
+            <div class="chart-container-small"><canvas id="jobsTimelineChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<script>
+Chart.defaults.color = '#4a7a8a';
+Chart.defaults.borderColor = '#0e3a52';
+
+const dc = {
+    critical: '#ff3366', high: '#ff6b35', medium: '#ffd700',
+    low: '#00ff88', info: '#00d4ff'
+};
+
+// Load all data in parallel
+Promise.all([
+    fetch('/api/stats/dashboard').then(r => r.json()),
+    fetch('/api/findings').then(r => r.json()),
+    fetch('/api/jobs').then(r => r.json())
+]).then(([stats, findingsData, jobsData]) => {
+
+    const findings = Array.isArray(findingsData) ? findingsData : (findingsData.findings || []);
+    const jobs     = Array.isArray(jobsData)     ? jobsData     : (jobsData.jobs     || []);
+
+    // ── KPIs ──────────────────────────────────────────────────────────────────
+    const totalFindings = findings.length;
+    const totalJobs     = jobs.length;
+    const critical      = stats.findings_by_severity.critical || 0;
+    const high          = stats.findings_by_severity.high     || 0;
+    const riskScore     = totalFindings > 0
+        ? Math.round(((critical * 10 + high * 5) / totalFindings) * 10) / 10
+        : 0;
+    const completed     = stats.jobs_by_status.completed || 0;
+    const successRate   = totalJobs > 0 ? Math.round((completed / totalJobs) * 100) : 0;
+
+    document.getElementById('kpi-risk-score').textContent    = riskScore;
+    document.getElementById('kpi-success-rate').textContent  = successRate + '%';
+    document.getElementById('kpi-total-findings').textContent = totalFindings;
+    document.getElementById('kpi-total-jobs').textContent     = totalJobs;
+
+    // ── Risk Profile (donut) ──────────────────────────────────────────────────
+    const sevLabels = ['Critical', 'High', 'Medium', 'Low', 'Info'];
+    const sevKeys   = ['critical', 'high', 'medium', 'low', 'info'];
+    const sevData   = sevKeys.map(k => stats.findings_by_severity[k] || 0);
+    const sevColors = sevKeys.map(k => dc[k]);
+
+    new Chart(document.getElementById('riskChart'), {
+        type: 'doughnut',
+        data: { labels: sevLabels, datasets: [{ data: sevData, backgroundColor: sevColors, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
+    });
+
+    // Risk legend
+    let legendHtml = '';
+    sevLabels.forEach((lbl, i) => {
+        legendHtml += `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #0a2a3a;">
+            <span style="color:${sevColors[i]};">● ${lbl}</span>
+            <span style="color:#c0d8e8;">${sevData[i]}</span>
+        </div>`;
+    });
+    document.getElementById('riskLegend').innerHTML = legendHtml;
+
+    // ── Findings over time (last 30 days) ────────────────────────────────────
+    const now   = new Date();
+    const days  = Array.from({ length: 30 }, (_, i) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() - (29 - i));
+        return d.toISOString().split('T')[0];
+    });
+
+    const findingsByDay = {};
+    days.forEach(d => { findingsByDay[d] = 0; });
+    findings.forEach(f => {
+        if (f.created_at) {
+            const day = f.created_at.split('T')[0];
+            if (findingsByDay[day] !== undefined) findingsByDay[day]++;
+        }
+    });
+
+    new Chart(document.getElementById('timelineChart'), {
+        type: 'line',
+        data: {
+            labels: days.map(d => d.slice(5)),
+            datasets: [{
+                label: 'Findings',
+                data: days.map(d => findingsByDay[d]),
+                borderColor: '#ff3366',
+                backgroundColor: 'rgba(255,51,102,0.08)',
+                borderWidth: 1.5,
+                pointRadius: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a', maxTicksLimit: 10 } },
+                y: { beginAtZero: true, grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a' } }
+            }
+        }
+    });
+
+    // ── Jobs over time (last 30 days) ────────────────────────────────────────
+    const jobsByDay = {};
+    days.forEach(d => { jobsByDay[d] = 0; });
+    jobs.forEach(j => {
+        if (j.created_at) {
+            const day = j.created_at.split('T')[0];
+            if (jobsByDay[day] !== undefined) jobsByDay[day]++;
+        }
+    });
+
+    new Chart(document.getElementById('jobsTimelineChart'), {
+        type: 'bar',
+        data: {
+            labels: days.map(d => d.slice(5)),
+            datasets: [{
+                label: 'Jobs',
+                data: days.map(d => jobsByDay[d]),
+                backgroundColor: 'rgba(0,212,255,0.2)',
+                borderColor: '#00d4ff',
+                borderWidth: 1,
+                borderRadius: 2
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a', maxTicksLimit: 10 } },
+                y: { beginAtZero: true, grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a' } }
+            }
+        }
+    });
+
+    // ── Findings per plugin ──────────────────────────────────────────────────
+    const jobMap = {};
+    jobs.forEach(j => { jobMap[j.id] = j.plugin || j.plugin_name || ''; });
+
+    const findingsPerPlugin = {};
+    findings.forEach(f => {
+        const plugin = jobMap[f.job_id] || 'unknown';
+        findingsPerPlugin[plugin] = (findingsPerPlugin[plugin] || 0) + 1;
+    });
+    const fppSorted = Object.entries(findingsPerPlugin).sort((a, b) => b[1] - a[1]);
+
+    new Chart(document.getElementById('findingsPerPluginChart'), {
+        type: 'bar',
+        data: {
+            labels: fppSorted.map(e => e[0]),
+            datasets: [{
+                data: fppSorted.map(e => e[1]),
+                backgroundColor: 'rgba(255,107,53,0.2)',
+                borderColor: '#ff6b35',
+                borderWidth: 1,
+                borderRadius: 2
+            }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a' } },
+                y: { grid: { display: false }, ticks: { color: '#7faec0' } }
+            }
+        }
+    });
+
+    // ── Plugin efficiency (completed jobs per plugin) ────────────────────────
+    const pluginJobs = {};
+    const pluginCompleted = {};
+    jobs.forEach(j => {
+        const p = j.plugin || j.plugin_name || 'unknown';
+        pluginJobs[p] = (pluginJobs[p] || 0) + 1;
+        if (j.status === 'completed') pluginCompleted[p] = (pluginCompleted[p] || 0) + 1;
+    });
+    const effPlugins = Object.keys(pluginJobs).sort();
+    const effRates   = effPlugins.map(p => Math.round(((pluginCompleted[p] || 0) / pluginJobs[p]) * 100));
+
+    new Chart(document.getElementById('efficiencyChart'), {
+        type: 'bar',
+        data: {
+            labels: effPlugins,
+            datasets: [{
+                data: effRates,
+                backgroundColor: effRates.map(r => r >= 80 ? 'rgba(0,255,136,0.2)' : r >= 50 ? 'rgba(255,215,0,0.2)' : 'rgba(255,51,102,0.2)'),
+                borderColor: effRates.map(r => r >= 80 ? '#00ff88' : r >= 50 ? '#ffd700' : '#ff3366'),
+                borderWidth: 1,
+                borderRadius: 2
+            }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, max: 100, grid: { color: '#0a2a3a' }, ticks: { color: '#4a7a8a', callback: v => v + '%' } },
+                y: { grid: { display: false }, ticks: { color: '#7faec0' } }
+            }
+        }
+    });
+
+    // ── Top targets ──────────────────────────────────────────────────────────
+    const targetCount = {};
+    jobs.forEach(j => {
+        const t = j.config?.target || j.target || null;
+        if (t) targetCount[t] = (targetCount[t] || 0) + 1;
+    });
+    const topTargets = Object.entries(targetCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+    if (topTargets.length > 0) {
+        let html = '<table style="width:100%;border-collapse:collapse;">';
+        html += '<tr><th style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:#4a7a8a;letter-spacing:2px;padding:6px 0;border-bottom:1px solid #0e3a52;text-align:left;">Target</th>';
+        html += '<th style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:#4a7a8a;letter-spacing:2px;padding:6px 0;border-bottom:1px solid #0e3a52;text-align:right;">Jobs</th></tr>';
+        topTargets.forEach(([target, count]) => {
+            const bar = Math.round((count / topTargets[0][1]) * 100);
+            html += `<tr>
+                <td style="padding:7px 0;border-bottom:1px solid #0a2a3a;font-family:'Share Tech Mono',monospace;font-size:11px;color:#c0d8e8;">
+                    <div style="width:${bar}%;height:2px;background:#00d4ff;margin-bottom:3px;opacity:0.5;"></div>
+                    ${target}
+                </td>
+                <td style="padding:7px 0;border-bottom:1px solid #0a2a3a;font-family:'Share Tech Mono',monospace;font-size:11px;color:#00d4ff;text-align:right;">${count}</td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('topTargets').innerHTML = html;
+    } else {
+        document.getElementById('topTargets').innerHTML = '<p style="color:#4a7a8a;">// No target data available.</p>';
+    }
+
+}).catch(err => {
+    console.error('Analytics error:', err);
+});
+</script>
 {% endblock %}

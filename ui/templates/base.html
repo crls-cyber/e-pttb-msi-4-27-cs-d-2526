@@ -133,12 +133,11 @@ code{padding:2px 6px!important;font-size:11px!important}
             <a href="/{{ lang }}/upload-external" class="nav-item {% if request.endpoint == 'ui.upload_external' %}active{% endif %}">
                 <i class="fas fa-upload"></i><span>{{ t('nav.upload') }}</span>
             </a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-folder-open"></i><span>Projects</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-bullseye"></i><span>Targets</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-file-alt"></i><span>Reports</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-plug"></i><span>Integrations</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-shield-alt"></i><span>Compliance</span><span class="badge-coming-soon">SOON</span></a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-chart-bar"></i><span>Analytics</span><span class="badge-coming-soon">SOON</span></a>
+            <a href="/{{ lang }}/analytics" class="nav-item {% if 'analytics' in request.path %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-cog"></i><span>Settings</span><span class="badge-coming-soon">SOON</span></a>
         </nav>
         <div class="sidebar-footer">
@@ -150,11 +149,6 @@ code{padding:2px 6px!important;font-size:11px!important}
     <div class="main-content">
         <div class="top-header">
             <div class="project-context">
-                <div class="project-selector">
-                    <i class="fas fa-folder-open"></i>
-                    <select disabled><option>No project selected</option></select>
-                    <span class="badge-coming-soon">SOON</span>
-                </div>
                 <div class="compliance-badges">
                     <span class="compliance-badge rgpd">🔒 RGPD</span>
                     <span class="compliance-badge authorized">✅ Authorized</span>

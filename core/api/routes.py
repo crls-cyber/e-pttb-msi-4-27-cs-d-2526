@@ -114,6 +114,7 @@ def list_jobs():
             'id': str(job.id),
             'plugin': job.plugin_name,
             'status': job.status,
+            'config': job.config,
             'created_at': job.created_at.isoformat()
         } for job in jobs]
     }), 200

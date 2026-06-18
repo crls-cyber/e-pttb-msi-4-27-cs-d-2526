@@ -5,6 +5,7 @@ from .job import Job
 from .finding import Finding
 from .artifact import Artifact
 from .audit_log import AuditLog
+from .target import Target
 
 __all__ = [
     'Base',
@@ -15,4 +16,5 @@ __all__ = [
     'Finding',
     'Artifact',
     'AuditLog',
+    'Target',
 ]

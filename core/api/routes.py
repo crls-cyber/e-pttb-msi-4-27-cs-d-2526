@@ -708,6 +708,77 @@ def trigger_web_app_audit():
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+@api_bp.route('/targets', methods=['GET'])
+@login_required
+def list_targets():
+    """List user targets."""
+    from core.models.target import Target
+    targets = db.session.query(Target).filter_by(user_id=current_user.id).order_by(Target.created_at.desc()).all()
+    return jsonify({
+        'targets': [{
+            'id': str(t.id),
+            'ip_or_domain': t.ip_or_domain,
+            'description': t.description or '',
+            'authorized': t.authorized,
+            'notes': t.notes or '',
+            'created_at': t.created_at.isoformat() if t.created_at else None
+        } for t in targets]
+    }), 200
+
+
+@api_bp.route('/targets', methods=['POST'])
+@login_required
+def create_target():
+    """Create a new target."""
+    from core.models.target import Target
+    data = request.get_json()
+    if not data or 'ip_or_domain' not in data:
+        return jsonify({'error': 'Missing required parameter: ip_or_domain'}), 400
+    target = Target(
+        user_id=current_user.id,
+        ip_or_domain=data['ip_or_domain'].strip(),
+        description=data.get('description', ''),
+        authorized=data.get('authorized', True),
+        notes=data.get('notes', '')
+    )
+    db.session.add(target)
+    db.session.commit()
+    audit_log('target.create', 'target', str(target.id))
+    return jsonify({'id': str(target.id), 'message': 'Target created'}), 201
+
+
+@api_bp.route('/targets/<target_id>', methods=['DELETE'])
+@login_required
+def delete_target(target_id):
+    """Delete a target."""
+    from core.models.target import Target
+    target = db.session.query(Target).filter_by(id=target_id, user_id=current_user.id).first()
+    if not target:
+        return jsonify({'error': 'Target not found'}), 404
+    db.session.delete(target)
+    db.session.commit()
+    audit_log('target.delete', 'target', target_id)
+    return jsonify({'message': 'Target deleted'}), 200
+
+
+@api_bp.route('/targets/<target_id>', methods=['PUT'])
+@login_required
+def update_target(target_id):
+    """Update a target."""
+    from core.models.target import Target
+    target = db.session.query(Target).filter_by(id=target_id, user_id=current_user.id).first()
+    if not target:
+        return jsonify({'error': 'Target not found'}), 404
+    data = request.get_json()
+    if 'ip_or_domain' in data:  target.ip_or_domain = data['ip_or_domain'].strip()
+    if 'description'  in data:  target.description  = data['description']
+    if 'authorized'   in data:  target.authorized   = data['authorized']
+    if 'notes'        in data:  target.notes        = data['notes']
+    db.session.commit()
+    audit_log('target.update', 'target', target_id)
+    return jsonify({'message': 'Target updated'}), 200
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

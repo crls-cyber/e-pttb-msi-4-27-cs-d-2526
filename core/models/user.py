@@ -32,6 +32,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     # Relationships
     roles = relationship('Role', secondary=user_roles, back_populates='users')
     jobs = relationship('Job', back_populates='user')
+    targets = relationship('Target', back_populates='user')
     audit_logs = relationship('AuditLog', back_populates='user')
 
     def set_password(self, password):

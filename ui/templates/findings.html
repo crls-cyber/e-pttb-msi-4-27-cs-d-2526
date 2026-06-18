@@ -43,6 +43,10 @@
         style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
         <option value="">All plugins</option>
     </select>
+    <select id="targetFilter" onchange="applyFilters()"
+        style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+        <option value="">All targets</option>
+    </select>
     <select id="sortSelect" onchange="applyFilters()"
         style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
         <option value="severity">Sort: Severity</option>
@@ -133,14 +137,20 @@ Promise.all([
 .then(([findingsData, jobsData]) => {
     allFindings = Array.isArray(findingsData) ? findingsData : (findingsData.findings || []);
 
-    // Construire mapping job_id → plugin_name
+    // Construire mapping job_id → plugin_name + target
     const jobs = Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []);
     const jobMap = {};
-    jobs.forEach(j => { jobMap[j.id] = j.plugin || j.plugin_name || ''; });
+    jobs.forEach(j => {
+        jobMap[j.id] = {
+            plugin: j.plugin || j.plugin_name || '',
+            target: j.config?.target || ''
+        };
+    });
 
-    // Enrichir chaque finding avec plugin_name
+    // Enrichir chaque finding avec plugin_name et target
     allFindings.forEach(f => {
-        f.plugin_name = jobMap[f.job_id] || '';
+        f.plugin_name = jobMap[f.job_id]?.plugin || '';
+        f.target      = jobMap[f.job_id]?.target || '';
     });
 
     // Populate plugin filter
@@ -148,9 +158,17 @@ Promise.all([
     const pluginSelect = document.getElementById('pluginFilter');
     plugins.forEach(p => {
         const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
+        opt.value = p; opt.textContent = p;
         pluginSelect.appendChild(opt);
+    });
+
+    // Populate target filter
+    const targets = [...new Set(allFindings.map(f => f.target).filter(Boolean))].sort();
+    const targetSelect = document.getElementById('targetFilter');
+    targets.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t; opt.textContent = t;
+        targetSelect.appendChild(opt);
     });
 
     // Count by severity
@@ -228,23 +246,27 @@ function resetFilters() {
     document.querySelectorAll('.sev-btn').forEach(b => b.setAttribute('data-active', 'false'));
     document.getElementById('searchInput').value = '';
     document.getElementById('pluginFilter').value = '';
+    document.getElementById('targetFilter').value = '';
     document.getElementById('sortSelect').value = 'severity';
     applyFilters();
 }
 
 function applyFilters() {
-    const search     = document.getElementById('searchInput').value.toLowerCase();
-    const plugin     = document.getElementById('pluginFilter').value;
-    const sortBy     = document.getElementById('sortSelect').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const plugin = document.getElementById('pluginFilter').value;
+    const target = document.getElementById('targetFilter').value;
+    const sortBy = document.getElementById('sortSelect').value;
 
     let filtered = allFindings.filter(f => {
         const sev   = f.severity || 'info';
         const title = (f.title || '').toLowerCase();
         const plug  = f.plugin_name || f.plugin || '';
+        const tgt   = f.target || '';
 
         if (activeFilters.size > 0 && !activeFilters.has(sev)) return false;
         if (search && !title.includes(search)) return false;
         if (plugin && plug !== plugin) return false;
+        if (target && tgt !== target) return false;
         return true;
     });
 

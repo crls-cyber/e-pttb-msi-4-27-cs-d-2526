@@ -3,13 +3,63 @@
 {% block title %}{{ t('nav.findings') }} - {{ t('app_title') }}{% endblock %}
 
 {% block content %}
-<div class="page-header" style="margin-bottom: 30px;">
+<div class="page-header">
     <h1 class="page-title">{{ t('findings.title') }}</h1>
 </div>
 
+<!-- Severity filter bar -->
+<div id="severityFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;letter-spacing:2px;margin-right:4px;">// FILTER</span>
+    <button onclick="toggleFilter('critical')" id="btn-critical" class="sev-btn" data-active="false"
+        style="background:rgba(220,53,69,0.1);border:1px solid rgba(220,53,69,0.4);color:#ff4d6d;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+        CRITICAL <span id="count-critical" style="opacity:0.7;"></span>
+    </button>
+    <button onclick="toggleFilter('high')" id="btn-high" class="sev-btn" data-active="false"
+        style="background:rgba(253,126,20,0.1);border:1px solid rgba(253,126,20,0.4);color:#ff9944;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+        HIGH <span id="count-high" style="opacity:0.7;"></span>
+    </button>
+    <button onclick="toggleFilter('medium')" id="btn-medium" class="sev-btn" data-active="false"
+        style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.4);color:#ffd700;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+        MEDIUM <span id="count-medium" style="opacity:0.7;"></span>
+    </button>
+    <button onclick="toggleFilter('low')" id="btn-low" class="sev-btn" data-active="false"
+        style="background:rgba(23,162,184,0.1);border:1px solid rgba(23,162,184,0.4);color:#00d4ff;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+        LOW <span id="count-low" style="opacity:0.7;"></span>
+    </button>
+    <button onclick="toggleFilter('info')" id="btn-info" class="sev-btn" data-active="false"
+        style="background:rgba(108,117,125,0.1);border:1px solid rgba(108,117,125,0.4);color:#7faec0;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+        INFO <span id="count-info" style="opacity:0.7;"></span>
+    </button>
+    <button onclick="resetFilters()" style="background:transparent;border:1px solid #0e3a52;color:#4a7a8a;padding:5px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;margin-left:8px;">
+        RESET
+    </button>
+</div>
+
+<!-- Search & sort bar -->
+<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search title..."
+        style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;flex:1;min-width:160px;">
+    <select id="pluginFilter" onchange="applyFilters()"
+        style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+        <option value="">All plugins</option>
+    </select>
+    <select id="sortSelect" onchange="applyFilters()"
+        style="padding:7px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+        <option value="severity">Sort: Severity</option>
+        <option value="title">Sort: Title</option>
+        <option value="date">Sort: Date</option>
+    </select>
+    <a id="csvExportBtn" href="/api/findings/export/csv?format=csv" 
+        style="padding:7px 14px;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:6px;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;display:flex;align-items:center;">
+        ↓ CSV
+    </a>
+</div>
+
 <div class="chart-card">
-    <div class="chart-card-header" style="margin-bottom: 20px;">{{ t('findings.all') }}</div>
-    <div id="findingsList" style="overflow-x: auto;">Loading findings...</div>
+    <div class="chart-card-header" id="findingsHeader">{{ t('findings.all') }}</div>
+    <div id="findingsList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+        Loading findings...
+    </div>
 </div>
 
 <style>
@@ -18,121 +68,196 @@
     border-collapse: separate;
     border-spacing: 0;
 }
-
 .findings-table thead th {
-    padding: 15px 12px;
-    background: #f5f7fa;
-    font-weight: 600;
-    font-size: 0.95rem;
+    padding: 10px 12px;
+    background: rgba(0,212,255,0.04);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4a7a8a;
     text-align: left;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 1px solid #0e3a52;
 }
-
 .findings-table tbody tr {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #0a2a3a;
+    transition: background 0.1s;
 }
-
 .findings-table tbody tr:hover {
-    background: #f9fafb;
+    background: rgba(0,212,255,0.03);
 }
-
 .findings-table tbody td {
-    padding: 15px 12px;
+    padding: 10px 12px;
     vertical-align: top;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #7faec0;
 }
-
 .finding-title {
-    font-size: 0.95rem;
-    font-weight: normal;
-    color: #333;
+    color: #c0d8e8;
+    font-size: 12px;
 }
-
 .severity-badge {
     display: inline-block;
-    padding: 6px 14px;
-    border-radius: 4px;
-    font-size: 0.95rem;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
     font-weight: bold;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
-
-.severity-critical {
-    background: #dc3545;
-    color: white;
+.severity-critical { background:rgba(220,53,69,0.2);  color:#ff4d6d; border:1px solid rgba(220,53,69,0.4); }
+.severity-high     { background:rgba(253,126,20,0.2); color:#ff9944; border:1px solid rgba(253,126,20,0.4); }
+.severity-medium   { background:rgba(255,193,7,0.2);  color:#ffd700; border:1px solid rgba(255,193,7,0.4); }
+.severity-low      { background:rgba(23,162,184,0.2); color:#00d4ff; border:1px solid rgba(23,162,184,0.4); }
+.severity-info     { background:rgba(108,117,125,0.2);color:#7faec0; border:1px solid rgba(108,117,125,0.4); }
+.sev-btn[data-active="true"] {
+    filter: brightness(1.5);
+    box-shadow: 0 0 8px currentColor;
 }
-
-.severity-high {
-    background: #fd7e14;
-    color: white;
-}
-
-.severity-medium {
-    background: #ffc107;
-    color: #333;
-}
-
-.severity-low {
-    background: #17a2b8;
-    color: white;
-}
-
-.severity-info {
-    background: #6c757d;
-    color: white;
-}
+.finding-row { transition: opacity 0.15s; }
+.finding-row.hidden { display: none; }
 </style>
 
 <script>
 const severityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4, 'info': 5 };
+let allFindings = [];
+let activeFilters = new Set();
 
-fetch('/api/findings')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('findingsList');
-        
-        let findings = Array.isArray(data) ? data : (data.findings || []);
-        
-        findings.sort((a, b) => {
-            const severityA = severityOrder[a.severity] || 999;
-            const severityB = severityOrder[b.severity] || 999;
-            return severityA - severityB;
-        });
-        
-        if (findings.length > 0) {
-            let html = '<table class="findings-table">';
-            html += '<thead><tr>';
-            html += '<th style="width: 30%;">Title</th>';
-            html += '<th style="width: 12%;">{{ t("findings.severity") }}</th>';
-            html += '<th style="width: 10%;">{{ t("findings.job_id") }}</th>';
-            html += '<th style="width: 48%;">{{ t("findings.description") }}</th>';
-            html += '</tr></thead><tbody>';
-            
-            findings.forEach(finding => {
-                const severity = finding.severity || 'info';
-                const title = finding.title || 'N/A';
-                const jobId = finding.job_id ? finding.job_id.substring(0, 8) : 'N/A';
-                const fullJobId = finding.job_id || '';
-                const description = (finding.description || 'No description').substring(0, 120);
-                
-                html += `<tr>
-                    <td><span class="finding-title">${title}</span></td>
-                    <td><span class="severity-badge severity-${severity}">${severity}</span></td>
-                    <td><a href="/{{ lang }}/jobs/${fullJobId}" style="font-size: 0.9rem; color: #006BB4; text-decoration: none;"><code>${jobId}</code></a></td>
-                    <td style="font-size: 0.95rem; color: #555;">${description}...</td>
-                </tr>`;
-            });
-            
-            html += '</tbody></table>';
-            container.innerHTML = html;
-            
-            document.querySelector('.chart-card-header').textContent = `{{ t("findings.all") }} (${findings.length})`;
-        } else {
-            container.innerHTML = '<p>No findings yet. Run some scans first!</p>';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading findings:', error);
-        document.getElementById('findingsList').innerHTML = `<p>Error: ${error.message}</p>`;
+// Charger findings + jobs en parallèle pour mapping job_id → plugin_name
+Promise.all([
+    fetch('/api/findings').then(r => r.json()),
+    fetch('/api/jobs').then(r => r.json())
+])
+.then(([findingsData, jobsData]) => {
+    allFindings = Array.isArray(findingsData) ? findingsData : (findingsData.findings || []);
+
+    // Construire mapping job_id → plugin_name
+    const jobs = Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []);
+    const jobMap = {};
+    jobs.forEach(j => { jobMap[j.id] = j.plugin || j.plugin_name || ''; });
+
+    // Enrichir chaque finding avec plugin_name
+    allFindings.forEach(f => {
+        f.plugin_name = jobMap[f.job_id] || '';
     });
+
+    // Populate plugin filter
+    const plugins = [...new Set(allFindings.map(f => f.plugin_name).filter(Boolean))].sort();
+    const pluginSelect = document.getElementById('pluginFilter');
+    plugins.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        pluginSelect.appendChild(opt);
+    });
+
+    // Count by severity
+    ['critical','high','medium','low','info'].forEach(sev => {
+        const count = allFindings.filter(f => (f.severity||'info') === sev).length;
+        const el = document.getElementById('count-' + sev);
+        if (el) el.textContent = `(${count})`;
+    });
+
+    renderFindings(allFindings);
+})
+.catch(err => {
+    document.getElementById('findingsList').innerHTML = `<p style="color:#ff3366;">Error: ${err.message}</p>`;
+});
+
+function renderFindings(findings) {
+    const container = document.getElementById('findingsList');
+    const header = document.getElementById('findingsHeader');
+
+    if (findings.length === 0) {
+        container.innerHTML = '<p style="padding:16px;color:#4a7a8a;">// No findings match the current filters.</p>';
+        header.textContent = '{{ t("findings.all") }} (0)';
+        return;
+    }
+
+    let html = '<table class="findings-table"><thead><tr>';
+    html += '<th style="width:32%;">Title</th>';
+    html += '<th style="width:12%;">Severity</th>';
+    html += '<th style="width:12%;">Job ID</th>';
+    html += '<th style="width:44%;">Description</th>';
+    html += '</tr></thead><tbody>';
+
+    findings.forEach(f => {
+        const severity  = f.severity || 'info';
+        const title     = f.title || 'N/A';
+        const jobId     = f.job_id ? f.job_id.substring(0, 8) : 'N/A';
+        const fullJobId = f.job_id || '';
+        const descFull  = f.description || 'No description';
+        const descShort = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
+        const descId    = 'desc-' + (f.id || Math.random().toString(36).substr(2,8));
+
+        html += `<tr class="finding-row">
+            <td><span class="finding-title">${title}</span></td>
+            <td><span class="severity-badge severity-${severity}">${severity}</span></td>
+            <td><a href="/{{ lang }}/jobs/${fullJobId}" style="color:#00d4ff;text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:11px;"><code>${jobId}</code></a></td>
+            <td>
+                <span id="${descId}-short" style="white-space:pre-wrap;">${descShort}</span>
+                ${descFull.length > 200 ? `
+                <span id="${descId}-full" style="display:none;white-space:pre-wrap;">${descFull}</span>
+                <br><a href="#" onclick="document.getElementById('${descId}-short').style.display='none';document.getElementById('${descId}-full').style.display='inline';this.style.display='none';return false;"
+                   style="font-size:10px;color:#00d4ff;font-family:'Share Tech Mono',monospace;">▼ Show more</a>` : ''}
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    header.textContent = `{{ t("findings.all") }} (${findings.length})`;
+}
+
+function toggleFilter(sev) {
+    const btn = document.getElementById('btn-' + sev);
+    if (activeFilters.has(sev)) {
+        activeFilters.delete(sev);
+        btn.setAttribute('data-active', 'false');
+    } else {
+        activeFilters.add(sev);
+        btn.setAttribute('data-active', 'true');
+    }
+    applyFilters();
+}
+
+function resetFilters() {
+    activeFilters.clear();
+    document.querySelectorAll('.sev-btn').forEach(b => b.setAttribute('data-active', 'false'));
+    document.getElementById('searchInput').value = '';
+    document.getElementById('pluginFilter').value = '';
+    document.getElementById('sortSelect').value = 'severity';
+    applyFilters();
+}
+
+function applyFilters() {
+    const search     = document.getElementById('searchInput').value.toLowerCase();
+    const plugin     = document.getElementById('pluginFilter').value;
+    const sortBy     = document.getElementById('sortSelect').value;
+
+    let filtered = allFindings.filter(f => {
+        const sev   = f.severity || 'info';
+        const title = (f.title || '').toLowerCase();
+        const plug  = f.plugin_name || f.plugin || '';
+
+        if (activeFilters.size > 0 && !activeFilters.has(sev)) return false;
+        if (search && !title.includes(search)) return false;
+        if (plugin && plug !== plugin) return false;
+        return true;
+    });
+
+    // Sort
+    if (sortBy === 'severity') {
+        filtered.sort((a, b) => (severityOrder[a.severity]||999) - (severityOrder[b.severity]||999));
+    } else if (sortBy === 'title') {
+        filtered.sort((a, b) => (a.title||'').localeCompare(b.title||''));
+    } else if (sortBy === 'date') {
+        filtered.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0));
+    }
+
+    renderFindings(filtered);
+}
 </script>
 {% endblock %}

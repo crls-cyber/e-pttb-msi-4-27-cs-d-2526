@@ -142,12 +142,6 @@ code{padding:2px 6px!important;font-size:11px!important}
             <a href="#" class="nav-item disabled"><i class="fas fa-cog"></i><span>Settings</span><span class="badge-coming-soon">SOON</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#00d4ff;margin-bottom:4px;padding:0 20px;">
-                {{ current_user.username if current_user.is_authenticated else 'guest' }}
-            </div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin-bottom:12px;padding:0 20px;text-transform:uppercase;letter-spacing:1px;">
-                {{ current_user.roles[0].name if current_user.is_authenticated and current_user.roles else '' }}
-            </div>
             <a href="/logout" class="nav-item" style="border-left:none!important;">
                 <i class="fas fa-sign-out-alt"></i><span>{{ t('nav.logout') }}</span>
             </a>

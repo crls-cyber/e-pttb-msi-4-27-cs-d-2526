@@ -332,3 +332,73 @@ def export_mission_zip(mission_id):
 **Version** : 1.0  
 **Auteur** : Carlos  
 **Validation requise** : Avant implémentation Phase 4
+
+---
+
+## 🎯 FEATURE 5 : Rapport Consolidé par Workflow (Moyenne Priorité)
+
+### Problème actuel
+
+Chaque outil d'un workflow génère son propre job et son propre rapport indépendant.
+Il n'existe pas de vue unifiée des résultats d'un workflow complet.
+
+### Solution proposée
+
+- Nouveau modèle `Workflow` en base (id, name, job_ids[], status, created_at)
+- Endpoint `/api/workflows/<id>/report` — agrège les findings de tous les jobs
+- Générateur de rapport multi-outils (HTML + PDF)
+- UI : page `/workflows/<id>` affichant la chaîne + findings consolidés
+
+### Implémentation estimée
+
+**Temps** : 1-2 jours
+
+**Fichiers à modifier :**
+- `core/models/workflow.py` (nouveau)
+- `core/orchestrator/workflows.py` (retourner workflow_id persistant)
+- `core/reporting/html_generator.py` (rapport multi-jobs)
+- `ui/templates/workflow_detail.html` (nouveau)
+
+---
+
+## 🎯 FEATURE 6 : Workflows Paramétrables (Basse Priorité)
+
+### Problème actuel
+
+Les workflows utilisent des paramètres par défaut fixes.
+L'utilisateur ne peut pas ajuster les options de chaque outil dans la chaîne.
+
+### Solution proposée (Option C — Hybride)
+
+- Paramètres par défaut intelligents pour un lancement rapide ("one click")
+- Section `<details>` dépliable par étape dans l'UI workflow
+- Chaque étape expose les mêmes options que sa page dédiée
+- Cohérent avec l'approche des pages `nmap_launch.html`, `nuclei_launch.html`, etc.
+
+### Implémentation estimée
+
+**Temps** : 2-3 jours
+
+**Fichiers à modifier :**
+- `ui/templates/workflows.html` (formulaires étendus par workflow)
+- `core/api/routes.py` (accepter paramètres étendus)
+- `core/orchestrator/workflows.py` (passer paramètres aux jobs)
+
+---
+
+## 📊 Priorités d'implémentation (mise à jour 18 juin 2026)
+
+| Feature | Priorité | Effort | Impact | Quand |
+|---------|----------|--------|--------|-------|
+| **Missions** | 🔴 Haute | 3j | ⭐⭐⭐⭐⭐ | Phase 4 |
+| **Backup/Restore** | 🔴 Haute | 1j | ⭐⭐⭐⭐ | Phase 4 |
+| **Rapport workflow consolidé** | 🟡 Moyenne | 1-2j | ⭐⭐⭐⭐ | Phase 4 |
+| **Archivage** | 🟡 Moyenne | 1j | ⭐⭐⭐ | Phase 4-5 |
+| **Export ZIP** | 🟡 Moyenne | 0.5j | ⭐⭐⭐ | Phase 5 |
+| **Workflows paramétrables** | 🟢 Basse | 2-3j | ⭐⭐⭐ | Phase 5 |
+
+---
+
+**Version** : 1.1
+**Mis à jour** : 18 juin 2026 (Phase 3)
+**Ajouts** : Feature 5 (rapport workflow), Feature 6 (workflows paramétrables)

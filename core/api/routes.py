@@ -456,57 +456,42 @@ def upload_external_file():
 @login_required
 def trigger_recon_to_exploit():
     """
-    Trigger recon-to-exploit workflow: Nmap → Nuclei → Metasploit
+    Trigger recon-to-exploit workflow: Nmap -> Nuclei -> Hydra
 
     Request body:
     {
         "target": "192.168.200.133",
-        "exploit": "exploit/unix/ftp/vsftpd_234_backdoor",  // optional
-        "payload": "cmd/unix/interact"  // optional
+        "service": "ssh",
+        "username": "admin"
     }
     """
     from core.orchestrator.workflows import recon_to_exploit_workflow
-
     data = request.get_json()
-
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
-
-    target = data['target']
-    exploit = data.get('exploit')
-    payload = data.get('payload')
-
-    # Validate: if exploit provided, payload is required
-    if exploit and not payload:
-        return jsonify({'error': 'Payload required when exploit is specified'}), 400
-
+    target   = data['target']
+    service  = data.get('service', 'ssh')
+    username = data.get('username')
     try:
         result = recon_to_exploit_workflow(
             target=target,
             user_id=current_user.id,
-            exploit_path=exploit,
-            payload=payload
+            service=service,
+            username=username
         )
-
-        stages = ['nmap', 'nuclei']
-        if exploit:
-            stages.append('metasploit')
-
         return jsonify({
-            'message': 'Recon-to-exploit workflow started',
+            'message': 'Recon-to-exploit workflow started (Nmap -> Nuclei -> Hydra)',
             'workflow_id': result['workflow_id'],
             'nmap_job_id': result['nmap_job_id'],
             'nuclei_job_id': result['nuclei_job_id'],
-            'metasploit_job_id': result.get('metasploit_job_id'),
+            'hydra_job_id': result['hydra_job_id'],
             'target': target,
-            'stages': stages
+            'stages': ['nmap', 'nuclei', 'hydra']
         }), 202
-
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @api_bp.route('/workflows/web-pentest-advanced', methods=['POST'])
 @login_required
@@ -643,6 +628,84 @@ def trigger_osint_recon():
         logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+
+@api_bp.route('/workflows/quick-vuln-scan', methods=['POST'])
+@login_required
+def trigger_quick_vuln_scan():
+    """Quick vuln scan: Nmap -> Nuclei"""
+    from core.orchestrator.workflows import quick_vuln_scan
+    data = request.get_json()
+    if not data or 'target' not in data:
+        return jsonify({'error': 'Missing required parameter: target'}), 400
+    target = data['target']
+    try:
+        result = quick_vuln_scan(target=target, user_id=current_user.id)
+        return jsonify({
+            'message': 'Quick vuln scan started (Nmap -> Nuclei)',
+            'workflow_id': result['workflow_id'],
+            'nmap_job_id': result['nmap_job_id'],
+            'nuclei_job_id': result['nuclei_job_id'],
+            'target': target,
+            'stages': ['nmap', 'nuclei']
+        }), 202
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/workflows/full-external-recon', methods=['POST'])
+@login_required
+def trigger_full_external_recon():
+    """Full external recon: Subfinder -> theHarvester -> Nmap -> WhatWeb"""
+    from core.orchestrator.workflows import full_external_recon
+    data = request.get_json()
+    if not data or 'domain' not in data:
+        return jsonify({'error': 'Missing required parameter: domain'}), 400
+    domain = data['domain']
+    try:
+        result = full_external_recon(domain=domain, user_id=current_user.id)
+        return jsonify({
+            'message': 'Full external recon started',
+            'workflow_id': result['workflow_id'],
+            'subfinder_job_id': result['subfinder_job_id'],
+            'harvester_job_id': result['harvester_job_id'],
+            'nmap_job_id': result['nmap_job_id'],
+            'whatweb_job_id': result['whatweb_job_id'],
+            'domain': domain,
+            'stages': ['subfinder', 'theharvester', 'nmap', 'whatweb']
+        }), 202
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/workflows/web-app-audit', methods=['POST'])
+@login_required
+def trigger_web_app_audit():
+    """Web app audit: WhatWeb -> ZAP -> SQLmap"""
+    from core.orchestrator.workflows import web_app_audit
+    data = request.get_json()
+    if not data or 'target' not in data:
+        return jsonify({'error': 'Missing required parameter: target'}), 400
+    target = data['target']
+    try:
+        result = web_app_audit(target=target, user_id=current_user.id)
+        return jsonify({
+            'message': 'Web app audit started (WhatWeb -> ZAP -> SQLmap)',
+            'workflow_id': result['workflow_id'],
+            'whatweb_job_id': result['whatweb_job_id'],
+            'zap_job_id': result['zap_job_id'],
+            'sqlmap_job_id': result['sqlmap_job_id'],
+            'target': target,
+            'stages': ['whatweb', 'zap', 'sqlmap']
+        }), 202
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Workflow error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required

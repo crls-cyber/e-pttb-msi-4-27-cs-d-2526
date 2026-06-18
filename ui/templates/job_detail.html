@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-
 {% block title %}Job Details - {{ t('app_title') }}{% endblock %}
-
 {% block content %}
-<div class="page-header" style="margin-bottom: 30px;">
+<div class="page-header">
     <h1 class="page-title">Job Details</h1>
     <a href="/{{ lang }}/jobs" class="btn btn-secondary">← Back to Jobs</a>
 </div>
@@ -12,54 +10,44 @@
     <div class="col-md-6">
         <div class="chart-card">
             <div class="chart-card-header">Job Information</div>
-            <div id="jobInfo">Loading job details...</div>
+            <div id="jobInfo" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading...</div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="chart-card">
             <div class="chart-card-header">Configuration</div>
-            <div id="jobConfig">Loading configuration...</div>
+            <div id="jobConfig" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading...</div>
         </div>
     </div>
 </div>
 
-<!-- NOUVELLE SECTION REPORTS -->
 <div class="chart-card mt-4">
-    <div class="chart-card-header">📊 Reports & Downloads</div>
-    <div style="padding: 20px;">
-        <p style="margin-bottom: 15px; color: #666; font-size: 0.95rem;">
-            Generate and download reports for this job in different formats:
-        </p>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <a id="htmlReportBtn" 
-               href="#" 
-               target="_blank" 
-               class="btn btn-primary"
-               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+    <div class="chart-card-header">📊 Reports &amp; Downloads</div>
+    <div style="padding:20px;">
+        <p style="margin-bottom:15px;color:#7faec0;font-size:0.9rem;font-family:'Share Tech Mono',monospace;">// Generate and download reports:</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a id="htmlReportBtn" href="#" target="_blank" class="btn btn-primary"
+               style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
                 <i class="fas fa-file-code"></i> HTML Report
             </a>
-            <a id="pdfReportBtn" 
-               href="#" 
-               class="btn btn-danger"
-               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+            <a id="pdfReportBtn" href="#" class="btn btn-danger"
+               style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
                 <i class="fas fa-file-pdf"></i> PDF Report
             </a>
-            <a id="csvExportBtn" 
-               href="#" 
-               class="btn btn-success"
-               style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+            <a id="csvExportBtn" href="#" class="btn btn-success"
+               style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
                 <i class="fas fa-file-csv"></i> CSV Export
             </a>
         </div>
-        <p style="margin-top: 15px; color: #999; font-size: 0.85rem;">
-            <i class="fas fa-info-circle"></i> Reports are generated on-demand and may take a few seconds.
+        <p style="margin-top:12px;color:#4a7a8a;font-size:0.82rem;font-family:'Share Tech Mono',monospace;">
+            // Reports are generated on-demand and may take a few seconds.
         </p>
     </div>
 </div>
 
 <div class="chart-card mt-4">
-    <div class="chart-card-header" id="findingsHeader" style="margin-bottom: 20px;">Findings from this Job</div>
-    <div id="jobFindings">Loading findings...</div>
+    <div class="chart-card-header" id="findingsHeader">Findings from this Job</div>
+    <div id="jobFindings" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;">Loading findings...</div>
 </div>
 
 <style>
@@ -68,198 +56,124 @@
     border-collapse: separate;
     border-spacing: 0;
 }
-
 .findings-table thead th {
-    padding: 15px 12px;
-    background: #f5f7fa;
-    font-weight: 600;
-    font-size: 0.95rem;
+    padding: 12px;
+    background: rgba(0,212,255,0.05);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4a7a8a;
     text-align: left;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 1px solid #0e3a52;
 }
-
 .findings-table tbody tr {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #0a2a3a;
 }
-
 .findings-table tbody tr:hover {
-    background: #f9fafb;
+    background: rgba(0,212,255,0.03);
 }
-
 .findings-table tbody td {
-    padding: 15px 12px;
+    padding: 12px;
     vertical-align: top;
 }
-
 .finding-title {
-    font-size: 0.95rem;
-    font-weight: normal;
-    color: #333;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #c0d8e8;
 }
-
 .severity-badge {
     display: inline-block;
-    padding: 6px 14px;
-    border-radius: 4px;
-    font-size: 0.95rem;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
     font-weight: bold;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
-
-.severity-critical {
-    background: #dc3545;
-    color: white;
-}
-
-.severity-high {
-    background: #fd7e14;
-    color: white;
-}
-
-.severity-medium {
-    background: #ffc107;
-    color: #333;
-}
-
-.severity-low {
-    background: #17a2b8;
-    color: white;
-}
-
-.severity-info {
-    background: #6c757d;
-    color: white;
-}
-
-/* Styles boutons reports */
-.btn {
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-primary {
-    background: #006BB4;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #005a94;
-    transform: translateY(-2px);
-}
-
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-}
-
-.btn-success {
-    background: #28a745;
-    color: white;
-}
-
-.btn-success:hover {
-    background: #218838;
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
+.severity-critical { background: rgba(220,53,69,0.2);  color: #ff4d6d; border: 1px solid rgba(220,53,69,0.4); }
+.severity-high     { background: rgba(253,126,20,0.2); color: #ff9944; border: 1px solid rgba(253,126,20,0.4); }
+.severity-medium   { background: rgba(255,193,7,0.2);  color: #ffd700; border: 1px solid rgba(255,193,7,0.4); }
+.severity-low      { background: rgba(23,162,184,0.2); color: #00d4ff; border: 1px solid rgba(23,162,184,0.4); }
+.severity-info     { background: rgba(108,117,125,0.2);color: #7faec0; border: 1px solid rgba(108,117,125,0.4); }
 </style>
 
 <script>
 const jobId = "{{ job_id }}";
 
-// Update report buttons URLs when job is loaded
 function updateReportButtons(jobId) {
     document.getElementById('htmlReportBtn').href = `/api/reports/${jobId}/html`;
     document.getElementById('pdfReportBtn').href = `/api/reports/${jobId}/pdf`;
     document.getElementById('csvExportBtn').href = `/api/findings/export/csv?job_id=${jobId}&format=csv`;
 }
 
-// Fetch job details
 fetch(`/api/jobs/${jobId}`)
     .then(response => response.json())
     .then(job => {
-        // Update report buttons
         updateReportButtons(job.id);
-        
-        // Job Info
-        const status = job.status || 'unknown';
-        const statusClass = status === 'completed' ? 'text-success' :
-                           status === 'failed' ? 'text-danger' :
-                           status === 'running' ? 'text-primary' : 'text-secondary';
 
-        const created = job.created_at ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
-        const started = job.started_at ? new Date(job.started_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+        const status = job.status || 'unknown';
+        const statusColor = status === 'completed' ? '#00ff88' :
+                            status === 'failed'    ? '#ff3366' :
+                            status === 'running'   ? '#00d4ff' : '#7faec0';
+
+        const created   = job.created_at   ? new Date(job.created_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
+        const started   = job.started_at   ? new Date(job.started_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
         const completed = job.completed_at ? new Date(job.completed_at).toLocaleString('{{ lang }}' === 'fr' ? 'fr-FR' : 'en-US') : 'N/A';
 
         document.getElementById('jobInfo').innerHTML = `
-            <table class="table">
-                <tr><th style="width: 30%;">ID:</th><td><code>${job.id}</code></td></tr>
-                <tr><th>Plugin:</th><td><strong>${job.plugin}</strong></td></tr>
-                <tr><th>Status:</th><td><span class="${statusClass}" style="font-weight: bold; font-size: 1.1rem;">${status.toUpperCase()}</span></td></tr>
-                <tr><th>Created:</th><td>${created}</td></tr>
-                <tr><th>Started:</th><td>${started}</td></tr>
-                <tr><th>Completed:</th><td>${completed}</td></tr>
+            <table style="width:100%;font-family:'Share Tech Mono',monospace;font-size:12px;">
+                <tr><td style="padding:6px 0;color:#4a7a8a;width:35%;">ID</td><td><code style="color:#00d4ff;font-size:11px;">${job.id}</code></td></tr>
+                <tr><td style="padding:6px 0;color:#4a7a8a;">Plugin</td><td style="color:#c0d8e8;font-weight:bold;">${job.plugin}</td></tr>
+                <tr><td style="padding:6px 0;color:#4a7a8a;">Status</td><td style="color:${statusColor};font-weight:bold;letter-spacing:2px;">${status.toUpperCase()}</td></tr>
+                <tr><td style="padding:6px 0;color:#4a7a8a;">Created</td><td style="color:#7faec0;">${created}</td></tr>
+                <tr><td style="padding:6px 0;color:#4a7a8a;">Started</td><td style="color:#7faec0;">${started}</td></tr>
+                <tr><td style="padding:6px 0;color:#4a7a8a;">Completed</td><td style="color:#7faec0;">${completed}</td></tr>
             </table>
         `;
 
-        // Job Config
         document.getElementById('jobConfig').innerHTML = `
-            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 0.9rem; overflow-x: auto;">${JSON.stringify(job.config, null, 2)}</pre>
+            <pre style="background:rgba(0,0,0,0.3);border:1px solid #0e3a52;padding:14px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;overflow-x:auto;">${JSON.stringify(job.config, null, 2)}</pre>
         `;
     })
     .catch(error => {
-        document.getElementById('jobInfo').innerHTML = `<p>Error: ${error.message}</p>`;
+        document.getElementById('jobInfo').innerHTML = `<p style="color:#ff3366;">Error: ${error.message}</p>`;
     });
 
-// Fetch findings for this job
 fetch(`/api/findings?job_id=${jobId}`)
     .then(response => response.json())
     .then(data => {
         let findings = Array.isArray(data) ? data : (data.findings || []);
 
-        // Tri par sévérité (Critical → High → Medium → Low → Info)
         const severityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4, 'info': 5 };
         findings.sort((a, b) => {
-            const severityA = severityOrder[a.severity] || 999;
-            const severityB = severityOrder[b.severity] || 999;
-            return severityA - severityB;
+            return (severityOrder[a.severity] || 999) - (severityOrder[b.severity] || 999);
         });
 
         if (findings.length > 0) {
-            let html = '<table class="findings-table">';
-            html += '<thead><tr>';
-            html += '<th style="width: 35%;">Title</th>';
-            html += '<th style="width: 15%;">Severity</th>';
-            html += '<th style="width: 50%;">Description</th>';
+            let html = '<table class="findings-table"><thead><tr>';
+            html += '<th style="width:35%;">Title</th>';
+            html += '<th style="width:15%;">Severity</th>';
+            html += '<th style="width:50%;">Description</th>';
             html += '</tr></thead><tbody>';
 
             findings.forEach(f => {
                 const severity = f.severity || 'info';
-                const title = f.title || 'N/A';
-                const descFull = f.description || 'No description';
+                const title    = f.title || 'N/A';
+                const descFull  = f.description || 'No description';
                 const descShort = descFull.length > 300 ? descFull.substring(0, 300) + '...' : descFull;
-                const descId = 'desc-' + (f.id || Math.random());
+                const descId    = 'desc-' + (f.id || Math.random());
 
                 html += `<tr>
                     <td><span class="finding-title">${title}</span></td>
                     <td><span class="severity-badge severity-${severity}">${severity}</span></td>
-                    <td style="font-size: 0.95rem; color: #555; white-space: pre-wrap;">
+                    <td style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;white-space:pre-wrap;">
                         <span id="${descId}-short">${descShort}</span>
                         ${descFull.length > 300 ? `
                         <span id="${descId}-full" style="display:none;white-space:pre-wrap;">${descFull}</span>
-                        <br><a href="#" onclick="document.getElementById('${descId}-short').style.display='none';document.getElementById('${descId}-full').style.display='inline';this.style.display='none';return false;" style="font-size:12px;color:#006BB4;">▼ Show full description</a>` : ''}
+                        <br><a href="#" onclick="document.getElementById('${descId}-short').style.display='none';document.getElementById('${descId}-full').style.display='inline';this.style.display='none';return false;"
+                           style="font-size:11px;color:#00d4ff;font-family:'Share Tech Mono',monospace;">▼ Show full description</a>` : ''}
                     </td>
                 </tr>`;
             });
@@ -267,17 +181,14 @@ fetch(`/api/findings?job_id=${jobId}`)
             html += '</tbody></table>';
             document.getElementById('jobFindings').innerHTML = html;
 
-            // Mettre à jour le header avec le compte
             const header = document.getElementById('findingsHeader');
-            if (header) {
-                header.textContent = `Findings from this Job (${findings.length})`;
-            }
+            if (header) header.textContent = `Findings from this Job (${findings.length})`;
         } else {
-            document.getElementById('jobFindings').innerHTML = '<p>No findings for this job.</p>';
+            document.getElementById('jobFindings').innerHTML = '<p style="padding:15px;color:#4a7a8a;font-family:\'Share Tech Mono\',monospace;">// No findings for this job.</p>';
         }
     })
     .catch(error => {
-        document.getElementById('jobFindings').innerHTML = `<p>Error: ${error.message}</p>`;
+        document.getElementById('jobFindings').innerHTML = `<p style="color:#ff3366;">Error: ${error.message}</p>`;
     });
 </script>
 {% endblock %}

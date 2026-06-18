@@ -1,221 +1,181 @@
 {% extends "base.html" %}
 
-{% block title %}Upload External File{% endblock %}
+{% block title %}Upload External File - {{ t('app_title') }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>📤 Upload External File</h1>
-    
-    <div class="info-box">
-        <h3>ℹ️ Supported File Types</h3>
-        <ul>
-            <li><strong>Aircrack-ng</strong>: .txt, .log (WiFi cracking output)</li>
-            <li><strong>Burp Suite</strong>: .xml (scan report)</li>
-            <li><strong>Ettercap</strong>: .log, .txt (MITM attack logs)</li>
-            <li><strong>Hydra</strong>: .txt (brute force results)</li>
-            <li><strong>Metasploit Logs</strong>: .log, .txt (max 50MB)</li>
-            <li><strong>Nikto</strong>: .xml, .txt (web scan results)</li>
-            <li><strong>SQLmap</strong>: .log, .txt (injection logs)</li>
-            <li><strong>Wireshark PCAP</strong>: .pcap, .pcapng, .cap (max 100MB)</li>
-        </ul>
-        <p><strong>⚠️ Important:</strong> Only upload files from authorized penetration tests.</p>
+<div class="page-header">
+    <h1 class="page-title">Upload External File</h1>
+    <a href="/{{ lang }}/jobs/new" class="btn btn-secondary">← Back</a>
+</div>
+
+<!-- Supported file types -->
+<div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-card-header">Supported File Types</div>
+    <div style="padding:16px;">
+        <table style="width:100%;font-family:'Share Tech Mono',monospace;font-size:12px;">
+            <thead>
+                <tr>
+                    <th style="padding:8px 12px;color:#4a7a8a;letter-spacing:2px;font-size:10px;text-transform:uppercase;border-bottom:1px solid #0e3a52;width:25%;">Tool</th>
+                    <th style="padding:8px 12px;color:#4a7a8a;letter-spacing:2px;font-size:10px;text-transform:uppercase;border-bottom:1px solid #0e3a52;width:25%;">Format</th>
+                    <th style="padding:8px 12px;color:#4a7a8a;letter-spacing:2px;font-size:10px;text-transform:uppercase;border-bottom:1px solid #0e3a52;">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:8px 12px;color:#00d4ff;border-bottom:1px solid #0a2a3a;">Aircrack-ng</td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;"><code>.txt, .log</code></td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;">WiFi cracking output</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 12px;color:#00d4ff;border-bottom:1px solid #0a2a3a;">Burp Suite</td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;"><code>.xml</code></td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;">Scan report</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 12px;color:#00d4ff;border-bottom:1px solid #0a2a3a;">Ettercap</td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;"><code>.log, .txt</code></td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;">MITM attack logs</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 12px;color:#00d4ff;border-bottom:1px solid #0a2a3a;">Metasploit</td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;"><code>.log, .txt</code></td>
+                    <td style="padding:8px 12px;color:#7faec0;border-bottom:1px solid #0a2a3a;">Logs (max 50MB)</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 12px;color:#00d4ff;">Wireshark</td>
+                    <td style="padding:8px 12px;color:#7faec0;"><code>.pcap, .pcapng, .cap</code></td>
+                    <td style="padding:8px 12px;color:#7faec0;">PCAP capture (max 100MB)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.5px;">
+            ⚠️ Only upload files from authorized penetration tests.
+        </p>
     </div>
-    
-    <form id="uploadForm" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="file">Select File:</label>
-            <input type="file" id="file" name="file" required 
-                   accept=".pcap,.pcapng,.cap,.log,.txt">
+</div>
+
+<!-- Upload form -->
+<div class="chart-card">
+    <div class="chart-card-header">Upload &amp; Parse</div>
+    <div style="padding:20px;">
+
+        <div style="margin-bottom:20px;">
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Select File</label>
+            <input type="file" id="file" name="file"
+                   accept=".pcap,.pcapng,.cap,.log,.txt,.xml"
+                   style="width:100%;padding:10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;">
         </div>
-        
-        <div class="form-group">
-            <label for="parser_type">Parser Type:</label>
-            <select id="parser_type" name="parser_type">
+
+        <div style="margin-bottom:24px;">
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Parser Type</label>
+            <select id="parser_type" name="parser_type"
+                    style="width:100%;padding:10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;">
                 <option value="auto">Auto-detect</option>
                 <option value="aircrack">Aircrack-ng (WiFi Cracking)</option>
                 <option value="burp">Burp Suite (HTTP Proxy)</option>
                 <option value="ettercap">Ettercap (MITM)</option>
-                <option value="hydra">Hydra (Brute Force)</option>
                 <option value="metasploit">Metasploit (Logs)</option>
-                <option value="nikto">Nikto (Web Scan)</option>
-                <option value="sqlmap">SQLmap (SQL Injection)</option>
                 <option value="wireshark">Wireshark (PCAP)</option>
             </select>
         </div>
-        
-        <button type="submit" id="uploadBtn">Upload & Parse</button>
-    </form>
-    
-    <div id="progress" style="display:none;">
-        <p>⏳ Uploading and parsing file...</p>
-        <div class="progress-bar">
-            <div id="progressBar" style="width: 0%"></div>
+
+        <button id="uploadBtn" onclick="handleUpload()"
+                style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:12px 28px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+            UPLOAD &amp; PARSE
+        </button>
+
+        <!-- Progress -->
+        <div id="progress" style="display:none;margin-top:20px;">
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;">⏳ Uploading and parsing file...</p>
+            <div style="width:100%;height:4px;background:#0a2a3a;border-radius:2px;margin-top:8px;">
+                <div id="progressBar" style="width:0%;height:100%;background:#00d4ff;border-radius:2px;transition:width 0.3s;"></div>
+            </div>
         </div>
+
+        <!-- Result -->
+        <div id="result" style="display:none;margin-top:20px;"></div>
+
     </div>
-    
-    <div id="result" style="display:none;"></div>
 </div>
 
 <script>
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
+async function handleUpload() {
     const fileInput = document.getElementById('file');
     const parserType = document.getElementById('parser_type').value;
     const uploadBtn = document.getElementById('uploadBtn');
     const progress = document.getElementById('progress');
     const result = document.getElementById('result');
-    
-    // Validate file
+
     if (!fileInput.files || fileInput.files.length === 0) {
         alert('Please select a file');
         return;
     }
-    
+
     const file = fileInput.files[0];
-    const maxSize = 100 * 1024 * 1024; // 100MB
-    
+    const maxSize = 100 * 1024 * 1024;
+
     if (file.size > maxSize) {
         alert('File too large. Maximum size: 100MB');
         return;
     }
-    
-    // Prepare form data
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('parser_type', parserType);
-    
-    // Show progress
+
     uploadBtn.disabled = true;
     progress.style.display = 'block';
     result.style.display = 'none';
-    
+
     try {
         const response = await fetch('/api/upload-external', {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             result.innerHTML = `
-                <div class="success-box">
-                    <h3>✅ Upload Successful</h3>
-                    <p><strong>Summary:</strong> ${data.summary}</p>
-                    <p><strong>Findings:</strong> ${data.findings_count}</p>
-                    <p><strong>Job ID:</strong> ${data.job_id}</p>
-                    <a href="/en/jobs/${data.job_id}" class="btn">View Details</a>
+                <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);border-left:3px solid #00ff88;padding:20px;border-radius:6px;">
+                    <p style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#00ff88;margin:0 0 12px 0;">✅ Upload Successful</p>
+                    <table style="font-family:'Share Tech Mono',monospace;font-size:12px;width:100%;">
+                        <tr><td style="color:#4a7a8a;padding:4px 0;width:30%;">Summary</td><td style="color:#7faec0;">${data.summary}</td></tr>
+                        <tr><td style="color:#4a7a8a;padding:4px 0;">Findings</td><td style="color:#7faec0;">${data.findings_count}</td></tr>
+                        <tr><td style="color:#4a7a8a;padding:4px 0;">Job ID</td><td style="color:#00d4ff;"><code>${data.job_id}</code></td></tr>
+                    </table>
+                    <a href="/en/jobs/${data.job_id}"
+                       style="display:inline-block;margin-top:14px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:8px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;">
+                        View Details
+                    </a>
                 </div>
             `;
         } else {
             result.innerHTML = `
-                <div class="error-box">
-                    <h3>❌ Upload Failed</h3>
-                    <p>${data.error || 'Unknown error'}</p>
+                <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;">
+                    <p style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#ff3366;margin:0 0 8px 0;">❌ Upload Failed</p>
+                    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;margin:0;">${data.error || 'Unknown error'}</p>
                 </div>
             `;
         }
-        
+
         result.style.display = 'block';
-        
+
     } catch (error) {
         result.innerHTML = `
-            <div class="error-box">
-                <h3>❌ Upload Failed</h3>
-                <p>${error.message}</p>
+            <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;">
+                <p style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#ff3366;margin:0 0 8px 0;">❌ Upload Failed</p>
+                <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;margin:0;">${error.message}</p>
             </div>
         `;
         result.style.display = 'block';
-        
+
     } finally {
         uploadBtn.disabled = false;
         progress.style.display = 'none';
     }
-});
+}
 </script>
-
-<style>
-.info-box {
-    background: #e7f3ff;
-    border: 1px solid #2196F3;
-    padding: 15px;
-    margin: 20px 0;
-    border-radius: 5px;
-}
-
-.form-group {
-    margin: 20px 0;
-}
-
-.form-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.form-group input[type="file"],
-.form-group select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-button[type="submit"] {
-    background: #4CAF50;
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-button[type="submit"]:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 20px;
-    background: #f0f0f0;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-#progressBar {
-    height: 100%;
-    background: #4CAF50;
-    transition: width 0.3s;
-}
-
-.success-box {
-    background: #d4edda;
-    border: 1px solid #28a745;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
-}
-
-.error-box {
-    background: #f8d7da;
-    border: 1px solid #dc3545;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
-}
-
-.btn {
-    display: inline-block;
-    background: #2196F3;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 4px;
-    margin-top: 10px;
-}
-</style>
 {% endblock %}

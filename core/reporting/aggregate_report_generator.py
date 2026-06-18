@@ -135,3 +135,24 @@ def generate_plugin_report(plugin_name):
         stats=_build_stats(findings),
         generated_at=datetime.utcnow()
     )
+
+
+def generate_global_pdf():
+    """Generate PDF for global aggregate report."""
+    from weasyprint import HTML
+    html = generate_global_report()
+    return HTML(string=html).write_pdf()
+
+
+def generate_target_pdf(target):
+    """Generate PDF for target aggregate report."""
+    from weasyprint import HTML
+    html = generate_target_report(target)
+    return HTML(string=html).write_pdf()
+
+
+def generate_plugin_pdf(plugin_name):
+    """Generate PDF for plugin aggregate report."""
+    from weasyprint import HTML
+    html = generate_plugin_report(plugin_name)
+    return HTML(string=html).write_pdf()

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DejaVu Sans',sans-serif; font-size:10pt; line-height:1.6; color:#1a2a3a; background:white; padding:20px; }
+
+        .report-header { border-bottom:2px solid #0077aa; padding-bottom:16px; margin-bottom:24px; display:table; width:100%; }
+        .report-header-left  { display:table-cell; vertical-align:bottom; }
+        .report-header-right { display:table-cell; vertical-align:bottom; text-align:right; font-size:8pt; color:#6a8090; }
+        .report-title    { font-size:20pt; color:#0077aa; letter-spacing:2px; text-transform:uppercase; font-weight:bold; }
+        .report-subtitle { font-size:9pt; color:#b84000; margin-top:4px; letter-spacing:1px; }
+        .confidential    { color:#b84000; font-weight:bold; font-size:8pt; }
+
+        h2 { font-size:11pt; color:#0077aa; letter-spacing:2px; text-transform:uppercase; margin:24px 0 12px 0; padding-bottom:6px; border-bottom:1px solid #d0dce8; }
+        h2::before { content:'// '; color:#b84000; }
+
+        .meta-block { background:#f5f7fa; border:1px solid #d0dce8; border-left:3px solid #0077aa; padding:12px 16px; margin-bottom:20px; }
+        .meta-table { width:100%; border-collapse:collapse; }
+        .meta-table td { padding:4px 8px 4px 0; font-size:9pt; }
+        .meta-table td:first-child { color:#6a8090; width:140px; text-transform:uppercase; font-size:8pt; letter-spacing:1px; }
+
+        .kpi-row  { display:table; width:100%; margin-bottom:20px; border-collapse:collapse; }
+        .kpi-card { display:table-cell; width:20%; padding:12px 8px; text-align:center; border:1px solid #d0dce8; background:#f9fafb; }
+        .kpi-value{ font-size:26pt; font-weight:bold; margin-bottom:4px; }
+        .kpi-label{ font-size:7pt; color:#6a8090; text-transform:uppercase; letter-spacing:1px; }
+        .kpi-total   { color:#0077aa; }
+        .kpi-critical{ color:#cc0033; }
+        .kpi-high    { color:#cc5500; }
+        .kpi-medium  { color:#997700; }
+        .kpi-low     { color:#1a7a3a; }
+
+        table.jobs-tbl { width:100%; border-collapse:collapse; font-size:8.5pt; margin-bottom:16px; }
+        table.jobs-tbl th { background:#1a2a3a; color:white; padding:6px 8px; text-align:left; font-size:7.5pt; text-transform:uppercase; }
+        table.jobs-tbl td { padding:6px 8px; border-bottom:1px solid #eef2f5; vertical-align:top; }
+        table.jobs-tbl tr:nth-child(even) td { background:#f9fafb; }
+
+        table.findings { width:100%; border-collapse:collapse; font-size:9pt; margin-top:12px; }
+        table.findings th { background:#1a2a3a; color:white; padding:8px 10px; text-align:left; font-size:8pt; text-transform:uppercase; letter-spacing:0.5px; }
+        table.findings td { padding:10px; border-bottom:1px solid #eef2f5; vertical-align:top; }
+        table.findings tr:nth-child(even) td { background:#f9fafb; }
+        .finding-title{ font-weight:bold; color:#1a2a3a; margin-bottom:3px; font-size:9pt; }
+        .finding-desc { color:#445566; font-size:8.5pt; }
+
+        .sev { display:inline-block; padding:2px 8px; border-radius:2px; font-size:7.5pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }
+        .sev-critical{ background:#fff0f3; color:#cc0033; border:1px solid #cc0033; }
+        .sev-high    { background:#fff5f0; color:#cc5500; border:1px solid #cc5500; }
+        .sev-medium  { background:#fffdf0; color:#997700; border:1px solid #997700; }
+        .sev-low     { background:#f0fff5; color:#1a7a3a; border:1px solid #1a7a3a; }
+        .sev-info    { background:#f0faff; color:#0077aa; border:1px solid #0077aa; }
+
+        .plugin-tag { display:inline-block; padding:1px 6px; font-size:7pt; background:#f0faff; border:1px solid #0077aa; color:#0077aa; border-radius:2px; }
+        .target-tag { display:inline-block; padding:1px 6px; font-size:7pt; background:#fff5f0; border:1px solid #b84000; color:#b84000; border-radius:2px; }
+
+        .report-footer { margin-top:40px; padding-top:16px; border-top:1px solid #d0dce8; font-size:7.5pt; color:#6a8090; display:table; width:100%; }
+        .footer-left  { display:table-cell; }
+        .footer-right { display:table-cell; text-align:right; }
+        .no-findings  { text-align:center; padding:24px; color:#6a8090; font-style:italic; }
+        .page-break   { page-break-after:always; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="report-header">
+        <div class="report-header-left">
+            <div class="report-title">// {{ report_title }}</div>
+            <div class="report-subtitle">{{ report_subtitle }}</div>
+        </div>
+        <div class="report-header-right">
+            <div>Generated: {{ generated_at.strftime('%Y-%m-%d %H:%M') }} UTC</div>
+            <div>Pentest ToolBox — M1 Cybersécurité 2026</div>
+            <div class="confidential">CONFIDENTIAL</div>
+        </div>
+    </div>
+
+    <!-- Scope -->
+    <h2>Report Scope</h2>
+    <div class="meta-block">
+        <table class="meta-table">
+            <tr><td>Report Type</td><td>{{ report_type }}</td></tr>
+            <tr><td>Filter</td><td>{{ filter_value }}</td></tr>
+            <tr><td>Jobs included</td><td>{{ jobs|length }}</td></tr>
+            <tr><td>Findings total</td><td>{{ findings|length }}</td></tr>
+            <tr><td>Generated</td><td>{{ generated_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</td></tr>
+        </table>
+    </div>
+
+    <!-- KPIs -->
+    <h2>Executive Summary</h2>
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-value kpi-total">{{ stats.total }}</div><div class="kpi-label">Total</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-critical">{{ stats.critical }}</div><div class="kpi-label">Critical</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-high">{{ stats.high }}</div><div class="kpi-label">High</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-medium">{{ stats.medium }}</div><div class="kpi-label">Medium</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-low">{{ stats.low }}</div><div class="kpi-label">Low</div></div>
+    </div>
+
+    <!-- Jobs -->
+    <h2>Jobs Included ({{ jobs|length }})</h2>
+    <table class="jobs-tbl">
+        <thead>
+            <tr>
+                <th style="width:5%;">#</th>
+                <th style="width:12%;">Job ID</th>
+                <th style="width:15%;">Plugin</th>
+                <th style="width:25%;">Target</th>
+                <th style="width:20%;">Date</th>
+                <th style="width:10%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><code>{{ (job.id|string)[:8] }}</code></td>
+                <td><span class="plugin-tag">{{ job.plugin_name }}</span></td>
+                <td><span class="target-tag">{{ job.config.get('target', job.config.get('domain', 'N/A')) }}</span></td>
+                <td>{{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ job.status|upper }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- Findings -->
+    <h2>All Findings ({{ findings|length }})</h2>
+
+    {% if findings %}
+    <table class="findings">
+        <thead>
+            <tr>
+                <th style="width:10%;">Severity</th>
+                <th style="width:12%;">Plugin</th>
+                <th style="width:18%;">Target</th>
+                <th style="width:28%;">Title</th>
+                <th style="width:32%;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in findings %}
+            <tr>
+                <td><span class="sev sev-{{ f.severity }}">{{ f.severity }}</span></td>
+                <td><span class="plugin-tag">{{ f.plugin_name }}</span></td>
+                <td style="font-size:8pt;color:#b84000;">{{ f.target }}</td>
+                <td><div class="finding-title">{{ f.title }}</div></td>
+                <td><div class="finding-desc">{{ (f.description or 'No description.')|replace('\n','<br>')|safe }}</div></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="no-findings">// No findings match the selected filters.</div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="report-footer">
+        <div class="footer-left">// Pentest ToolBox v1.0 — Projet M1 Cybersécurité 2026</div>
+        <div class="footer-right">This report is confidential — authorized use only.</div>
+    </div>
+
+</body>
+</html>

@@ -815,6 +815,52 @@ def get_plugin_report(plugin_name):
     except Exception as e:
         return jsonify({'error': f'Report generation error: {str(e)}'}), 500
 
+
+@api_bp.route('/reports/global/pdf', methods=['GET'])
+@login_required
+def get_global_report_pdf():
+    """Generate global aggregate PDF report."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_global_pdf
+        pdf = generate_global_pdf()
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename="global_report.pdf"'
+        }
+    except Exception as e:
+        return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/target/<path:target>/pdf', methods=['GET'])
+@login_required
+def get_target_report_pdf(target):
+    """Generate target aggregate PDF report."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_target_pdf
+        pdf = generate_target_pdf(target)
+        safe = target.replace('/', '_').replace(':', '_')
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': f'attachment; filename="report_target_{safe}.pdf"'
+        }
+    except Exception as e:
+        return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/plugin/<plugin_name>/pdf', methods=['GET'])
+@login_required
+def get_plugin_report_pdf(plugin_name):
+    """Generate plugin aggregate PDF report."""
+    try:
+        from core.reporting.aggregate_report_generator import generate_plugin_pdf
+        pdf = generate_plugin_pdf(plugin_name)
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': f'attachment; filename="report_plugin_{plugin_name}.pdf"'
+        }
+    except Exception as e:
+        return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

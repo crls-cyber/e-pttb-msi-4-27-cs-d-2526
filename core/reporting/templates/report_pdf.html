@@ -1,252 +1,200 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rapport Pentest - {{ (job.id|string)[:8] }}</title>
+    <title>Pentest Report — {{ (job.id|string)[:8] }} — {{ job.plugin_name }}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #2c3e50;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-size: 24pt;
-        }
-        
-        h2 {
-            color: #34495e;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-size: 18pt;
-            border-left: 4px solid #3498db;
-            padding-left: 10px;
-        }
-        
-        .meta {
-            background: #ecf0f1;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 25px;
-        }
-        
-        .meta p {
-            margin: 5px 0;
             font-size: 10pt;
+            line-height: 1.6;
+            color: #1a2a3a;
+            background: white;
+            padding: 20px;
         }
-        
-        .meta strong {
-            display: inline-block;
-            min-width: 140px;
-            color: #2c3e50;
-        }
-        
-        .summary {
+
+        /* ── Header ── */
+        .report-header {
+            border-bottom: 2px solid #0077aa;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
             display: table;
             width: 100%;
-            margin: 20px 0;
-            border-collapse: collapse;
         }
-        
-        .stat-card {
-            display: table-cell;
-            width: 25%;
-            padding: 15px;
-            text-align: center;
-            border: 2px solid #ddd;
-        }
-        
-        .stat-card .number {
-            font-size: 32pt;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stat-card.critical {
-            background: #fee;
-            border-color: #d32f2f;
-        }
-        .stat-card.critical .number { color: #d32f2f; }
-        
-        .stat-card.high {
-            background: #fff3e0;
-            border-color: #f57c00;
-        }
-        .stat-card.high .number { color: #f57c00; }
-        
-        .stat-card.medium {
-            background: #fffde7;
-            border-color: #fbc02d;
-        }
-        .stat-card.medium .number { color: #f9a825; }
-        
-        .stat-card.low {
-            background: #e8f5e9;
-            border-color: #388e3c;
-        }
-        .stat-card.low .number { color: #388e3c; }
-        
-        .stat-card .label {
+        .report-header-left  { display: table-cell; vertical-align: bottom; }
+        .report-header-right { display: table-cell; vertical-align: bottom; text-align: right; font-size: 8pt; color: #6a8090; }
+        .report-title { font-size: 20pt; color: #0077aa; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
+        .report-subtitle { font-size: 9pt; color: #b84000; margin-top: 4px; letter-spacing: 1px; }
+        .confidential { color: #b84000; font-weight: bold; font-size: 8pt; }
+
+        /* ── Section titles ── */
+        h2 {
+            font-size: 11pt;
+            color: #0077aa;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            font-size: 9pt;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            color: #666;
+            margin: 24px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #d0dce8;
         }
-        
-        table {
+        h2::before { content: '// '; color: #b84000; }
+
+        /* ── Meta block ── */
+        .meta-block {
+            background: #f5f7fa;
+            border: 1px solid #d0dce8;
+            border-left: 3px solid #0077aa;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .meta-table { width: 100%; border-collapse: collapse; }
+        .meta-table td { padding: 4px 8px 4px 0; font-size: 9pt; }
+        .meta-table td:first-child { color: #6a8090; width: 140px; text-transform: uppercase; font-size: 8pt; letter-spacing: 1px; }
+
+        /* ── KPI row ── */
+        .kpi-row { display: table; width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+        .kpi-card { display: table-cell; width: 20%; padding: 12px 8px; text-align: center; border: 1px solid #d0dce8; background: #f9fafb; }
+        .kpi-value { font-size: 26pt; font-weight: bold; margin-bottom: 4px; }
+        .kpi-label { font-size: 7pt; color: #6a8090; text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-total   { color: #0077aa; }
+        .kpi-critical{ color: #cc0033; }
+        .kpi-high    { color: #cc5500; }
+        .kpi-medium  { color: #997700; }
+        .kpi-low     { color: #1a7a3a; }
+
+        /* ── Findings table ── */
+        table.findings {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 12px;
             font-size: 9pt;
         }
-        
-        th {
-            background: #34495e;
+        table.findings th {
+            background: #1a2a3a;
             color: white;
-            padding: 10px;
+            padding: 8px 10px;
             text-align: left;
-            font-weight: 600;
-            text-transform: uppercase;
             font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        td {
+        table.findings td {
             padding: 10px;
-            border-bottom: 1px solid #ecf0f1;
+            border-bottom: 1px solid #eef2f5;
             vertical-align: top;
         }
-        
-        .severity {
+        table.findings tr:nth-child(even) td { background: #f9fafb; }
+        .finding-title { font-weight: bold; color: #1a2a3a; margin-bottom: 3px; font-size: 9pt; }
+        .finding-desc  { color: #445566; font-size: 8.5pt; }
+
+        /* ── Severity badges ── */
+        .sev {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 3px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 7.5pt;
             font-weight: bold;
-            font-size: 8pt;
             text-transform: uppercase;
-            color: white;
+            letter-spacing: 0.5px;
         }
-        
-        .severity.critical { background: #d32f2f; }
-        .severity.high { background: #f57c00; }
-        .severity.medium { background: #fbc02d; color: #333; }
-        .severity.low { background: #388e3c; }
-        
-        .finding-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 3px;
-            font-size: 10pt;
-        }
-        
-        .finding-description {
-            color: #666;
-            font-size: 9pt;
-        }
-        
-        .footer {
+        .sev-critical{ background:#fff0f3; color:#cc0033; border:1px solid #cc0033; }
+        .sev-high    { background:#fff5f0; color:#cc5500; border:1px solid #cc5500; }
+        .sev-medium  { background:#fffdf0; color:#997700; border:1px solid #997700; }
+        .sev-low     { background:#f0fff5; color:#1a7a3a; border:1px solid #1a7a3a; }
+        .sev-info    { background:#f0faff; color:#0077aa; border:1px solid #0077aa; }
+
+        /* ── Footer ── */
+        .report-footer {
             margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #ecf0f1;
-            text-align: center;
-            font-size: 8pt;
-            color: #7f8c8d;
+            padding-top: 16px;
+            border-top: 1px solid #d0dce8;
+            font-size: 7.5pt;
+            color: #6a8090;
+            display: table;
+            width: 100%;
         }
-        
-        .footer p {
-            margin: 3px 0;
-        }
-        
-        .page-break {
-            page-break-after: always;
-        }
+        .footer-left  { display: table-cell; }
+        .footer-right { display: table-cell; text-align: right; }
+
+        .no-findings { text-align: center; padding: 24px; color: #6a8090; font-style: italic; }
+        .page-break  { page-break-after: always; }
     </style>
 </head>
 <body>
-    <h1>🛡️ Rapport de Test d'Intrusion</h1>
-    
-    <div class="meta">
-        <p><strong>Job ID:</strong> {{ job.id|string }}</p>
-        <p><strong>Plugin:</strong> {{ job.plugin_name }}</p>
-        <p><strong>Cible:</strong> {{ job.config.get('target', job.config.get('targets', 'N/A')) }}</p>
-        <p><strong>Date d'exécution:</strong> {{ job.created_at.strftime('%d/%m/%Y %H:%M:%S') }} UTC</p>
-        {% if job.completed_at %}
-        <p><strong>Durée:</strong> {{ (job.completed_at - job.created_at).total_seconds()|int }} secondes</p>
-        {% endif %}
-        <p><strong>Status:</strong> {{ job.status }}</p>
+
+    <!-- Header -->
+    <div class="report-header">
+        <div class="report-header-left">
+            <div class="report-title">// Pentest Report</div>
+            <div class="report-subtitle">{{ job.plugin_name|upper }} — {{ job.config.get('target', job.config.get('domain', 'N/A')) }}</div>
+        </div>
+        <div class="report-header-right">
+            <div>Generated: {{ generated_at.strftime('%Y-%m-%d %H:%M') }} UTC</div>
+            <div>Pentest ToolBox — M1 Cybersécurité 2026</div>
+            <div class="confidential">CONFIDENTIAL</div>
+        </div>
     </div>
 
-    <h2>📊 Résumé Exécutif</h2>
-    <div class="summary">
-        <div class="stat-card critical">
-            <div class="number">{{ stats.critical }}</div>
-            <div class="label">Critiques</div>
-        </div>
-        <div class="stat-card high">
-            <div class="number">{{ stats.high }}</div>
-            <div class="label">Hautes</div>
-        </div>
-        <div class="stat-card medium">
-            <div class="number">{{ stats.medium }}</div>
-            <div class="label">Moyennes</div>
-        </div>
-        <div class="stat-card low">
-            <div class="number">{{ stats.low }}</div>
-            <div class="label">Basses</div>
-        </div>
+    <!-- Meta -->
+    <h2>Job Information</h2>
+    <div class="meta-block">
+        <table class="meta-table">
+            <tr><td>Job ID</td><td>{{ job.id }}</td></tr>
+            <tr><td>Plugin</td><td>{{ job.plugin_name }}</td></tr>
+            <tr><td>Target</td><td>{{ job.config.get('target', job.config.get('domain', 'N/A')) }}</td></tr>
+            <tr><td>Status</td><td>{{ job.status|upper }}</td></tr>
+            <tr><td>Created</td><td>{{ job.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</td></tr>
+            {% if job.completed_at %}
+            <tr><td>Duration</td><td>{{ (job.completed_at - job.created_at).total_seconds()|int }}s</td></tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- KPIs -->
+    <h2>Executive Summary</h2>
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-value kpi-total">{{ stats.total }}</div><div class="kpi-label">Total</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-critical">{{ stats.critical }}</div><div class="kpi-label">Critical</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-high">{{ stats.high }}</div><div class="kpi-label">High</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-medium">{{ stats.medium }}</div><div class="kpi-label">Medium</div></div>
+        <div class="kpi-card"><div class="kpi-value kpi-low">{{ stats.low }}</div><div class="kpi-label">Low</div></div>
     </div>
 
     <div class="page-break"></div>
 
-    <h2>🔍 Vulnérabilités Détectées ({{ stats.total }})</h2>
-    
+    <!-- Findings -->
+    <h2>Findings ({{ findings|length }})</h2>
+
     {% if findings %}
-    <table>
+    <table class="findings">
         <thead>
             <tr>
-                <th style="width: 100px;">Sévérité</th>
-                <th>Vulnérabilité</th>
+                <th style="width:12%;">Severity</th>
+                <th style="width:40%;">Title</th>
+                <th style="width:48%;">Description</th>
             </tr>
         </thead>
         <tbody>
             {% for finding in findings %}
             <tr>
-                <td>
-                    <span class="severity {{ finding.severity }}">{{ finding.severity }}</span>
-                </td>
-                <td>
-                    <div class="finding-title">{{ finding.title }}</div>
-                    <div class="finding-description">
-                        {{ (finding.description if finding.description else 'Pas de description disponible.')|replace('\n', '<br>')|safe }}
-                    </div>
-                </td>
+                <td><span class="sev sev-{{ finding.severity }}">{{ finding.severity }}</span></td>
+                <td><div class="finding-title">{{ finding.title }}</div></td>
+                <td><div class="finding-desc">{{ (finding.description or 'No description.')|replace('\n','<br>')|safe }}</div></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <p style="text-align: center; color: #95a5a6; padding: 20px;">
-        ✅ Aucune vulnérabilité détectée.
-    </p>
+    <div class="no-findings">// No findings detected for this job.</div>
     {% endif %}
 
-    <div class="footer">
-        <p><strong>Rapport généré le {{ generated_at.strftime('%d/%m/%Y à %H:%M:%S') }} UTC</strong></p>
-        <p>Pentest ToolBox v1.0.0-mvp | Projet M1 Cybersécurité 2026</p>
-        <p style="margin-top: 5px; font-size: 7pt;">
-            Ce rapport est confidentiel et destiné uniquement à l'usage interne de l'organisation cliente.
-        </p>
+    <!-- Footer -->
+    <div class="report-footer">
+        <div class="footer-left">// Pentest ToolBox v1.0 — Projet M1 Cybersécurité 2026</div>
+        <div class="footer-right">This report is confidential — authorized use only.</div>
     </div>
+
 </body>
 </html>

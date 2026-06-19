@@ -5,9 +5,10 @@
     <h1 class="page-title">Targets</h1>
 </div>
 
-<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:20px;padding:10px 14px;border-left:2px solid #0e3a52;">
-    // Authorized targets registry — only scan systems listed here.
-    Adding a target confirms you have written authorization to test it.
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:16px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Scope enforcement is active — <strong style="color:#00d4ff;">zero trust by default</strong>.
+    A target must appear in the Authorized list (and not be blocked by a more specific
+    Unauthorized rule) to be scanned. Targets matching neither list are blocked automatically.
 </div>
 
 <!-- Legal warning -->
@@ -16,13 +17,22 @@
 </div>
 
 <div class="row">
-    <!-- Add target form -->
-    <div class="col-md-4 mb-4">
+    <!-- Add target form (admin only) -->
+    <div class="col-md-4 mb-4" id="addTargetCard">
         <div class="chart-card">
             <div class="chart-card-header">Add Target</div>
             <div style="padding:16px;">
-                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">IP or Domain *</label>
-                <input type="text" id="input-ip" placeholder="192.168.200.133 or example.com"
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Scope Type</label>
+                <select id="input-scope-type" onchange="updatePlaceholder()"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;">
+                    <option value="ip">IP Address</option>
+                    <option value="cidr">IP Range (CIDR)</option>
+                    <option value="domain">Domain (exact)</option>
+                    <option value="wildcard_domain">Domain + Subdomains</option>
+                </select>
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Value *</label>
+                <input type="text" id="input-ip" placeholder="192.168.200.133"
                     style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
 
                 <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Description</label>
@@ -31,11 +41,11 @@
 
                 <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Notes</label>
                 <textarea id="input-notes" placeholder="Authorization reference, scope, contact..."
-                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;height:80px;resize:vertical;"></textarea>
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;height:70px;resize:vertical;"></textarea>
 
-                <label style="display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a7a8a;cursor:pointer;margin-bottom:16px;">
-                    <input type="checkbox" id="input-authorized" checked>
-                    <span>Authorized target</span>
+                <label style="display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;cursor:pointer;margin-bottom:16px;">
+                    <input type="checkbox" id="input-unauthorized">
+                    <span>Unauthorized target (block this entry)</span>
                 </label>
 
                 <button onclick="addTarget()"
@@ -50,80 +60,81 @@
         </div>
     </div>
 
-    <!-- Targets list -->
-    <div class="col-md-8 mb-4">
-        <div class="chart-card">
-            <div class="chart-card-header" id="targetsHeader">Authorized Targets</div>
-            <div id="targetsList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+    <!-- Targets lists -->
+    <div class="col-md-8 mb-4" id="targetsListsCol">
+
+        <!-- Unauthorized targets (top) -->
+        <div class="chart-card" style="margin-bottom:16px;border-left:3px solid #ff3366;">
+            <div class="chart-card-header" id="unauthorizedHeader" style="color:#ff4d6d;">⛔ Unauthorized Targets</div>
+            <div id="unauthorizedList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
                 Loading...
             </div>
         </div>
+
+        <!-- Authorized targets -->
+        <div class="chart-card" style="border-left:3px solid #00ff88;">
+            <div class="chart-card-header" id="authorizedHeader" style="color:#00ff88;">✓ Authorized Targets</div>
+            <div id="authorizedList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+                Loading...
+            </div>
+        </div>
+
     </div>
 </div>
 
 <style>
 .targets-table { width:100%; border-collapse:separate; border-spacing:0; }
 .targets-table thead th {
-    padding:10px 12px;
-    background:rgba(0,212,255,0.04);
-    font-family:'Share Tech Mono',monospace;
-    font-size:10px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    color:#4a7a8a;
-    text-align:left;
-    border-bottom:1px solid #0e3a52;
+    padding:10px 12px; background:rgba(0,212,255,0.04);
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px;
+    text-transform:uppercase; color:#4a7a8a; text-align:left; border-bottom:1px solid #0e3a52;
 }
 .targets-table tbody tr { border-bottom:1px solid #0a2a3a; }
 .targets-table tbody tr:hover { background:rgba(0,212,255,0.03); }
 .targets-table tbody td {
-    padding:10px 12px;
-    vertical-align:top;
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    color:#7faec0;
+    padding:10px 12px; vertical-align:top;
+    font-family:'Share Tech Mono',monospace; font-size:11px; color:#7faec0;
 }
-.auth-badge {
-    display:inline-block;
-    padding:2px 8px;
-    border-radius:3px;
-    font-size:9px;
-    letter-spacing:1px;
-    font-family:'Share Tech Mono',monospace;
+.scope-badge {
+    display:inline-block; padding:2px 8px; border-radius:3px;
+    font-size:9px; letter-spacing:1px; font-family:'Share Tech Mono',monospace;
+    background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.25); color:#00d4ff;
 }
-.auth-yes { background:rgba(0,255,136,0.1); color:#00ff88; border:1px solid rgba(0,255,136,0.3); }
-.auth-no  { background:rgba(255,51,102,0.1); color:#ff3366; border:1px solid rgba(255,51,102,0.3); }
 .btn-scan {
-    background:rgba(0,212,255,0.08);
-    border:1px solid rgba(0,212,255,0.3);
-    color:#00d4ff;
-    padding:3px 10px;
-    border-radius:3px;
-    font-family:'Share Tech Mono',monospace;
-    font-size:9px;
-    letter-spacing:1px;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-block;
-    margin-right:4px;
+    background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.3); color:#00d4ff;
+    padding:3px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace;
+    font-size:9px; letter-spacing:1px; cursor:pointer; text-decoration:none;
+    display:inline-block; margin-right:4px;
 }
 .btn-delete {
-    background:rgba(255,51,102,0.08);
-    border:1px solid rgba(255,51,102,0.3);
-    color:#ff3366;
-    padding:3px 10px;
-    border-radius:3px;
-    font-family:'Share Tech Mono',monospace;
-    font-size:9px;
-    letter-spacing:1px;
-    cursor:pointer;
+    background:rgba(255,51,102,0.08); border:1px solid rgba(255,51,102,0.3); color:#ff3366;
+    padding:3px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace;
+    font-size:9px; letter-spacing:1px; cursor:pointer;
 }
 </style>
 
 <script>
 let allTargets = [];
+const isAdmin = {{ 'true' if current_user.is_authenticated and current_user.roles and 'admin' in current_user.roles|map(attribute='name')|list else 'false' }};
+
+const placeholders = {
+    ip: '192.168.200.133',
+    cidr: '192.168.200.0/24',
+    domain: 'example.com',
+    wildcard_domain: '*.example.com'
+};
+
+function updatePlaceholder() {
+    const type = document.getElementById('input-scope-type').value;
+    document.getElementById('input-ip').placeholder = placeholders[type] || '';
+}
 
 function loadTargets() {
+    if (!isAdmin) {
+        document.getElementById('addTargetCard').style.display = 'none';
+        document.getElementById('targetsListsCol').classList.remove('col-md-8');
+        document.getElementById('targetsListsCol').classList.add('col-md-12');
+    }
     fetch('/api/targets')
         .then(r => r.json())
         .then(data => {
@@ -131,43 +142,43 @@ function loadTargets() {
             renderTargets();
         })
         .catch(err => {
-            document.getElementById('targetsList').innerHTML = `<p style="color:#ff3366;">Error: ${err.message}</p>`;
+            document.getElementById('authorizedList').innerHTML = `<p style="color:#ff3366;">Error: ${err.message}</p>`;
         });
 }
 
-function renderTargets() {
-    const container = document.getElementById('targetsList');
-    const header    = document.getElementById('targetsHeader');
+function scopeLabel(type) {
+    const labels = { ip: 'IP', cidr: 'CIDR', domain: 'DOMAIN', wildcard_domain: 'WILDCARD' };
+    return labels[type] || type.toUpperCase();
+}
 
-    if (allTargets.length === 0) {
-        container.innerHTML = '<p style="color:#4a7a8a;padding:8px 0;">// No targets yet. Add your first authorized target.</p>';
-        header.textContent  = 'Authorized Targets (0)';
+function renderTable(targets, containerId, headerId, headerLabel, emptyMsg) {
+    const container = document.getElementById(containerId);
+    const header = document.getElementById(headerId);
+
+    header.textContent = `${headerLabel} (${targets.length})`;
+
+    if (targets.length === 0) {
+        container.innerHTML = `<p style="color:#4a7a8a;padding:8px 0;">// ${emptyMsg}</p>`;
         return;
     }
 
-    header.textContent = `Authorized Targets (${allTargets.length})`;
-
     let html = '<table class="targets-table"><thead><tr>';
-    html += '<th style="width:25%;">IP / Domain</th>';
-    html += '<th style="width:25%;">Description</th>';
-    html += '<th style="width:10%;">Status</th>';
-    html += '<th style="width:25%;">Notes</th>';
-    html += '<th style="width:15%;">Actions</th>';
+    html += '<th style="width:10%;">Type</th>';
+    html += '<th style="width:22%;">Value</th>';
+    html += '<th style="width:22%;">Description</th>';
+    html += '<th style="width:26%;">Notes</th>';
+    html += '<th style="width:20%;">Actions</th>';
     html += '</tr></thead><tbody>';
 
-    allTargets.forEach(t => {
-        const authBadge = t.authorized
-            ? '<span class="auth-badge auth-yes">✓ AUTH</span>'
-            : '<span class="auth-badge auth-no">✗ UNAUTH</span>';
-
+    targets.forEach(t => {
         html += `<tr>
+            <td><span class="scope-badge">${scopeLabel(t.scope_type)}</span></td>
             <td style="color:#c0d8e8;font-weight:bold;">${t.ip_or_domain}</td>
             <td>${t.description || '<span style="color:#4a7a8a;">—</span>'}</td>
-            <td>${authBadge}</td>
             <td style="font-size:10px;">${t.notes || '<span style="color:#4a7a8a;">—</span>'}</td>
             <td>
-                <a href="/{{ lang }}/jobs/new?target=${encodeURIComponent(t.ip_or_domain)}" class="btn-scan">→ SCAN</a>
-                <button onclick="deleteTarget('${t.id}')" class="btn-delete">✕</button>
+                ${t.authorized ? `<a href="/{{ lang }}/jobs/new?target=${encodeURIComponent(t.ip_or_domain)}" class="btn-scan">→ SCAN</a>` : ''}
+                ${isAdmin ? `<button onclick="deleteTarget('${t.id}')" class="btn-delete">✕</button>` : ''}
             </td>
         </tr>`;
     });
@@ -176,32 +187,51 @@ function renderTargets() {
     container.innerHTML = html;
 }
 
+function renderTargets() {
+    const unauthorized = allTargets.filter(t => !t.authorized);
+    const authorized   = allTargets.filter(t => t.authorized);
+
+    renderTable(unauthorized, 'unauthorizedList', 'unauthorizedHeader', 'Unauthorized Targets',
+        'No unauthorized entries — only used to block specific exceptions within an authorized scope.');
+    renderTable(authorized, 'authorizedList', 'authorizedHeader', 'Authorized Targets',
+        'No targets yet. Add your first authorized target — required for any scan to run (zero trust).');
+}
+
 function addTarget() {
-    const ip   = document.getElementById('input-ip').value.trim();
-    const desc = document.getElementById('input-desc').value.trim();
-    const notes = document.getElementById('input-notes').value.trim();
-    const auth = document.getElementById('input-authorized').checked;
+    const scopeType = document.getElementById('input-scope-type').value;
+    const ip     = document.getElementById('input-ip').value.trim();
+    const desc   = document.getElementById('input-desc').value.trim();
+    const notes  = document.getElementById('input-notes').value.trim();
+    const unauth = document.getElementById('input-unauthorized').checked;
     const result = document.getElementById('add-result');
 
     if (!ip) {
-        result.innerHTML = '<span style="color:#ff3366;">// IP or domain required</span>';
+        result.innerHTML = '<span style="color:#ff3366;">// Value required</span>';
         return;
     }
 
     fetch('/api/targets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip_or_domain: ip, description: desc, notes: notes, authorized: auth })
+        body: JSON.stringify({
+            ip_or_domain: ip,
+            description: desc,
+            notes: notes,
+            authorized: !unauth,
+            scope_type: scopeType
+        })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.id) {
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 201 || data.id) {
             result.innerHTML = '<span style="color:#00ff88;">✓ Target added</span>';
             document.getElementById('input-ip').value    = '';
             document.getElementById('input-desc').value  = '';
             document.getElementById('input-notes').value = '';
-            document.getElementById('input-authorized').checked = true;
+            document.getElementById('input-unauthorized').checked = false;
             loadTargets();
+        } else if (status === 403) {
+            result.innerHTML = '<span style="color:#ff3366;">✗ Admin role required</span>';
         } else {
             result.innerHTML = `<span style="color:#ff3366;">Error: ${data.error}</span>`;
         }
@@ -214,11 +244,17 @@ function addTarget() {
 function deleteTarget(id) {
     if (!confirm('Delete this target?')) return;
     fetch(`/api/targets/${id}`, { method: 'DELETE' })
-        .then(r => r.json())
-        .then(() => loadTargets())
+        .then(r => {
+            if (r.status === 403) {
+                alert('Admin role required to delete targets.');
+                return;
+            }
+            loadTargets();
+        })
         .catch(err => console.error(err));
 }
 
+updatePlaceholder();
 loadTargets();
 </script>
 {% endblock %}

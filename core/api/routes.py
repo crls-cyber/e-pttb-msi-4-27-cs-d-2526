@@ -755,9 +755,9 @@ def trigger_web_app_audit():
 @api_bp.route('/targets', methods=['GET'])
 @login_required
 def list_targets():
-    """List user targets."""
+    """List all targets — scope is shared across the team for this mission (one machine = one mission)."""
     from core.models.target import Target
-    targets = db.session.query(Target).filter_by(user_id=current_user.id).order_by(Target.created_at.desc()).all()
+    targets = db.session.query(Target).order_by(Target.created_at.desc()).all()
     return jsonify({
         'targets': [{
             'id': str(t.id),
@@ -765,6 +765,7 @@ def list_targets():
             'description': t.description or '',
             'authorized': t.authorized,
             'notes': t.notes or '',
+            'scope_type': t.scope_type or 'ip',
             'created_at': t.created_at.isoformat() if t.created_at else None
         } for t in targets]
     }), 200
@@ -784,7 +785,8 @@ def create_target():
         ip_or_domain=data['ip_or_domain'].strip(),
         description=data.get('description', ''),
         authorized=data.get('authorized', True),
-        notes=data.get('notes', '')
+        notes=data.get('notes', ''),
+        scope_type=data.get('scope_type', 'ip')
     )
     db.session.add(target)
     db.session.commit()
@@ -796,9 +798,9 @@ def create_target():
 @login_required
 @require_role('admin')
 def delete_target(target_id):
-    """Delete a target."""
+    """Delete a target — any admin can delete any target (shared mission scope)."""
     from core.models.target import Target
-    target = db.session.query(Target).filter_by(id=target_id, user_id=current_user.id).first()
+    target = db.session.query(Target).filter_by(id=target_id).first()
     if not target:
         return jsonify({'error': 'Target not found'}), 404
     db.session.delete(target)
@@ -811,9 +813,9 @@ def delete_target(target_id):
 @login_required
 @require_role('admin')
 def update_target(target_id):
-    """Update a target."""
+    """Update a target — any admin can update any target (shared mission scope)."""
     from core.models.target import Target
-    target = db.session.query(Target).filter_by(id=target_id, user_id=current_user.id).first()
+    target = db.session.query(Target).filter_by(id=target_id).first()
     if not target:
         return jsonify({'error': 'Target not found'}), 404
     data = request.get_json()
@@ -906,6 +908,30 @@ def get_plugin_report_pdf(plugin_name):
         }
     except Exception as e:
         return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/users/me/password', methods=['PUT'])
+@login_required
+def change_own_password():
+    """Change current user's password."""
+    data = request.get_json()
+    if not data or 'current_password' not in data or 'new_password' not in data:
+        return jsonify({'error': 'Missing current_password or new_password'}), 400
+
+    current_password = data['current_password']
+    new_password = data['new_password']
+
+    if not current_user.check_password(current_password):
+        return jsonify({'error': 'Current password is incorrect'}), 403
+
+    if len(new_password) < 8:
+        return jsonify({'error': 'New password must be at least 8 characters'}), 400
+
+    current_user.set_password(new_password)
+    db.session.commit()
+    audit_log('user.password_change', 'user', current_user.id)
+
+    return jsonify({'message': 'Password changed successfully'}), 200
 
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required

@@ -1,5 +1,5 @@
 """User, Role, and Permission models."""
-from sqlalchemy import Column, String, Table, ForeignKey
+from sqlalchemy import Column, String, Table, ForeignKey, Boolean, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -28,6 +28,10 @@ class User(Base, UUIDMixin, TimestampMixin):
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), nullable=True)
+    must_change_password = Column(Boolean, nullable=False, default=False)
+    theme = Column(String(10), nullable=False, default='dark')
+    density = Column(String(15), nullable=False, default='comfortable')
+    session_timeout_minutes = Column(Integer, nullable=False, default=30)
 
     # Relationships
     roles = relationship('Role', secondary=user_roles, back_populates='users')

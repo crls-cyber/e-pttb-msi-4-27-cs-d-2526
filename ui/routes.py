@@ -15,6 +15,16 @@ def inject_i18n():
         'get_translations': get_translations
     }
 
+@ui_bp.before_request
+def enforce_password_change():
+    """Force redirect to /settings if user must change their password."""
+    if current_user.is_authenticated and getattr(current_user, 'must_change_password', False):
+        allowed_endpoints = ('ui.settings', 'ui.logout', 'static')
+        if request.endpoint not in allowed_endpoints:
+            lang = get_locale()
+            return redirect(f'/{lang}/settings?force_password_change=1')
+
+
 @ui_bp.route('/')
 def root():
     """Redirect root to dashboard."""
@@ -40,8 +50,11 @@ def login():
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            # Redirect to dashboard
             lang = get_locale()
+            # Force password change on first login
+            if user.must_change_password:
+                return redirect(f'/{lang}/settings?force_password_change=1')
+            # Redirect to dashboard
             return redirect(f'/{lang}/dashboard')
         else:
             return render_template('login.html', error='Invalid username or password')

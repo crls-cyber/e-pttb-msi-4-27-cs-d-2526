@@ -1,9 +1,114 @@
 {% extends "base.html" %}
+{% block title %}Settings - {{ t('app_title') }}{% endblock %}
 {% block content %}
-<div style="max-width:800px;margin:60px auto;text-align:center;padding:40px;">
-    <div style="font-size:80px;margin-bottom:24px;">🚧</div>
-    <h1 style="font-family:'Share Tech Mono',monospace;font-size:32px;color:#00d4ff;letter-spacing:4px;margin-bottom:16px;text-transform:uppercase;">COMING SOON</h1>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;letter-spacing:2px;margin-bottom:32px;">// THIS MODULE IS UNDER DEVELOPMENT</p>
-    <a href="/en/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+<div class="page-header">
+    <h1 class="page-title">Settings</h1>
 </div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:24px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Personal account settings — signed in as <strong style="color:#00d4ff;">{{ current_user.username }}</strong>
+</div>
+
+<div class="row">
+
+    <!-- Change Password -->
+    <div class="col-md-5 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔑 Change Password</div>
+            <div style="padding:16px;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Current Password</label>
+                <input type="password" id="current-password"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">New Password</label>
+                <input type="password" id="new-password"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
+                <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin:-10px 0 14px 0;">Minimum 8 characters.</p>
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Confirm New Password</label>
+                <input type="password" id="confirm-password"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:18px;box-sizing:border-box;">
+
+                <button onclick="changePassword()"
+                    style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px 24px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%;"
+                    onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                    onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+                    UPDATE PASSWORD
+                </button>
+
+                <div id="password-result" style="margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:11px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account info -->
+    <div class="col-md-7 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">👤 Account Information</div>
+            <div style="padding:16px;">
+                <table style="width:100%;font-family:'Share Tech Mono',monospace;font-size:12px;">
+                    <tr><td style="padding:6px 0;color:#4a7a8a;width:30%;">Username</td><td style="color:#c0d8e8;font-weight:bold;">{{ current_user.username }}</td></tr>
+                    <tr><td style="padding:6px 0;color:#4a7a8a;">Email</td><td style="color:#7faec0;">{{ current_user.email or 'N/A' }}</td></tr>
+                    <tr><td style="padding:6px 0;color:#4a7a8a;">Role</td><td style="color:#00d4ff;text-transform:uppercase;letter-spacing:1px;">{{ current_user.roles[0].name if current_user.roles else 'N/A' }}</td></tr>
+                    <tr><td style="padding:6px 0;color:#4a7a8a;">Member since</td><td style="color:#7faec0;">{{ current_user.created_at.strftime('%Y-%m-%d') if current_user.created_at else 'N/A' }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="chart-card" style="margin-top:16px;">
+            <div class="chart-card-header">🌐 Interface Language</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;">
+                Current: <span style="color:#00d4ff;">{{ lang|upper }}</span> —
+                switch via the
+                <a href="/en{{ request.path.replace('/fr','').replace('/en','') }}" style="color:#00d4ff;">EN</a> /
+                <a href="/fr{{ request.path.replace('/fr','').replace('/en','') }}" style="color:#00d4ff;">FR</a>
+                links in the top bar.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function changePassword() {
+    const current = document.getElementById('current-password').value;
+    const newPwd  = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
+    const result  = document.getElementById('password-result');
+
+    if (!current || !newPwd || !confirm) {
+        result.innerHTML = '<span style="color:#ff3366;">// All fields required</span>';
+        return;
+    }
+    if (newPwd.length < 8) {
+        result.innerHTML = '<span style="color:#ff3366;">// New password must be at least 8 characters</span>';
+        return;
+    }
+    if (newPwd !== confirm) {
+        result.innerHTML = '<span style="color:#ff3366;">// Passwords do not match</span>';
+        return;
+    }
+
+    fetch('/api/users/me/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: current, new_password: newPwd })
+    })
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 200) {
+            result.innerHTML = '<span style="color:#00ff88;">✓ Password updated successfully</span>';
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        } else {
+            result.innerHTML = `<span style="color:#ff3366;">✗ ${data.error}</span>`;
+        }
+    })
+    .catch(err => {
+        result.innerHTML = `<span style="color:#ff3366;">Error: ${err.message}</span>`;
+    });
+}
+</script>
 {% endblock %}

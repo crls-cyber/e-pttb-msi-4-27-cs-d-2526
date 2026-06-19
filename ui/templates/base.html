@@ -138,7 +138,7 @@ code{padding:2px 6px!important;font-size:11px!important}
             <a href="#" class="nav-item disabled"><i class="fas fa-plug"></i><span>Integrations</span><span class="badge-coming-soon">SOON</span></a>
             <a href="#" class="nav-item disabled"><i class="fas fa-shield-alt"></i><span>Compliance</span><span class="badge-coming-soon">SOON</span></a>
             <a href="/{{ lang }}/analytics" class="nav-item {% if 'analytics' in request.path %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-cog"></i><span>Settings</span><span class="badge-coming-soon">SOON</span></a>
+            <a href="/{{ lang }}/settings" class="nav-item {% if 'settings' in request.path %}active{% endif %}"><i class="fas fa-cog"></i><span>Settings</span></a>
         </nav>
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item" style="border-left:none!important;">
@@ -164,10 +164,17 @@ code{padding:2px 6px!important;font-size:11px!important}
                     <a href="/en{{ request.path.replace('/fr', '').replace('/en', '') }}" class="{% if lang == 'en' %}active{% endif %}">EN</a>
                     <a href="/fr{{ request.path.replace('/fr', '').replace('/en', '') }}" class="{% if lang == 'fr' %}active{% endif %}">FR</a>
                 </div>
+                {% if current_user.is_authenticated and current_user.roles and 'admin' in current_user.roles|map(attribute='name')|list %}
+                <a href="/{{ lang }}/admin/users" class="user-menu" style="text-decoration:none;cursor:pointer;">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ current_user.username }}</span>
+                </a>
+                {% else %}
                 <div class="user-menu">
                     <i class="fas fa-user-circle"></i>
                     <span>{{ current_user.username if current_user.is_authenticated else 'Guest' }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
         <div class="content-area">

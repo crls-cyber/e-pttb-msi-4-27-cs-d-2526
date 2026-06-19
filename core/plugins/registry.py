@@ -23,8 +23,10 @@ class PluginRegistry:
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             
-            # Skip if not a directory or starts with _
+            # Skip if not a directory, starts with _, or is the external parsers folder
             if not os.path.isdir(plugin_path) or plugin_name.startswith('_'):
+                continue
+            if plugin_name == 'external':
                 continue
             
             # Try to import plugin.py

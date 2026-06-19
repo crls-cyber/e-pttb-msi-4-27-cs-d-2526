@@ -195,10 +195,11 @@ function renderFindings(findings) {
     }
 
     let html = '<table class="findings-table"><thead><tr>';
-    html += '<th style="width:32%;">Title</th>';
-    html += '<th style="width:12%;">Severity</th>';
-    html += '<th style="width:12%;">Job ID</th>';
-    html += '<th style="width:44%;">Description</th>';
+    html += '<th style="width:28%;">Title</th>';
+    html += '<th style="width:11%;">Severity</th>';
+    html += '<th style="width:10%;">Job ID</th>';
+    html += '<th style="width:11%;">Date</th>';
+    html += '<th style="width:40%;">Description</th>';
     html += '</tr></thead><tbody>';
 
     findings.forEach(f => {
@@ -206,6 +207,7 @@ function renderFindings(findings) {
         const title     = f.title || 'N/A';
         const jobId     = f.job_id ? f.job_id.substring(0, 8) : 'N/A';
         const fullJobId = f.job_id || '';
+        const date      = f.created_at ? new Date(f.created_at).toLocaleDateString('en-GB') : 'N/A';
         const descFull  = f.description || 'No description';
         const descShort = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
         const descId    = 'desc-' + (f.id || Math.random().toString(36).substr(2,8));
@@ -214,6 +216,7 @@ function renderFindings(findings) {
             <td><span class="finding-title">${title}</span></td>
             <td><span class="severity-badge severity-${severity}">${severity}</span></td>
             <td><a href="/{{ lang }}/jobs/${fullJobId}" style="color:#00d4ff;text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:11px;"><code>${jobId}</code></a></td>
+            <td style="color:#4a7a8a;">${date}</td>
             <td>
                 <span id="${descId}-short" style="white-space:pre-wrap;">${descShort}</span>
                 ${descFull.length > 200 ? `

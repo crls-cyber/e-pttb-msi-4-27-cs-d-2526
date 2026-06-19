@@ -6,7 +6,7 @@
 </div>
 
 <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:20px;padding:10px 14px;border-left:2px solid #0e3a52;">
-    // Generate aggregated reports across multiple jobs.
+    // Generate aggregated reports across multiple jobs — combine filters as needed.
     For individual job reports, see
     <a href="/{{ lang }}/jobs" style="color:#00d4ff;">Jobs</a> → Details → HTML/PDF Report.
 </div>
@@ -14,181 +14,237 @@
 <div class="row">
 
     <!-- Global Report -->
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-4">
         <div class="chart-card">
             <div class="chart-card-header">🌐 Global Report</div>
             <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
-                // All findings from all completed jobs — full campaign overview.
+                // All findings from all completed jobs.
             </p>
-            <div id="global-stats" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#4a7a8a;margin-bottom:16px;">
+            <div id="global-stats" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a7a8a;margin-bottom:16px;">
                 Loading stats...
             </div>
             <a href="/api/reports/global" target="_blank"
-               style="display:block;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;text-decoration:none;margin-bottom:8px;">
+               style="display:block;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:9px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;margin-bottom:8px;">
                 → HTML REPORT
             </a>
             <a href="/api/reports/global/pdf" target="_blank"
-               style="display:block;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;text-decoration:none;">
+               style="display:block;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:9px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;">
                 → PDF REPORT
             </a>
         </div>
     </div>
 
-    <!-- Report by Target -->
-    <div class="col-md-4 mb-4">
+    <!-- Custom Report (combinable filters) -->
+    <div class="col-md-9 mb-4">
         <div class="chart-card">
-            <div class="chart-card-header">🎯 Report by Target</div>
+            <div class="chart-card-header">🧩 Custom Report — Combine Filters</div>
             <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
-                // All findings on a specific IP or domain — ideal client deliverable.
+                // Combine target, plugin and/or date range — leave any filter empty to ignore it.
             </p>
-            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Target</label>
-            <select id="target-select"
-                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;">
-                <option value="">-- Select a target --</option>
-            </select>
-            <button onclick="openTargetReport('html')"
-                style="display:block;width:100%;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;margin-bottom:8px;">
-                → HTML REPORT
-            </button>
-            <button onclick="openTargetReport('pdf')"
-                style="display:block;width:100%;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;">
-                → PDF REPORT
-            </button>
-        </div>
-    </div>
 
-    <!-- Report by Plugin -->
-    <div class="col-md-4 mb-4">
-        <div class="chart-card">
-            <div class="chart-card-header">🔌 Report by Plugin</div>
-            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
-                // All findings from a specific tool — methodology statistics.
-            </p>
-            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Plugin</label>
-            <select id="plugin-select"
-                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;">
-                <option value="">-- Select a plugin --</option>
-            </select>
-            <button onclick="openPluginReport('html')"
-                style="display:block;width:100%;text-align:center;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;margin-bottom:8px;">
-                → HTML REPORT
-            </button>
-            <button onclick="openPluginReport('pdf')"
-                style="display:block;width:100%;text-align:center;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:10px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;">
-                → PDF REPORT
-            </button>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#4a7a8a;text-transform:uppercase;margin-bottom:6px;">Target</label>
+                    <select id="f-target" onchange="updatePreview()"
+                        style="width:100%;padding:8px 10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+                        <option value="">All targets</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#4a7a8a;text-transform:uppercase;margin-bottom:6px;">Plugin</label>
+                    <select id="f-plugin" onchange="updatePreview()"
+                        style="width:100%;padding:8px 10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+                        <option value="">All plugins</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#4a7a8a;text-transform:uppercase;margin-bottom:6px;">From</label>
+                    <input type="date" id="f-start" onchange="updatePreview()"
+                        style="width:100%;padding:8px 10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+                </div>
+                <div>
+                    <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#4a7a8a;text-transform:uppercase;margin-bottom:6px;">To</label>
+                    <input type="date" id="f-end" onchange="updatePreview()"
+                        style="width:100%;padding:8px 10px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:11px;">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button onclick="openCustomReport('html')"
+                    style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:9px 22px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+                    → HTML REPORT
+                </button>
+                <button onclick="openCustomReport('pdf')"
+                    style="background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.3);color:#ff4d6d;padding:9px 22px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+                    → PDF REPORT
+                </button>
+                <button onclick="resetFilters()"
+                    style="background:transparent;border:1px solid #0e3a52;color:#4a7a8a;padding:9px 18px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;">
+                    RESET
+                </button>
+            </div>
         </div>
     </div>
 
 </div>
 
-<!-- Recent jobs with report links -->
+<!-- Dynamic preview -->
 <div class="chart-card mt-2">
-    <div class="chart-card-header" id="jobsHeader">Recent Jobs — Individual Reports</div>
-    <div id="jobsList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+    <div class="chart-card-header" id="previewHeader">Recent Findings (default view)</div>
+    <div id="previewList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
         Loading...
     </div>
 </div>
 
 <style>
-.jobs-table { width:100%; border-collapse:separate; border-spacing:0; }
-.jobs-table thead th { padding:10px 12px; background:rgba(0,212,255,0.04); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#4a7a8a; text-align:left; border-bottom:1px solid #0e3a52; }
-.jobs-table tbody tr { border-bottom:1px solid #0a2a3a; }
-.jobs-table tbody tr:hover { background:rgba(0,212,255,0.03); }
-.jobs-table tbody td { padding:10px 12px; vertical-align:middle; font-family:'Share Tech Mono',monospace; font-size:11px; color:#7faec0; }
-.report-btn { display:inline-block; padding:3px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; text-decoration:none; margin-right:4px; }
-.btn-html { background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.3); color:#00d4ff; }
-.btn-pdf  { background:rgba(255,51,102,0.08); border:1px solid rgba(255,51,102,0.3); color:#ff4d6d; }
-.btn-csv  { background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.3); color:#00ff88; }
+.preview-table { width:100%; border-collapse:separate; border-spacing:0; }
+.preview-table thead th { padding:10px 12px; background:rgba(0,212,255,0.04); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#4a7a8a; text-align:left; border-bottom:1px solid #0e3a52; }
+.preview-table tbody tr { border-bottom:1px solid #0a2a3a; }
+.preview-table tbody tr:hover { background:rgba(0,212,255,0.03); }
+.preview-table tbody td { padding:10px 12px; vertical-align:top; font-family:'Share Tech Mono',monospace; font-size:11px; color:#7faec0; }
+.severity-badge { display:inline-block; padding:3px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; }
+.severity-critical { background:rgba(220,53,69,0.2); color:#ff4d6d; border:1px solid rgba(220,53,69,0.4); }
+.severity-high     { background:rgba(253,126,20,0.2); color:#ff9944; border:1px solid rgba(253,126,20,0.4); }
+.severity-medium   { background:rgba(255,193,7,0.2);  color:#ffd700; border:1px solid rgba(255,193,7,0.4); }
+.severity-low      { background:rgba(23,162,184,0.2); color:#00d4ff; border:1px solid rgba(23,162,184,0.4); }
+.severity-info     { background:rgba(108,117,125,0.2);color:#7faec0; border:1px solid rgba(108,117,125,0.4); }
 </style>
 
 <script>
-// Load jobs and stats
+let allJobs = [];
+let allFindings = [];
+
 Promise.all([
     fetch('/api/jobs').then(r => r.json()),
+    fetch('/api/findings').then(r => r.json()),
     fetch('/api/stats/dashboard').then(r => r.json())
-]).then(([jobsData, stats]) => {
-    const jobs = Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []);
+]).then(([jobsData, findingsData, stats]) => {
+    allJobs = Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []);
+    allFindings = Array.isArray(findingsData) ? findingsData : (findingsData.findings || []);
 
-    // Global stats
+    const jobMap = {};
+    allJobs.forEach(j => { jobMap[j.id] = { plugin: j.plugin || j.plugin_name || '', target: j.config?.target || j.config?.domain || '', created_at: j.created_at }; });
+    allFindings.forEach(f => {
+        f.plugin_name = jobMap[f.job_id]?.plugin || '';
+        f.target = jobMap[f.job_id]?.target || '';
+        f.job_created_at = jobMap[f.job_id]?.created_at || null;
+    });
+
     const total = Object.values(stats.findings_by_severity).reduce((a,b) => a+b, 0);
     document.getElementById('global-stats').innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <div>Jobs completed: <span style="color:#00d4ff;">${stats.jobs_by_status.completed||0}</span></div>
-            <div>Total findings: <span style="color:#ff3366;">${total}</span></div>
-            <div>Critical: <span style="color:#ff3366;">${stats.findings_by_severity.critical||0}</span></div>
-            <div>High: <span style="color:#ff6b35;">${stats.findings_by_severity.high||0}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+            <div>Completed: <span style="color:#00d4ff;">${stats.jobs_by_status.completed||0}</span></div>
+            <div>Findings: <span style="color:#ff3366;">${total}</span></div>
         </div>
     `;
 
-    // Populate target select
-    const targets = [...new Set(jobs.map(j => j.config?.target || j.config?.domain || '').filter(Boolean))].sort();
-    const targetSel = document.getElementById('target-select');
+    const targets = [...new Set(allFindings.map(f => f.target).filter(Boolean))].sort();
+    const targetSel = document.getElementById('f-target');
     targets.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t; opt.textContent = t;
         targetSel.appendChild(opt);
     });
 
-    // Populate plugin select
-    const plugins = [...new Set(jobs.map(j => j.plugin || j.plugin_name || '').filter(Boolean))].sort();
-    const pluginSel = document.getElementById('plugin-select');
+    const plugins = [...new Set(allFindings.map(f => f.plugin_name).filter(Boolean))].sort();
+    const pluginSel = document.getElementById('f-plugin');
     plugins.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p; opt.textContent = p;
         pluginSel.appendChild(opt);
     });
 
-    // Jobs table
-    const completed = jobs.filter(j => j.status === 'completed').slice(0, 20);
-    document.getElementById('jobsHeader').textContent = `Recent Jobs — Individual Reports (${completed.length})`;
+    renderPreview(allFindings.slice(0, 50), 'Recent Findings (default view)');
+}).catch(err => console.error('Reports error:', err));
 
-    if (completed.length === 0) {
-        document.getElementById('jobsList').innerHTML = '<p style="color:#4a7a8a;padding:8px 0;">// No completed jobs yet.</p>';
+function renderPreview(findings, headerLabel) {
+    const container = document.getElementById('previewList');
+    const header = document.getElementById('previewHeader');
+    header.textContent = `${headerLabel} (${findings.length})`;
+
+    if (findings.length === 0) {
+        container.innerHTML = '<p style="color:#4a7a8a;padding:8px 0;">// No findings match this filter combination.</p>';
         return;
     }
 
-    const statusColor = { completed:'#00ff88', failed:'#ff3366', running:'#00d4ff', pending:'#4a7a8a' };
+    const severityOrder = { critical:1, high:2, medium:3, low:4, info:5 };
+    const sorted = [...findings].sort((a,b) => (severityOrder[a.severity]||99) - (severityOrder[b.severity]||99));
 
-    let html = '<table class="jobs-table"><thead><tr>';
-    html += '<th style="width:10%;">ID</th><th style="width:12%;">Plugin</th>';
-    html += '<th style="width:20%;">Target</th><th style="width:15%;">Date</th>';
-    html += '<th style="width:12%;">Status</th><th style="width:31%;">Reports</th>';
+    let html = '<table class="preview-table"><thead><tr>';
+    html += '<th style="width:10%;">Severity</th>';
+    html += '<th style="width:12%;">Plugin</th>';
+    html += '<th style="width:16%;">Target</th>';
+    html += '<th style="width:14%;">Date</th>';
+    html += '<th style="width:48%;">Title</th>';
     html += '</tr></thead><tbody>';
 
-    completed.forEach(j => {
-        const target = j.config?.target || j.config?.domain || 'N/A';
-        const date   = j.created_at ? new Date(j.created_at).toLocaleDateString('en-GB') : 'N/A';
-        const color  = statusColor[j.status] || '#7faec0';
+    sorted.slice(0, 100).forEach(f => {
+        const date = f.job_created_at ? new Date(f.job_created_at).toLocaleDateString('en-GB') : 'N/A';
         html += `<tr>
-            <td><code style="color:#00d4ff;">${j.id.substring(0,8)}</code></td>
-            <td>${j.plugin || j.plugin_name || 'N/A'}</td>
-            <td style="color:#ff6b35;">${target}</td>
+            <td><span class="severity-badge severity-${f.severity||'info'}">${f.severity||'info'}</span></td>
+            <td>${f.plugin_name||'—'}</td>
+            <td style="color:#ff6b35;">${f.target||'—'}</td>
             <td style="color:#4a7a8a;">${date}</td>
-            <td style="color:${color};">${j.status.toUpperCase()}</td>
-            <td>
-                <a href="/api/reports/${j.id}/html" target="_blank" class="report-btn btn-html">HTML</a>
-                <a href="/api/reports/${j.id}/pdf"  target="_blank" class="report-btn btn-pdf">PDF</a>
-                <a href="/api/findings/export/csv?job_id=${j.id}&format=csv" class="report-btn btn-csv">CSV</a>
-            </td>
+            <td style="color:#c0d8e8;">${f.title||'N/A'}</td>
         </tr>`;
     });
 
     html += '</tbody></table>';
-    document.getElementById('jobsList').innerHTML = html;
-
-}).catch(err => console.error('Reports error:', err));
-
-function openTargetReport(format) {
-    const target = document.getElementById('target-select').value;
-    if (!target) { alert('Please select a target'); return; }
-    window.open(`/api/reports/target/${encodeURIComponent(target)}${format === 'pdf' ? '/pdf' : ''}`, '_blank');
+    if (findings.length > 100) {
+        html += `<p style="color:#4a7a8a;padding:10px 0 0 0;font-size:10px;">// Showing first 100 of ${findings.length} — download the full report for all results.</p>`;
+    }
+    container.innerHTML = html;
 }
 
-function openPluginReport(format) {
-    const plugin = document.getElementById('plugin-select').value;
-    if (!plugin) { alert('Please select a plugin'); return; }
-    window.open(`/api/reports/plugin/${plugin}${format === 'pdf' ? '/pdf' : ''}`, '_blank');
+function updatePreview() {
+    const target = document.getElementById('f-target').value;
+    const plugin = document.getElementById('f-plugin').value;
+    const start  = document.getElementById('f-start').value;
+    const end    = document.getElementById('f-end').value;
+
+    let filtered = allFindings;
+    let labels = [];
+
+    if (target) { filtered = filtered.filter(f => f.target === target); labels.push(`Target: ${target}`); }
+    if (plugin) { filtered = filtered.filter(f => f.plugin_name === plugin); labels.push(`Plugin: ${plugin}`); }
+    if (start) {
+        const s = new Date(start);
+        filtered = filtered.filter(f => f.job_created_at && new Date(f.job_created_at) >= s);
+        labels.push(`From: ${start}`);
+    }
+    if (end) {
+        const e = new Date(end);
+        e.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(f => f.job_created_at && new Date(f.job_created_at) <= e);
+        labels.push(`To: ${end}`);
+    }
+
+    const headerLabel = labels.length > 0 ? `Custom Preview — ${labels.join(' | ')}` : 'Recent Findings (default view)';
+    renderPreview(target||plugin||start||end ? filtered : allFindings.slice(0,50), headerLabel);
+}
+
+function resetFilters() {
+    document.getElementById('f-target').value = '';
+    document.getElementById('f-plugin').value = '';
+    document.getElementById('f-start').value = '';
+    document.getElementById('f-end').value = '';
+    renderPreview(allFindings.slice(0, 50), 'Recent Findings (default view)');
+}
+
+function openCustomReport(format) {
+    const target = document.getElementById('f-target').value;
+    const plugin = document.getElementById('f-plugin').value;
+    const start  = document.getElementById('f-start').value;
+    const end    = document.getElementById('f-end').value;
+
+    const params = new URLSearchParams();
+    if (target) params.set('target', target);
+    if (plugin) params.set('plugin', plugin);
+    if (start)  params.set('start', start);
+    if (end)    params.set('end', end);
+
+    const endpoint = format === 'pdf' ? '/api/reports/custom/pdf' : '/api/reports/custom';
+    window.open(`${endpoint}?${params.toString()}`, '_blank');
 }
 </script>
 {% endblock %}

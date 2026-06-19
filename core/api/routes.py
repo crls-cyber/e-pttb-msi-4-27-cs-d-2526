@@ -933,6 +933,114 @@ def change_own_password():
 
     return jsonify({'message': 'Password changed successfully'}), 200
 
+
+@api_bp.route('/users/me/preferences', methods=['PUT'])
+@login_required
+def update_preferences():
+    """Update current user's UI preferences (theme, density, session timeout)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    if 'theme' in data:
+        if data['theme'] not in ('dark', 'light'):
+            return jsonify({'error': 'theme must be "dark" or "light"'}), 400
+        current_user.theme = data['theme']
+
+    if 'density' in data:
+        if data['density'] not in ('comfortable', 'compact'):
+            return jsonify({'error': 'density must be "comfortable" or "compact"'}), 400
+        current_user.density = data['density']
+
+    if 'session_timeout_minutes' in data:
+        try:
+            timeout = int(data['session_timeout_minutes'])
+            if timeout < 1 or timeout > 480:
+                return jsonify({'error': 'session_timeout_minutes must be between 1 and 480'}), 400
+            current_user.session_timeout_minutes = timeout
+        except (ValueError, TypeError):
+            return jsonify({'error': 'session_timeout_minutes must be a number'}), 400
+
+    db.session.commit()
+    audit_log('user.preferences_update', 'user', current_user.id)
+
+    return jsonify({
+        'message': 'Preferences updated',
+        'theme': current_user.theme,
+        'density': current_user.density,
+        'session_timeout_minutes': current_user.session_timeout_minutes
+    }), 200
+
+
+@api_bp.route('/reports/daterange', methods=['GET'])
+@login_required
+def get_daterange_report():
+    """Generate date-range aggregate report. Query params: start, end (YYYY-MM-DD)."""
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if not start or not end:
+        return jsonify({'error': 'Missing required query params: start, end (YYYY-MM-DD)'}), 400
+    try:
+        from core.reporting.aggregate_report_generator import generate_date_range_report
+        html = generate_date_range_report(start, end)
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/daterange/pdf', methods=['GET'])
+@login_required
+def get_daterange_report_pdf():
+    """Generate date-range aggregate PDF report. Query params: start, end (YYYY-MM-DD)."""
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if not start or not end:
+        return jsonify({'error': 'Missing required query params: start, end (YYYY-MM-DD)'}), 400
+    try:
+        from core.reporting.aggregate_report_generator import generate_date_range_pdf
+        pdf = generate_date_range_pdf(start, end)
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': f'attachment; filename="report_{start}_to_{end}.pdf"'
+        }
+    except Exception as e:
+        return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/custom', methods=['GET'])
+@login_required
+def get_custom_report():
+    """Generate combined-filter report. Optional query params: target, plugin, start, end."""
+    target = request.args.get('target') or None
+    plugin = request.args.get('plugin') or None
+    start = request.args.get('start') or None
+    end = request.args.get('end') or None
+    try:
+        from core.reporting.aggregate_report_generator import generate_custom_report
+        html = generate_custom_report(target=target, plugin=plugin, start_date=start, end_date=end)
+        return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except Exception as e:
+        return jsonify({'error': f'Report generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/reports/custom/pdf', methods=['GET'])
+@login_required
+def get_custom_report_pdf():
+    """Generate combined-filter PDF report. Optional query params: target, plugin, start, end."""
+    target = request.args.get('target') or None
+    plugin = request.args.get('plugin') or None
+    start = request.args.get('start') or None
+    end = request.args.get('end') or None
+    try:
+        from core.reporting.aggregate_report_generator import generate_custom_pdf
+        pdf = generate_custom_pdf(target=target, plugin=plugin, start_date=start, end_date=end)
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename="custom_report.pdf"'
+        }
+    except Exception as e:
+        return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

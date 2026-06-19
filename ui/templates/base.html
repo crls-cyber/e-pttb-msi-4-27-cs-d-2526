@@ -9,6 +9,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
 :root{--bg:#020b12;--surface:#061a27;--border:#0e3a52;--cyan:#00d4ff;--cyan-dim:rgba(0,212,255,0.08);--cyan-glow:rgba(0,212,255,0.25);--green:#00ff88;--orange:#ff6b35;--red:#ff3366;--gold:#ffd700;--text:#c8e6f0;--text-dim:#4a7a8a;--text-mid:#7faec0;--mono:'Share Tech Mono',monospace;--sans:'Exo 2',sans-serif}
+body.theme-light{--bg:#eef1f5;--surface:#ffffff;--border:#b8c4d0;--cyan:#0066a3;--cyan-dim:rgba(0,102,163,0.08);--cyan-glow:rgba(0,102,163,0.25);--green:#15803d;--orange:#b8460e;--red:#c2003d;--gold:#8a6d00;--text:#0a1722;--text-dim:#5a6a78;--text-mid:#2e3e4c;--mono:'Share Tech Mono',monospace;--sans:'Exo 2',sans-serif}
+body.theme-light .form-control,body.theme-light .form-select{background:#ffffff!important;border:1px solid var(--border)!important;color:var(--text)!important}
+body.theme-light .form-control:focus,body.theme-light .form-select:focus{background:#ffffff!important;border-color:var(--cyan)!important}
+body.theme-light .form-control::placeholder{color:var(--text-dim)!important}
+body.theme-light .form-control:disabled,body.theme-light .form-select:disabled,body.theme-light select:disabled,body.theme-light input:disabled{background:#e4e9ee!important;color:var(--text-dim)!important;opacity:1!important}
+body.theme-light input[type="text"],body.theme-light input[type="password"],body.theme-light input[type="number"],body.theme-light select,body.theme-light textarea{background:#ffffff!important;color:var(--text)!important;border:1px solid var(--border)!important}
+body.theme-light ::selection{background:var(--cyan)!important;color:#ffffff!important}
+body.theme-light .chart-card{background:var(--surface)!important;border:1px solid var(--border)!important}
+body.theme-light table th{color:var(--cyan)!important}
+body.theme-light table td{color:var(--text)!important}
+body.theme-light code{color:var(--cyan)!important;background:rgba(0,102,163,0.08)!important}
+/* Force readable badge colors in light theme — override inline JS-generated styles */
+body.theme-light [style*="color:#00ff88"]{color:#0d7a3d!important}
+body.theme-light [style*="color: #00ff88"]{color:#0d7a3d!important}
+body.theme-light [style*="color:#ff3366"]{color:#b8002e!important}
+body.theme-light [style*="color: #ff3366"]{color:#b8002e!important}
+body.theme-light [style*="color:#00d4ff"]{color:#005f8a!important}
+body.theme-light [style*="color: #00d4ff"]{color:#005f8a!important}
+body.theme-light [style*="color:#ff6b35"]{color:#a8420a!important}
+body.theme-light [style*="color: #ff6b35"]{color:#a8420a!important}
+body.theme-light [style*="color:#ffd700"]{color:#7a5f00!important}
+body.theme-light [style*="color: #ffd700"]{color:#7a5f00!important}
+body.theme-light [style*="color:#7faec0"]{color:#3e5666!important}
+body.theme-light [style*="color: #7faec0"]{color:#3e5666!important}
+body.theme-light [style*="color:#4a7a8a"]{color:#3e5666!important}
+body.theme-light [style*="color: #4a7a8a"]{color:#3e5666!important}
+/* Badge backgrounds: lighten translucent dark-theme backgrounds for readability */
+body.theme-light [style*="background:rgba(0,255,136"]{background:rgba(13,122,61,0.12)!important}
+body.theme-light [style*="background:rgba(255,51,102"]{background:rgba(184,0,46,0.12)!important}
+body.theme-light [style*="background:rgba(0,212,255"]{background:rgba(0,95,138,0.12)!important}
+body.theme-light [style*="background:rgba(255,107,53"]{background:rgba(168,66,10,0.12)!important}
+body.theme-light [style*="background:rgba(255,215,0"]{background:rgba(122,95,0,0.12)!important}
+/* Severity/status badge classes (findings.html, job_detail.html) */
+body.theme-light .severity-critical{background:rgba(184,0,46,0.12)!important;color:#b8002e!important;border-color:rgba(184,0,46,0.4)!important}
+body.theme-light .severity-high{background:rgba(168,66,10,0.12)!important;color:#a8420a!important;border-color:rgba(168,66,10,0.4)!important}
+body.theme-light .severity-medium{background:rgba(122,95,0,0.12)!important;color:#7a5f00!important;border-color:rgba(122,95,0,0.4)!important}
+body.theme-light .severity-low{background:rgba(13,122,61,0.12)!important;color:#0d7a3d!important;border-color:rgba(13,122,61,0.4)!important}
+body.theme-light .severity-info{background:rgba(0,95,138,0.12)!important;color:#005f8a!important;border-color:rgba(0,95,138,0.4)!important}
+body.theme-light input[type="file"]{color:var(--text)!important}
+body.density-compact .nav-item{padding:7px 20px!important}
+body.density-compact .chart-card{padding:12px!important}
+body.density-compact td,body.density-compact th{padding:6px 10px!important}
+
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
@@ -111,7 +154,7 @@ code{padding:2px 6px!important;font-size:11px!important}
     </style>
     {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% if current_user.is_authenticated and current_user.theme == 'light' %}theme-light{% endif %} {% if current_user.is_authenticated and current_user.density == 'compact' %}density-compact{% endif %}">
     <div class="sidebar">
         <div class="sidebar-header">
             <span class="sidebar-logo">△</span>
@@ -193,5 +236,27 @@ code{padding:2px 6px!important;font-size:11px!important}
         tick();setInterval(tick,1000);
     })();
     </script>
+    {% if current_user.is_authenticated %}
+    <script>
+    (function(){
+        const timeoutMinutes = {{ current_user.session_timeout_minutes }};
+        const timeoutMs = timeoutMinutes * 60 * 1000;
+        let timer;
+
+        function resetTimer(){
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                window.location.href = '/logout';
+            }, timeoutMs);
+        }
+
+        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+            document.addEventListener(evt, resetTimer, { passive: true });
+        });
+
+        resetTimer();
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>

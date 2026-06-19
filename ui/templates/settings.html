@@ -66,9 +66,77 @@
                 links in the top bar.
             </div>
         </div>
+
+        <div class="chart-card" style="margin-top:16px;">
+            <div class="chart-card-header">🎨 Interface Preferences</div>
+            <div style="padding:16px;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Theme</label>
+                <select id="pref-theme"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:16px;">
+                    <option value="dark" {% if current_user.theme == 'dark' %}selected{% endif %}>Dark (Delta OS)</option>
+                    <option value="light" {% if current_user.theme == 'light' %}selected{% endif %}>Light (high ambient light)</option>
+                </select>
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Density</label>
+                <select id="pref-density"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:16px;">
+                    <option value="comfortable" {% if current_user.density == 'comfortable' %}selected{% endif %}>Comfortable</option>
+                    <option value="compact" {% if current_user.density == 'compact' %}selected{% endif %}>Compact</option>
+                </select>
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Session Timeout (minutes)</label>
+                <input type="number" id="pref-timeout" min="1" max="480" value="{{ current_user.session_timeout_minutes }}"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:8px;box-sizing:border-box;">
+                <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin:0 0 16px 0;">
+                    Auto-logout after this period of inactivity (1–480 min).
+                </p>
+
+                <button onclick="savePreferences()"
+                    style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px 24px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%;"
+                    onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                    onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+                    SAVE PREFERENCES
+                </button>
+
+                <div id="prefs-result" style="margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:11px;"></div>
+            </div>
+        </div>
     </div>
 
 </div>
+
+<script>
+function savePreferences() {
+    const theme   = document.getElementById('pref-theme').value;
+    const density = document.getElementById('pref-density').value;
+    const timeout = parseInt(document.getElementById('pref-timeout').value, 10);
+    const result  = document.getElementById('prefs-result');
+
+    if (!timeout || timeout < 1 || timeout > 480) {
+        result.innerHTML = '<span style="color:#ff3366;">// Timeout must be between 1 and 480 minutes</span>';
+        return;
+    }
+
+    fetch('/api/users/me/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: theme, density: density, session_timeout_minutes: timeout })
+    })
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 200) {
+            result.innerHTML = '<span style="color:#00ff88;">✓ Preferences saved — reloading...</span>';
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            result.innerHTML = `<span style="color:#ff3366;">✗ ${data.error}</span>`;
+        }
+    })
+    .catch(err => {
+        result.innerHTML = `<span style="color:#ff3366;">Error: ${err.message}</span>`;
+    });
+}
+</script>
 
 <script>
 function changePassword() {

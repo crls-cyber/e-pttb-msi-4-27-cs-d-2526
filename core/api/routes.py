@@ -79,6 +79,14 @@ def create_job():
     if not plugin_name:
         return jsonify({'error': 'Plugin name required'}), 400
 
+    # Scope enforcement
+    target = config.get('target') or config.get('domain')
+    if target:
+        from core.security.scope_checker import enforce_scope, ScopeViolation
+        try:
+            enforce_scope(target)
+        except ScopeViolation as e:
+            return jsonify({'error': str(e), 'scope_violation': True}), 403
     # Create job in database
     job = Job(
         id=uuid.uuid4(),
@@ -473,6 +481,11 @@ def trigger_recon_to_exploit():
     target   = data['target']
     service  = data.get('service', 'ssh')
     username = data.get('username')
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(target)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     try:
         result = recon_to_exploit_workflow(
             target=target,
@@ -514,6 +527,11 @@ def trigger_web_pentest_advanced():
         return jsonify({'error': 'Missing required parameter: target'}), 400
 
     target = data['target']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(target)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     sqli_url = data.get('sqli_url')
 
     try:
@@ -561,6 +579,11 @@ def trigger_network_bruteforce():
         return jsonify({'error': 'Missing required parameter: target'}), 400
 
     target = data['target']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(target)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     service = data.get('service', 'ssh')
     username = data.get('username', 'msfadmin')
     password_list = data.get('password_list')
@@ -608,6 +631,11 @@ def trigger_osint_recon():
         return jsonify({'error': 'Missing required parameter: domain'}), 400
 
     domain = data['domain']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(domain)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
 
     try:
         result = osint_recon(
@@ -640,6 +668,11 @@ def trigger_quick_vuln_scan():
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
     target = data['target']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(target)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     try:
         result = quick_vuln_scan(target=target, user_id=current_user.id)
         return jsonify({
@@ -665,6 +698,11 @@ def trigger_full_external_recon():
     if not data or 'domain' not in data:
         return jsonify({'error': 'Missing required parameter: domain'}), 400
     domain = data['domain']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(domain)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     try:
         result = full_external_recon(domain=domain, user_id=current_user.id)
         return jsonify({
@@ -692,6 +730,11 @@ def trigger_web_app_audit():
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
     target = data['target']
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(target)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
     try:
         result = web_app_audit(target=target, user_id=current_user.id)
         return jsonify({
@@ -729,6 +772,7 @@ def list_targets():
 
 @api_bp.route('/targets', methods=['POST'])
 @login_required
+@require_role('admin')
 def create_target():
     """Create a new target."""
     from core.models.target import Target
@@ -750,6 +794,7 @@ def create_target():
 
 @api_bp.route('/targets/<target_id>', methods=['DELETE'])
 @login_required
+@require_role('admin')
 def delete_target(target_id):
     """Delete a target."""
     from core.models.target import Target
@@ -764,6 +809,7 @@ def delete_target(target_id):
 
 @api_bp.route('/targets/<target_id>', methods=['PUT'])
 @login_required
+@require_role('admin')
 def update_target(target_id):
     """Update a target."""
     from core.models.target import Target

@@ -246,6 +246,13 @@ def nmap_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('nmap_launch.html')
         if not target:
             flash('Target is required', 'error')
             return render_template('nmap_launch.html')
@@ -302,6 +309,13 @@ def nuclei_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('nuclei_launch.html')
         if not target:
             protocol = request.form.get('protocol', 'http://')
             host = request.form.get('target_host', '')
@@ -373,6 +387,13 @@ def sqlmap_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('sqlmap_launch.html')
         if not target:
             flash('Target URL is required', 'error')
             return render_template('sqlmap_launch.html')
@@ -434,6 +455,13 @@ def hydra_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('hydra_launch.html')
         service = request.form.get('service')
         if not target or not service:
             flash('Target and service are required', 'error')
@@ -504,6 +532,13 @@ def subfinder_launch():
         from flask import flash
 
         domain = request.form.get('domain')
+        if domain:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(domain)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('subfinder_launch.html')
         if not domain:
             flash('Domain is required', 'error')
             return render_template('subfinder_launch.html')
@@ -553,6 +588,13 @@ def theharvester_launch():
         from flask import flash
 
         domain = request.form.get('domain')
+        if domain:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(domain)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('theharvester_launch.html')
         if not domain:
             flash('Domain is required', 'error')
             return render_template('theharvester_launch.html')
@@ -599,6 +641,13 @@ def zap_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('zap_launch.html')
         if not target or target in ['http://', 'https://']:
             protocol = request.form.get('protocol', 'http://')
             host = request.form.get('target_host', '')
@@ -659,6 +708,13 @@ def whatweb_launch():
         from flask import flash
 
         target = request.form.get('target')
+        if target:
+            from core.security.scope_checker import enforce_scope, ScopeViolation
+            try:
+                enforce_scope(target)
+            except ScopeViolation as e:
+                flash(str(e), 'error')
+                return render_template('whatweb_launch.html')
         if not target or target in ['http://', 'https://']:
             flash('Target URL is required', 'error')
             return render_template('whatweb_launch.html')

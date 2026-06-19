@@ -394,11 +394,201 @@ L'utilisateur ne peut pas ajuster les options de chaque outil dans la chaîne.
 | **Backup/Restore** | 🔴 Haute | 1j | ⭐⭐⭐⭐ | Phase 4 |
 | **Rapport workflow consolidé** | 🟡 Moyenne | 1-2j | ⭐⭐⭐⭐ | Phase 4 |
 | **Archivage** | 🟡 Moyenne | 1j | ⭐⭐⭐ | Phase 4-5 |
+
+---
+
+## 🎯 FEATURE 7 : Sécurisation Machine Dédiée par Mission (Haute Priorité)
+
+### Contexte
+
+Pour des missions sensibles, l'industrie du pentest utilise des machines dédiées par mission,
+mises à disposition des pentesters mandatés, avec un environnement préconfiguré et verrouillé.
+
+### Bonnes pratiques du secteur (confirmées réalistes)
+
+- **Machine dédiée par mission** ("engagement laptop") — pratique courante chez les cabinets sérieux,
+  parfois exigée contractuellement par le client.
+- **Chiffrement disque complet** (LUKS / BitLocker) — standard de l'industrie, souvent imposé par
+  les certifications (ISO 27001, PASSI en France).
+- **Accès nominatif restreint** — cohérent avec le principe de moindre privilège.
+- **Scope pré-défini (cibles autorisées/interdites)** — correspond aux Rules of Engagement (RoE)
+  signées avant toute mission. Obligation légale et contractuelle, pas seulement une bonne pratique.
+
+### Limites à connaître
+
+- Le **chiffrement disque** protège contre le vol physique à froid, **pas** contre une compromission
+  active pendant l'utilisation (keylogger, exfiltration réseau en cours de mission).
+- L'**effacement à distance** nécessite que la machine ait une connexion réseau active pour recevoir
+  l'ordre de wipe — inefficace si la machine est immédiatement mise hors ligne après le vol.
+  Le chiffrement disque reste la défense principale, indépendante du réseau.
+
+### Lien avec Feature 1 (Missions)
+
+Cette feature est complémentaire à la Feature 1 (Gestion par Missions) : le scope RoE (cibles
+autorisées/interdites) correspondrait directement aux champs `scope` et `exclusions` de la table
+`missions`, et à la nouvelle Feature 8 (Scope Enforcement) ci-dessous.
+
+---
+
+## 🎯 FEATURE 8 : Scope Enforcement — Blocage Automatique des Cibles (Haute Priorité)
+
+### Problème actuel
+
+La page Targets (ajoutée en Phase 3) est purement informative — rien n'empêche aujourd'hui de
+lancer un scan sur une cible non autorisée ou explicitement interdite.
+
+### Solution proposée
+
+**Deux listes de cibles :**
+- **Authorized targets** — cibles explicitement autorisées
+- **Unauthorized targets** — cibles explicitement interdites (prioritaires en cas de conflit)
+
+**Formats de cibles supportés :**
+- IP unique (`192.168.200.133`)
+- Plage CIDR (`192.168.200.0/24`) — via le module `ipaddress` de Python
+- Domaine exact (`example.com`)
+- Domaine + sous-domaines (`*.example.com`)
+
+**Logique de résolution (scope checker) :**
+```
+SI cible correspond à une entrée "Unauthorized" (règle la plus spécifique) → BLOQUÉ
+SINON SI liste "Authorized" non vide ET cible ne correspond à aucune entrée → BLOQUÉ (zero trust)
+SINON SI liste "Authorized" non vide ET cible correspond → AUTORISÉ
+SINON (liste "Authorized" vide) → BLOQUÉ (zero trust par défaut)
+```
+
+**Mode "Zero Trust" par défaut** — standard reconnu en pentest professionnel (méthodologies PTES,
+OSSTMM) : rien n'est autorisé tant que ce n'est pas explicitement dans le scope contractuel.
+Plus simple à implémenter que le mode permissif actuel.
+
+**Spécificité des règles** — la règle la plus spécifique l'emporte (ex: domaine autorisé +
+sous-domaine spécifique interdit → tous les autres sous-domaines restent autorisés). Logique
+identique aux règles de pare-feu / ACL réseau.
+
+### Niveau d'application
+
+Contrôle au **niveau API** (`core/api/routes.py`), avant toute création de `Job` — un point de
+contrôle centralisé pour tous les endpoints de lancement (jobs individuels + 7 workflows).
+Plus robuste qu'un contrôle côté formulaire (JS, contournable) ou côté plugin (redondant).
+
+### Permissions
+
+Seul le rôle `admin` peut ajouter/supprimer des cibles (`@require_role('admin')` sur les endpoints
+`POST` et `DELETE /api/targets`), via le décorateur RBAC déjà existant dans `core/security/rbac.py`.
+
+### Implémentation estimée
+
+**Temps** : 1-2 jours
+
+**Fichiers à modifier :**
+- `core/models/target.py` (ajout champ `scope_type`: ip/cidr/domain/wildcard_domain)
+- `core/security/scope_checker.py` (nouveau — logique de matching + spécificité)
+- `core/api/routes.py` (contrôle dans `/jobs` POST + 7 endpoints `/workflows/*`)
+- `ui/templates/targets.html` (deux tableaux, case "Unauthorized target", sélecteur de type)
+
+---
+
+## 🎯 FEATURE 9 : Mapping des Rôles RBAC (Priorité Moyenne)
+
+### Constat
+
+Le système RBAC existant définit 3 rôles (`admin`, `analyst`, `viewer`) mais la table `permissions`
+est actuellement vide — seul `@require_role()` est utilisé (vérification directe du nom de rôle),
+jamais `@require_permission()` (permissions granulaires).
+
+### Mapping proposé (cohérent avec les standards du secteur pentest)
+
+| Rôle existant | Équivalent métier | Responsabilités |
+|----------------|-------------------|------------------|
+| `admin`   | Lead Pentester | Gère le scope (targets), les utilisateurs, valide les rapports finaux, lance tout type de scan |
+| `analyst` | Pentester | Lance des scans sur les cibles autorisées, consulte/édite les findings de ses missions |
+| `viewer`  | Membre interne (consultation) | Suit l'avancement sans pouvoir agir — utile pour un manager ou un reviewer interne |
+
+**Note contexte** : la ToolBox étant host-only (pas d'accès internet), le rôle `viewer` ne concerne
+que l'équipe interne ayant physiquement accès à la machine — pas le client final.
+
+### Amélioration future possible
+
+Peupler réellement la table `permissions` pour un contrôle plus granulaire que le simple nom de
+rôle (ex: `targets.create`, `targets.delete`, `reports.generate`, `jobs.launch`), en utilisant le
+décorateur `@require_permission()` déjà présent mais inutilisé dans `rbac.py`.
+
+---
+
+## 🎯 FEATURE 10 : Verrouillage de l'Environnement en Mode Production (Haute Priorité)
+
+### Problème
+
+Une fois la ToolBox déployée en mission réelle ("mode production"), il faut empêcher les
+pentesters d'altérer le code de l'application (accidentellement ou volontairement), tout en
+leur laissant les droits `sudo` nécessaires aux outils natifs (Metasploit, Aircrack-ng, tcpdump).
+
+### Nuance importante
+
+Avoir `sudo` sur la machine (nécessaire pour `nmap -sS`, `tcpdump`, `aircrack-ng` en mode monitor,
+`msfconsole`) ne protège **pas** automatiquement contre une modification volontaire du code de la
+ToolBox — avec un `sudo` complet, aucune protection technique n'est totalement inviolable.
+La vraie réponse combine **restriction technique** + **traçabilité/responsabilité procédurale**.
+
+### Stratégie de verrouillage recommandée (par ordre de robustesse croissante)
+
+**1. `sudoers` restreint** (essentiel) — autoriser `sudo` uniquement pour les binaires nécessaires
+   (`nmap`, `tcpdump`, `aircrack-ng`, `msfconsole`), jamais un `sudo` total :
+   ```
+   pentester ALL=(ALL) NOPASSWD: /usr/bin/nmap, /usr/sbin/tcpdump, /usr/sbin/airmon-ng, /usr/bin/msfconsole
+   ```
+
+**2. Permissions filesystem** — dossier projet appartenant à `root`, lecture seule pour le
+   compte pentester :
+   ```bash
+   sudo chown -R root:root ~/Desktop/ToolBox_M1/pentest-toolbox-v2
+   sudo chmod -R 750 ~/Desktop/ToolBox_M1/pentest-toolbox-v2
+   ```
+
+**3. Comptes séparés** — le compte avec accès au dossier projet (admin) est distinct du compte
+   utilisé pour les commandes sudo ciblées (pentester).
+
+**4. Conteneurs Docker en lecture seule** en production :
+   ```yaml
+   volumes:
+     - ./ui:/app/ui:ro
+     - ./core:/app/core:ro
+   ```
+   Empêche l'écriture même avec un accès filesystem, et impose un redémarrage visible pour
+   toute modification légitime.
+
+**5. Audit log systématique** (déjà présent — table `audit_logs`) — toute action reste tracée et
+   imputable, ce qui dissuade et permet d'enquêter a posteriori.
+
+**6. Tag Git figé par mission** — déployer une version stable taguée (`v1.0-mission-ACME`) plutôt
+   que la branche `main` en mouvement, pour garantir la reproductibilité et la non-régression
+   pendant la durée de la mission.
+
+### Conclusion
+
+Combiner **1 + 2 + 5** est réaliste et suffisant pour un contexte académique/MVP. Les points
+3, 4 et 6 sont des renforcements supplémentaires pour un déploiement professionnel réel.
+
+---
+
+## 📊 Priorités d'implémentation (mise à jour 19 juin 2026)
+
+| Feature | Priorité | Effort | Impact | Quand |
+|---------|----------|--------|--------|-------|
+| **Scope Enforcement (targets)** | 🔴 Haute | 1-2j | ⭐⭐⭐⭐⭐ | Phase 4 |
+| **Verrouillage mode production** | 🔴 Haute | 0.5-1j | ⭐⭐⭐⭐ | Phase 4 |
+| **Missions** | 🔴 Haute | 3j | ⭐⭐⭐⭐⭐ | Phase 4 |
+| **Backup/Restore** | 🔴 Haute | 1j | ⭐⭐⭐⭐ | Phase 4 |
+| **Sécurisation machine dédiée** | 🟡 Moyenne | Documentation/procédure | ⭐⭐⭐⭐ | Phase 4-5 |
+| **Mapping rôles RBAC + permissions** | 🟡 Moyenne | 1j | ⭐⭐⭐ | Phase 4-5 |
+| **Rapport workflow consolidé** | 🟡 Moyenne | 1-2j | ⭐⭐⭐⭐ | Phase 4 |
+| **Archivage** | 🟡 Moyenne | 1j | ⭐⭐⭐ | Phase 4-5 |
 | **Export ZIP** | 🟡 Moyenne | 0.5j | ⭐⭐⭐ | Phase 5 |
 | **Workflows paramétrables** | 🟢 Basse | 2-3j | ⭐⭐⭐ | Phase 5 |
 
 ---
 
-**Version** : 1.1
-**Mis à jour** : 18 juin 2026 (Phase 3)
-**Ajouts** : Feature 5 (rapport workflow), Feature 6 (workflows paramétrables)
+**Version** : 1.2
+**Mis à jour** : 19 juin 2026 (Phase 3)
+**Ajouts** : Feature 7 (machine dédiée), Feature 8 (scope enforcement), Feature 9 (mapping rôles),
+Feature 10 (verrouillage production)

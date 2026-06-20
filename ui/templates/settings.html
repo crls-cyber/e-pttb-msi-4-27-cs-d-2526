@@ -166,10 +166,14 @@ function changePassword() {
     .then(r => r.json().then(data => ({ status: r.status, data })))
     .then(({ status, data }) => {
         if (status === 200) {
-            result.innerHTML = '<span style="color:#00ff88;">✓ Password updated successfully</span>';
+            result.innerHTML = '<span style="color:#00ff88;">✓ Password updated successfully — redirecting...</span>';
             document.getElementById('current-password').value = '';
             document.getElementById('new-password').value = '';
             document.getElementById('confirm-password').value = '';
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('force_password_change')) {
+                setTimeout(() => { window.location.href = '/{{ lang }}/dashboard'; }, 1200);
+            }
         } else {
             result.innerHTML = `<span style="color:#ff3366;">✗ ${data.error}</span>`;
         }

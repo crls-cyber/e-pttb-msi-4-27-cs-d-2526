@@ -176,19 +176,24 @@ def get_job_findings(job_id):
 @api_bp.route('/findings', methods=['GET'])
 @login_required
 def get_findings():
-    """Get findings with optional filters"""
+    """Get findings with optional filters.
+    Visibility: admin sees all findings; analyst/viewer see only findings
+    from their own jobs (methodology independence between pentesters)."""
     from core.models.finding import Finding
-
+    from core.models.job import Job
     job_id = request.args.get('job_id')
     severity = request.args.get('severity')
-
     query = db.session.query(Finding)
+
+    is_admin = any(role.name == 'admin' for role in current_user.roles)
+    if not is_admin:
+        own_job_ids = db.session.query(Job.id).filter_by(user_id=current_user.id).subquery()
+        query = query.filter(Finding.job_id.in_(own_job_ids))
 
     if job_id:
         query = query.filter_by(job_id=job_id)
     if severity:
         query = query.filter_by(severity=severity)
-
     findings = query.order_by(Finding.created_at.desc()).all()
 
     return jsonify([{
@@ -928,6 +933,7 @@ def change_own_password():
         return jsonify({'error': 'New password must be at least 8 characters'}), 400
 
     current_user.set_password(new_password)
+    current_user.must_change_password = False
     db.session.commit()
     audit_log('user.password_change', 'user', current_user.id)
 
@@ -1040,6 +1046,91 @@ def get_custom_report_pdf():
         }
     except Exception as e:
         return jsonify({'error': f'PDF generation error: {str(e)}'}), 500
+
+
+@api_bp.route('/users', methods=['GET'])
+@login_required
+@require_role('admin')
+def list_users():
+    """List all users with their roles (admin only)."""
+    from core.models import User
+    users = db.session.query(User).order_by(User.created_at.desc()).all()
+    return jsonify({
+        'users': [{
+            'id': str(u.id),
+            'username': u.username,
+            'email': u.email or '',
+            'role': u.roles[0].name if u.roles else None,
+            'must_change_password': u.must_change_password,
+            'created_at': u.created_at.isoformat() if u.created_at else None
+        } for u in users]
+    }), 200
+
+
+@api_bp.route('/users', methods=['POST'])
+@login_required
+@require_role('admin')
+def create_user_endpoint():
+    """Create a new user (admin only)."""
+    from core.models import User, Role
+    data = request.get_json()
+
+    if not data or not data.get('username') or not data.get('password') or not data.get('role'):
+        return jsonify({'error': 'Missing required fields: username, password, role'}), 400
+
+    username = data['username'].strip()
+    password = data['password']
+    email = data.get('email', '').strip()
+    role_name = data['role']
+
+    if len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters'}), 400
+
+    existing = db.session.query(User).filter_by(username=username).first()
+    if existing:
+        return jsonify({'error': f"User '{username}' already exists"}), 409
+
+    role = db.session.query(Role).filter_by(name=role_name).first()
+    if not role:
+        return jsonify({'error': f"Role '{role_name}' not found"}), 400
+
+    new_user = User(username=username, email=email or None)
+    new_user.set_password(password)
+    new_user.must_change_password = True
+    new_user.roles.append(role)
+
+    db.session.add(new_user)
+    db.session.commit()
+    audit_log('user.create', 'user', new_user.id)
+
+    return jsonify({
+        'id': str(new_user.id),
+        'username': new_user.username,
+        'role': role_name,
+        'message': 'User created — must change password on first login'
+    }), 201
+
+
+@api_bp.route('/users/<user_id>', methods=['DELETE'])
+@login_required
+@require_role('admin')
+def delete_user_endpoint(user_id):
+    """Delete a user (admin only). Cannot delete yourself."""
+    from core.models import User
+
+    if str(current_user.id) == user_id:
+        return jsonify({'error': 'You cannot delete your own account'}), 400
+
+    user = db.session.query(User).filter_by(id=user_id).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    audit_log('user.delete', 'user', user_id)
+
+    return jsonify({'message': f"User '{username}' deleted"}), 200
 
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required

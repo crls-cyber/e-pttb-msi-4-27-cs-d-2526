@@ -592,3 +592,38 @@ Combiner **1 + 2 + 5** est réaliste et suffisant pour un contexte académique/M
 **Mis à jour** : 19 juin 2026 (Phase 3)
 **Ajouts** : Feature 7 (machine dédiée), Feature 8 (scope enforcement), Feature 9 (mapping rôles),
 Feature 10 (verrouillage production)
+
+---
+
+## ⚠️ NOTE DE CONCEPTION — Validation Domaine vs IP (Full External Recon)
+
+**Date** : 20 juin 2026 (Phase 3 — tests workflows)
+**Statut** : Comportement voulu — NE PAS "corriger" en rendant ce workflow tolérant aux IPs
+
+### Contexte
+
+Le workflow **Full External Recon** (Subfinder → theHarvester → Nmap → WhatWeb) requiert
+strictement un **nom de domaine DNS réel** (ex: `example.com`), jamais une adresse IP.
+
+### Pourquoi cette contrainte est volontaire
+
+- Subfinder et theHarvester opèrent sur des noms de domaine (énumération de sous-domaines,
+  OSINT via moteurs de recherche) — une IP n'a structurellement aucun sens pour ces outils.
+- Tester ce workflow avec une IP de lab (`192.168.200.133`) produit un échec Subfinder
+  attendu (`Invalid domain format`), ce qui n'est PAS un bug mais le comportement correct.
+- La validation explicite côté `core/orchestrator/workflows.py::full_external_recon()`
+  bloque l'exécution **avant** la création de jobs inutiles, avec un message clair
+  redirigeant vers le bon workflow (`Quick Vuln Scan` pour les cibles IP).
+
+### Si une IP doit être scannée
+
+Utiliser **Quick Vuln Scan** (Nmap → Nuclei) à la place — conçu pour les cibles IP/lab.
+
+### Limite connue — theHarvester timeout
+
+theHarvester peut occasionnellement dépasser le timeout de 5 minutes lors de l'interrogation
+de sources externes (Google, Bing, Yahoo), en particulier lors de tests répétés depuis la
+même IP source (rate-limiting probable des moteurs de recherche). Ce n'est pas un bug du
+code — le timeout est une protection saine évitant un job bloqué indéfiniment. Comportement
+à observer/documenter en cas de mission réelle (prévoir des retries espacés si nécessaire).
+

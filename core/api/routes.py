@@ -735,13 +735,15 @@ def trigger_web_app_audit():
     if not data or 'target' not in data:
         return jsonify({'error': 'Missing required parameter: target'}), 400
     target = data['target']
+    sqli_url = data.get('sqli_url')
+    cookie = data.get('cookie')
     from core.security.scope_checker import enforce_scope, ScopeViolation
     try:
         enforce_scope(target)
     except ScopeViolation as e:
         return jsonify({'error': str(e), 'scope_violation': True}), 403
     try:
-        result = web_app_audit(target=target, user_id=current_user.id)
+        result = web_app_audit(target=target, user_id=current_user.id, sqli_url=sqli_url, cookie=cookie)
         return jsonify({
             'message': 'Web app audit started (WhatWeb -> ZAP -> SQLmap)',
             'workflow_id': result['workflow_id'],

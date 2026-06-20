@@ -241,6 +241,11 @@
         <form id="workflow7-form">
             <label class="wf-label">Target IP or domain</label>
             <input type="text" class="wf-input" name="target" placeholder="192.168.200.133" required>
+            <label class="wf-label">SQLi URL (optional)</label>
+            <input type="text" class="wf-input" name="sqli_url" placeholder="http://target/vulnerable.php?id=1">
+            <label class="wf-label">ZAP Session Cookie (optional)</label>
+            <input type="text" class="wf-input" name="cookie" placeholder="PHPSESSID=abc123; security=low">
+            <p class="wf-meta" style="margin-top:-8px;">// Without a cookie, ZAP active scan is limited to public pages.</p>
             <button type="submit" class="wf-btn">🚀 LAUNCH WORKFLOW</button>
         </form>
     </div>
@@ -302,7 +307,9 @@ submitWorkflow('workflow6-form', '/api/workflows/full-external-recon', fd => ({
 }));
 
 submitWorkflow('workflow7-form', '/api/workflows/web-app-audit', fd => ({
-    target: fd.get('target')
+    target: fd.get('target'),
+    sqli_url: fd.get('sqli_url') || undefined,
+    cookie: fd.get('cookie') || undefined
 }));
 
 function showResult(result) {

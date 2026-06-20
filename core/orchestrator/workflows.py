@@ -171,7 +171,8 @@ def web_pentest_advanced(target, user_id, sqli_url=None):
         config={'target': f'http://{target}'},
         status='pending'
     )
-    sqlmap_target = sqli_url or f'http://{target}:8080/vulnerabilities/sqli/?id=1&Submit=Submit'
+    # No lab-specific default — use sqli_url if provided, else a generic guess based on target
+    sqlmap_target = sqli_url or f'http://{target}/?id=1'
     sqlmap_job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -374,6 +375,16 @@ def quick_vuln_scan(target, user_id):
     }
 
 
+def _looks_like_ip(value):
+    """Return True if value is a valid IPv4/IPv6 address."""
+    import ipaddress
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except ValueError:
+        return False
+
+
 def full_external_recon(domain, user_id):
     """
     Full external reconnaissance: Subfinder → theHarvester → Nmap → WhatWeb
@@ -384,13 +395,29 @@ def full_external_recon(domain, user_id):
     3. Nmap: Port scan on discovered hosts
     4. WhatWeb: Web technology fingerprinting
 
+    IMPORTANT: this workflow requires a real DNS domain (e.g. "example.com"),
+    NOT an IP address. Subfinder/theHarvester operate on domain names only.
+    For IP-only lab targets, use the "Quick Vuln Scan" workflow instead.
+    See FUTURE_IMPROVEMENTS.md — "Workflow target-type validation" for the
+    rationale behind this strict separation (deliberate design choice, not
+    a limitation to "fix" by making this workflow IP-tolerant).
+
     Args:
-        domain: Target domain (e.g., "example.com")
+        domain: Target domain (e.g., "example.com") — must NOT be an IP address
         user_id: UUID of the user
 
     Returns:
         dict with job_ids
+
+    Raises:
+        ValueError: if domain is an IP address
     """
+    if _looks_like_ip(domain):
+        raise ValueError(
+            f"'{domain}' is an IP address — Full External Recon requires a domain name "
+            f"(Subfinder/theHarvester need DNS). Use 'Quick Vuln Scan' for IP targets instead."
+        )
+
     subfinder_job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -456,7 +483,7 @@ def full_external_recon(domain, user_id):
     }
 
 
-def web_app_audit(target, user_id):
+def web_app_audit(target, user_id, sqli_url=None, cookie=None):
     """
     Web application audit: WhatWeb → ZAP → SQLmap
 
@@ -465,9 +492,18 @@ def web_app_audit(target, user_id):
     2. ZAP: Active web vulnerability scan (XSS, CSRF, headers...)
     3. SQLmap: SQL injection detection
 
+    NOTE: ZAP active scan without an authentication cookie is limited to
+    publicly reachable pages — this is an inherent limitation of unauthenticated
+    scanning, not a bug. Pass `cookie` for authenticated app sections.
+
     Args:
         target: IP or domain (e.g., "192.168.200.133")
         user_id: UUID of the user
+        sqli_url: Optional specific URL for SQLmap (e.g. a known injectable
+                  parameter). Defaults to a generic guess based on `target`
+                  if not provided — adjust per real application structure.
+        cookie: Optional session cookie string for ZAP authenticated scanning
+                (e.g. "PHPSESSID=abc123; security=low")
 
     Returns:
         dict with job_ids
@@ -482,23 +518,30 @@ def web_app_audit(target, user_id):
         },
         status='pending'
     )
+
+    zap_config = {
+        'target': f'http://{target}',
+        'scan_mode': 'active',
+        'api_key': 'changeme123'
+    }
+    if cookie:
+        zap_config['cookie'] = cookie
+
     zap_job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
         plugin_name='zap',
-        config={
-            'target': f'http://{target}',
-            'scan_mode': 'active',
-            'api_key': 'changeme123'
-        },
+        config=zap_config,
         status='pending'
     )
+
+    sqlmap_target = sqli_url or f'http://{target}/?id=1'
     sqlmap_job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
         plugin_name='sqlmap',
         config={
-            'target': f'http://{target}:8080/vulnerabilities/sqli/?id=1&Submit=Submit',
+            'target': sqlmap_target,
             'mode': 'detect',
             'level': 1,
             'risk': 1

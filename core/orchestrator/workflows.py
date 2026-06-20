@@ -106,6 +106,10 @@ def recon_to_exploit_workflow(target, user_id, service='ssh', username=None):
     }
     if username:
         hydra_config['username'] = username
+    else:
+        # Hydra requires either username or userlist — fall back to a generic
+        # common-usernames list when none is provided (no lab-specific default).
+        hydra_config['userlist'] = ['admin', 'root', 'user', 'test', 'administrator']
 
     hydra_job = Job(
         id=str(uuid.uuid4()),

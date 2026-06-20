@@ -68,7 +68,18 @@ class HydraPlugin(PluginBase):
         if "username" in self.config:
             cmd.extend(["-l", self.config["username"]])
         else:
-            cmd.extend(["-L", self.config["userlist"]])
+            userlist = self.config["userlist"]
+            # If userlist is a Python list, create a temp file (same pattern as passlist)
+            if isinstance(userlist, list):
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+                    for usr in userlist:
+                        f.write(usr + '\n')
+                    userlist_file = f.name
+                cmd.extend(["-L", userlist_file])
+            else:
+                # Already a file path
+                cmd.extend(["-L", userlist])
         
         # Password(s)
         if "password" in self.config:

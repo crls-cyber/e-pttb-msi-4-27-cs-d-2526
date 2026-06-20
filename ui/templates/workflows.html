@@ -18,6 +18,9 @@
     ⚠️ AUTHORIZED TARGETS ONLY — Unauthorized scanning is illegal (Art. 323-1 Code Pénal)
 </div>
 
+<!-- Result (moved to top for visibility) -->
+<div id="workflow-result" style="margin-bottom:20px;"></div>
+
 <style>
 .wf-grid {
     display: grid;
@@ -244,8 +247,7 @@
 
 </div>
 
-<!-- Result -->
-<div id="workflow-result"></div>
+<!-- Result moved to top -->
 
 <script>
 function submitWorkflow(formId, endpoint, buildData) {
@@ -259,7 +261,12 @@ function submitWorkflow(formId, endpoint, buildData) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            showResult(await response.json());
+            const result = await response.json();
+            if (response.ok) {
+                showResult(result);
+            } else {
+                showError(result.error || `Request failed (${response.status})`);
+            }
         } catch(err) {
             showError(err.message);
         }
@@ -299,21 +306,25 @@ submitWorkflow('workflow7-form', '/api/workflows/web-app-audit', fd => ({
 }));
 
 function showResult(result) {
-    document.getElementById('workflow-result').innerHTML = `
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const resultEl = document.getElementById('workflow-result');
+    resultEl.innerHTML = `
         <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);border-left:3px solid #00ff88;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
             <p style="color:#00ff88;font-size:13px;margin:0 0 10px 0;">✅ Workflow Started</p>
             <p style="color:#7faec0;font-size:12px;margin:0 0 6px 0;">${result.message}</p>
             <p style="color:#7faec0;font-size:12px;margin:0 0 14px 0;">Workflow ID: <code style="color:#00d4ff;">${result.workflow_id}</code></p>
-            <a href="/{{ lang }}/dashboard"
+            <a href="/{{ lang }}/jobs"
                style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:8px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;">
-                → View Dashboard
+                → View Jobs
             </a>
         </div>
     `;
 }
 
 function showError(msg) {
-    document.getElementById('workflow-result').innerHTML = `
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const resultEl = document.getElementById('workflow-result');
+    resultEl.innerHTML = `
         <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
             <p style="color:#ff3366;font-size:13px;margin:0 0 8px 0;">❌ Error</p>
             <p style="color:#7faec0;font-size:12px;margin:0;">${msg}</p>

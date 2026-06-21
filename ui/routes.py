@@ -787,3 +787,23 @@ def wireshark_launch():
 @login_required
 def burp_launch():
     return render_template('burp_launch.html')
+
+# Admin — user management
+@ui_bp.route('/en/admin/users')
+@ui_bp.route('/fr/admin/users')
+@login_required
+def admin_users():
+    """Admin-only user management page."""
+    is_admin = any(role.name == 'admin' for role in current_user.roles)
+    if not is_admin:
+        from flask import abort
+        abort(403)
+    return render_template('admin_users.html')
+
+# Pivot Chains — data-driven workflows
+@ui_bp.route('/en/pivot-chains')
+@ui_bp.route('/fr/pivot-chains')
+@login_required
+def pivot_chains():
+    """Pivot Chains — data-driven workflows page."""
+    return render_template('pivot_chains.html')

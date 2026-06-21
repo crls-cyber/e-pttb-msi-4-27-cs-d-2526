@@ -173,6 +173,9 @@ code{padding:2px 6px!important;font-size:11px!important}
             <a href="/{{ lang }}/workflows" class="nav-item {% if request.endpoint == 'ui.workflows' %}active{% endif %}">
                 <i class="fas fa-project-diagram"></i><span>{{ t('nav.workflows') }}</span>
             </a>
+            <a href="/{{ lang }}/pivot-chains" class="nav-item {% if 'pivot-chains' in request.path %}active{% endif %}">
+                <i class="fas fa-route"></i><span>Pivot Chains</span>
+            </a>
             <a href="/{{ lang }}/upload-external" class="nav-item {% if request.endpoint == 'ui.upload_external' %}active{% endif %}">
                 <i class="fas fa-upload"></i><span>{{ t('nav.upload') }}</span>
             </a>

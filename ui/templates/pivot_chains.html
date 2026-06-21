@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Pivot Chains - {{ t('app_title') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Pivot Chains</h1>
+</div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:16px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Data-driven attack chains — each step is generated FROM the findings of the
+    previous one, not a fixed predefined target. Unlike
+    <a href="/{{ lang }}/workflows" style="color:#00d4ff;">Workflows</a> (sequential, static targets),
+    Pivot Chains discover new targets dynamically as the scan progresses.
+</div>
+
+<div style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;padding:8px 14px;margin-bottom:24px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.5px;">
+    ⚠️ AUTHORIZED TARGETS ONLY — Unauthorized scanning is illegal (Art. 323-1 Code Pénal).
+    The CIDR range must be registered in your Authorized Targets.
+</div>
+
+<!-- Result panel (top) -->
+<div id="pivot-result" style="margin-bottom:20px;"></div>
+
+<div class="row">
+    <div class="col-md-5 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔀 Network Pivot Discovery</div>
+            <div class="wf-chain" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+                <span class="wf-step" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;background:rgba(0,180,230,0.08);border-color:rgba(0,180,230,0.3);color:#00b4e6;">Nmap (range)</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;">→</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#ffd700;letter-spacing:1px;">[for each host found]</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;">→</span>
+                <span class="wf-step" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;background:rgba(60,140,255,0.08);border-color:rgba(60,140,255,0.3);color:#3c8cff;">Nuclei</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;">+</span>
+                <span class="wf-step" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;background:rgba(0,180,230,0.08);border-color:rgba(0,180,230,0.3);color:#00b4e6;">WhatWeb</span>
+            </div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
+                // Scans a full CIDR range, then automatically launches Nuclei + WhatWeb
+                on every host found active — no manual re-launch needed. Useful for
+                simulating lateral discovery after an initial foothold on a shared segment.
+            </p>
+
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">CIDR Range</label>
+            <input type="text" id="pivot-cidr" placeholder="192.168.145.0/24"
+                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:8px;box-sizing:border-box;">
+            <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin:0 0 16px 0;">
+                Must be registered as an authorized target (scope type: CIDR).
+            </p>
+
+            <button onclick="launchPivotDiscovery()"
+                style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px 24px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%;"
+                onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+                🚀 LAUNCH PIVOT DISCOVERY
+            </button>
+
+            <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin-top:10px;">
+                ⏱️ Duration varies with range size — Nmap scan, then parallel Nuclei/WhatWeb per host.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-7 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">📖 How It Differs From Workflows</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.8;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <th style="text-align:left;padding:6px 10px 6px 0;color:#4a7a8a;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #0e3a52;">Workflows</th>
+                        <th style="text-align:left;padding:6px 0;color:#4a7a8a;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #0e3a52;">Pivot Chains</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 10px 8px 0;border-bottom:1px solid #0a2a3a;">Target fixed at launch</td>
+                        <td style="padding:8px 0;border-bottom:1px solid #0a2a3a;color:#00ff88;">Targets discovered dynamically</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 10px 8px 0;border-bottom:1px solid #0a2a3a;">All jobs created upfront</td>
+                        <td style="padding:8px 0;border-bottom:1px solid #0a2a3a;color:#00ff88;">Jobs created as findings arrive</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 10px 8px 0;border-bottom:1px solid #0a2a3a;">N steps = N tools</td>
+                        <td style="padding:8px 0;border-bottom:1px solid #0a2a3a;color:#00ff88;">N steps = 1 + (hosts × tools)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 10px 8px 0;">Single target (IP/domain)</td>
+                        <td style="padding:8px 0;color:#00ff88;">CIDR range → multiple hosts</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function launchPivotDiscovery() {
+    const cidr = document.getElementById('pivot-cidr').value.trim();
+    const resultEl = document.getElementById('pivot-result');
+
+    if (!cidr) {
+        resultEl.innerHTML = `<div style="color:#ff3366;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 0;">// CIDR range required</div>`;
+        return;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    resultEl.innerHTML = `<div style="color:#4a7a8a;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 0;">// Launching — this may take a moment...</div>`;
+
+    fetch('/api/pivot-chains/network-discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cidr: cidr })
+    })
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 202) {
+            resultEl.innerHTML = `
+                <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.3);border-left:3px solid #00ff88;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                    <p style="color:#00ff88;font-size:13px;margin:0 0 10px 0;">✅ Pivot Discovery Started</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0 0 6px 0;">${data.message}</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0 0 14px 0;">Nmap Job ID: <code style="color:#00d4ff;">${data.nmap_job_id}</code></p>
+                    <a href="/{{ lang }}/jobs"
+                       style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:8px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;">
+                        → View Jobs
+                    </a>
+                </div>
+            `;
+        } else {
+            resultEl.innerHTML = `
+                <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                    <p style="color:#ff3366;font-size:13px;margin:0 0 8px 0;">❌ Error</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0;">${data.error || 'Unknown error'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(err => {
+        resultEl.innerHTML = `
+            <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                <p style="color:#ff3366;font-size:13px;margin:0;">❌ Error: ${err.message}</p>
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %}

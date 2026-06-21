@@ -1134,6 +1134,65 @@ def delete_user_endpoint(user_id):
 
     return jsonify({'message': f"User '{username}' deleted"}), 200
 
+
+@api_bp.route('/pivot-chains/network-discovery', methods=['POST'])
+@login_required
+def trigger_pivot_discovery():
+    """
+    Trigger Network Pivot Discovery (data-driven, Pivot Chains).
+
+    Unlike static workflows, this scans a CIDR range with Nmap, then
+    DYNAMICALLY launches Nuclei + WhatWeb on every host actually found
+    active — true findings-driven chaining, not a fixed-target sequence.
+
+    Request body:
+    {
+        "cidr": "192.168.145.0/24"
+    }
+    """
+    from core.orchestrator.tasks import pivot_discovery_orchestrator
+    from core.models import Job
+    import uuid as uuid_module
+
+    data = request.get_json()
+    if not data or 'cidr' not in data:
+        return jsonify({'error': 'Missing required parameter: cidr'}), 400
+
+    cidr = data['cidr'].strip()
+
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(cidr)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
+
+    try:
+        # Pre-create the Nmap job (status=pending) — the orchestrator task will run it
+        nmap_job = Job(
+            id=uuid_module.uuid4(),
+            user_id=current_user.id,
+            plugin_name='nmap',
+            config={'target': cidr, 'scan_type': '-sV'},
+            status='pending'
+        )
+        db.session.add(nmap_job)
+        db.session.commit()
+
+        task = pivot_discovery_orchestrator.delay(str(nmap_job.id), cidr, str(current_user.id))
+        audit_log('pivot_chain.start', 'job', nmap_job.id)
+
+        return jsonify({
+            'message': 'Network Pivot Discovery started — Nmap scanning range, follow-up jobs will appear as hosts are discovered.',
+            'nmap_job_id': str(nmap_job.id),
+            'task_id': task.id,
+            'cidr': cidr
+        }), 202
+
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Pivot chain error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

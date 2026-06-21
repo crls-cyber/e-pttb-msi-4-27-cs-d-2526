@@ -179,7 +179,7 @@ function renderPreview(findings, headerLabel) {
     html += '</tr></thead><tbody>';
 
     sorted.slice(0, 100).forEach(f => {
-        const date = f.job_created_at ? new Date(f.job_created_at).toLocaleDateString('en-GB') : 'N/A';
+        const date = f.job_created_at ? new Date(f.job_created_at).toLocaleString('en-GB') : 'N/A';
         html += `<tr>
             <td><span class="severity-badge severity-${f.severity||'info'}">${f.severity||'info'}</span></td>
             <td>${f.plugin_name||'—'}</td>

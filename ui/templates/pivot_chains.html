@@ -98,6 +98,45 @@
 
     <div class="col-md-2 mb-4" style="display:none;"></div>
 
+    <div class="col-md-5 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">💀 Exploitation Readiness Report</div>
+            <div class="wf-chain" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+                <span class="wf-step" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;background:rgba(0,180,230,0.08);border-color:rgba(0,180,230,0.3);color:#00b4e6;">Nmap + Nuclei</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;">→</span>
+                <span class="wf-step" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;background:rgba(255,51,102,0.08);border-color:rgba(255,51,102,0.3);color:#ff4d6d;">Readiness Report</span>
+            </div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;margin-bottom:16px;line-height:1.6;">
+                // Scans the range, then produces a prioritized report for MANUAL
+                follow-up with Metasploit, Burp Suite, or Wireshark — known
+                backdoors get a precise module recommendation, other
+                HIGH/CRITICAL CVEs get a generic msfconsole search hint.
+                No exploit is launched automatically.
+            </p>
+
+            <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">CIDR Range</label>
+            <input type="text" id="readiness-cidr" placeholder="192.168.145.0/24"
+                style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:8px;box-sizing:border-box;">
+            <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin:0 0 16px 0;">
+                Must be registered as an authorized target (scope type: CIDR).
+            </p>
+
+            <button onclick="launchExploitationReadiness()"
+                style="background:rgba(255,51,102,0.1);border:1px solid rgba(255,51,102,0.4);color:#ff4d6d;padding:10px 24px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%;"
+                onmouseover="this.style.background='rgba(255,51,102,0.18)'"
+                onmouseout="this.style.background='rgba(255,51,102,0.1)'">
+                💀 GENERATE READINESS REPORT
+            </button>
+
+            <p style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a7a8a;margin-top:10px;">
+                ⏱️ This runs synchronously — the page will wait for the full scan
+                to complete before showing the report (may take several minutes).
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-2 mb-4" style="display:none;"></div>
+
     <div class="col-md-7 mb-4">
         <div class="chart-card">
             <div class="chart-card-header">📖 How It Differs From Workflows</div>
@@ -207,6 +246,56 @@ function launchCredentialAccess() {
                     <a href="/{{ lang }}/jobs"
                        style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:8px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;">
                         → View Jobs
+                    </a>
+                </div>
+            `;
+        } else {
+            resultEl.innerHTML = `
+                <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                    <p style="color:#ff3366;font-size:13px;margin:0 0 8px 0;">❌ Error</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0;">${data.error || 'Unknown error'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(err => {
+        resultEl.innerHTML = `
+            <div style="background:rgba(255,51,102,0.07);border:1px solid rgba(255,51,102,0.3);border-left:3px solid #ff3366;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                <p style="color:#ff3366;font-size:13px;margin:0;">❌ Error: ${err.message}</p>
+            </div>
+        `;
+    });
+}
+
+function launchExploitationReadiness() {
+    const cidr = document.getElementById('readiness-cidr').value.trim();
+    const resultEl = document.getElementById('pivot-result');
+
+    if (!cidr) {
+        resultEl.innerHTML = `<div style="color:#ff3366;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 0;">// CIDR range required</div>`;
+        return;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    resultEl.innerHTML = `<div style="color:#4a7a8a;font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px 0;">// Launching — this may take a moment...</div>`;
+
+    fetch('/api/pivot-chains/exploitation-readiness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cidr: cidr })
+    })
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 202) {
+            resultEl.innerHTML = `
+                <div style="background:rgba(255,51,102,0.05);border:1px solid rgba(255,51,102,0.25);border-left:3px solid #ff4d6d;padding:20px;border-radius:6px;font-family:'Share Tech Mono',monospace;">
+                    <p style="color:#ff4d6d;font-size:13px;margin:0 0 10px 0;">💀 Exploitation Readiness Report Started</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0 0 6px 0;">${data.message}</p>
+                    <p style="color:#7faec0;font-size:12px;margin:0 0 14px 0;">Nmap Job ID: <code style="color:#00d4ff;">${data.nmap_job_id}</code></p>
+                    <p style="color:#4a7a8a;font-size:10px;margin:0 0 14px 0;">// Recommendations will appear as Findings on this job once the scan completes.</p>
+                    <a href="/{{ lang }}/jobs/${data.nmap_job_id}"
+                       style="background:rgba(255,51,102,0.1);border:1px solid rgba(255,51,102,0.4);color:#ff4d6d;padding:8px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-decoration:none;">
+                        → View Job Details
                     </a>
                 </div>
             `;

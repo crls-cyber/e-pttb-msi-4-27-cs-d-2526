@@ -1251,6 +1251,72 @@ def trigger_pivot_credential_access():
         logging.getLogger(__name__).error(f"Pivot chain error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+@api_bp.route('/pivot-chains/exploitation-readiness', methods=['POST'])
+@login_required
+def trigger_pivot_exploitation_readiness():
+    """
+    Trigger Exploitation Readiness Report (data-driven, Pivot Chains).
+
+    Scans a CIDR range with Nmap + Nuclei, then produces a prioritized,
+    actionable report for MANUAL follow-up with Metasploit, Burp Suite, or
+    Wireshark (upload-based tools — not auto-launched). No exploit jobs are
+    created automatically.
+
+    Request body:
+    {
+        "cidr": "192.168.145.0/24"
+    }
+
+    Returns the readiness report DIRECTLY in the response (synchronous,
+    unlike other Pivot Chains) since this is a report-generation task,
+    not a job-launching one — the result IS the deliverable.
+    """
+    from core.orchestrator.tasks import pivot_exploitation_readiness
+
+    data = request.get_json()
+    if not data or 'cidr' not in data:
+        return jsonify({'error': 'Missing required parameter: cidr'}), 400
+
+    cidr = data['cidr'].strip()
+
+    from core.security.scope_checker import enforce_scope, ScopeViolation
+    try:
+        enforce_scope(cidr)
+    except ScopeViolation as e:
+        return jsonify({'error': str(e), 'scope_violation': True}), 403
+
+    try:
+        # Pre-create the Nmap job (status=pending) — the orchestrator task will run it,
+        # then save the readiness report as Findings on this job (consult via Jobs).
+        from core.models import Job
+        import uuid as uuid_module
+
+        nmap_job = Job(
+            id=uuid_module.uuid4(),
+            user_id=current_user.id,
+            plugin_name='nmap',
+            config={'target': cidr, 'scan_type': '-sV'},
+            status='pending'
+        )
+        db.session.add(nmap_job)
+        db.session.commit()
+
+        task = pivot_exploitation_readiness.delay(str(nmap_job.id), cidr, str(current_user.id))
+        audit_log('pivot_chain.start', 'job', nmap_job.id)
+
+        return jsonify({
+            'message': 'Exploitation Readiness Report started — scanning range, recommendations will appear as Findings on the Nmap job once complete.',
+            'nmap_job_id': str(nmap_job.id),
+            'task_id': task.id,
+            'cidr': cidr
+        }), 202
+
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Pivot chain error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @api_bp.route('/stats/dashboard', methods=['GET'])
 @login_required
 def get_dashboard_stats():

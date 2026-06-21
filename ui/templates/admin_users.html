@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}User Management - {{ t('app_title') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">User Management</h1>
+</div>
+
+<div style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;padding:8px 14px;margin-bottom:24px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.5px;">
+    ⚠️ ADMIN ONLY — User accounts are scoped to this mission's machine. New users must change their password on first login.
+</div>
+
+<div class="row">
+
+    <!-- Create user -->
+    <div class="col-md-4 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">+ Create User</div>
+            <div style="padding:16px;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Username *</label>
+                <input type="text" id="new-username" placeholder="acme1"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Temporary Password *</label>
+                <input type="text" id="new-password" placeholder="Min. 8 characters"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Email (optional)</label>
+                <input type="email" id="new-email" placeholder="acme1@toolbox.local"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px;box-sizing:border-box;">
+
+                <label style="display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a7a8a;text-transform:uppercase;margin-bottom:8px;">Role *</label>
+                <select id="new-role"
+                    style="width:100%;padding:9px 12px;background:rgba(0,0,0,0.3);border:1px solid #0e3a52;border-radius:6px;color:#7faec0;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:18px;">
+                    <option value="analyst">Analyst (Pentester)</option>
+                    <option value="viewer">Viewer (Read-only)</option>
+                    <option value="admin">Admin</option>
+                </select>
+
+                <button onclick="createUser()"
+                    style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;padding:10px 24px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%;"
+                    onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                    onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+                    + CREATE USER
+                </button>
+
+                <div id="create-result" style="margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:11px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users list -->
+    <div class="col-md-8 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header" id="usersHeader">All Users</div>
+            <div id="usersList" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;padding:16px;">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.users-table { width:100%; border-collapse:separate; border-spacing:0; }
+.users-table thead th { padding:10px 12px; background:rgba(0,212,255,0.04); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#4a7a8a; text-align:left; border-bottom:1px solid #0e3a52; }
+.users-table tbody tr { border-bottom:1px solid #0a2a3a; }
+.users-table tbody tr:hover { background:rgba(0,212,255,0.03); }
+.users-table tbody td { padding:10px 12px; vertical-align:middle; font-family:'Share Tech Mono',monospace; font-size:11px; color:#7faec0; }
+.role-badge { display:inline-block; padding:3px 10px; border-radius:3px; font-size:10px; letter-spacing:1px; font-family:'Share Tech Mono',monospace; text-transform:uppercase; }
+.role-admin   { background:rgba(255,51,102,0.1); color:#ff4d6d; border:1px solid rgba(255,51,102,0.3); }
+.role-analyst { background:rgba(0,212,255,0.1); color:#00d4ff; border:1px solid rgba(0,212,255,0.3); }
+.role-viewer  { background:rgba(74,122,138,0.15); color:#7faec0; border:1px solid rgba(74,122,138,0.3); }
+.must-change-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:9px; background:rgba(255,215,0,0.1); color:#ffd700; border:1px solid rgba(255,215,0,0.3); margin-left:6px; }
+.btn-delete-user {
+    background:rgba(255,51,102,0.08); border:1px solid rgba(255,51,102,0.3); color:#ff3366;
+    padding:4px 12px; border-radius:3px; font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:1px; cursor:pointer;
+}
+.btn-delete-user:disabled { opacity:0.3; cursor:not-allowed; }
+</style>
+
+<script>
+const currentUserId = "{{ current_user.id }}";
+
+function loadUsers() {
+    fetch('/api/users')
+        .then(r => r.json())
+        .then(data => {
+            renderUsers(data.users || []);
+        })
+        .catch(err => {
+            document.getElementById('usersList').innerHTML = `<p style="color:#ff3366;">Error: ${err.message}</p>`;
+        });
+}
+
+function renderUsers(users) {
+    const container = document.getElementById('usersList');
+    const header = document.getElementById('usersHeader');
+    header.textContent = `All Users (${users.length})`;
+
+    if (users.length === 0) {
+        container.innerHTML = '<p style="color:#4a7a8a;padding:8px 0;">// No users found.</p>';
+        return;
+    }
+
+    let html = '<table class="users-table"><thead><tr>';
+    html += '<th style="width:22%;">Username</th>';
+    html += '<th style="width:25%;">Email</th>';
+    html += '<th style="width:15%;">Role</th>';
+    html += '<th style="width:18%;">Created</th>';
+    html += '<th style="width:20%;">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    users.forEach(u => {
+        const created = u.created_at ? new Date(u.created_at).toLocaleString('en-GB') : 'N/A';
+        const isSelf = u.id === currentUserId;
+        html += `<tr>
+            <td style="color:#c0d8e8;font-weight:bold;">
+                ${u.username}
+                ${u.must_change_password ? '<span class="must-change-badge">PWD RESET PENDING</span>' : ''}
+                ${isSelf ? '<span style="color:#4a7a8a;font-size:9px;"> (you)</span>' : ''}
+            </td>
+            <td>${u.email || '<span style="color:#4a7a8a;">—</span>'}</td>
+            <td><span class="role-badge role-${u.role}">${u.role || 'N/A'}</span></td>
+            <td style="color:#4a7a8a;">${created}</td>
+            <td>
+                <button onclick="deleteUser('${u.id}', '${u.username}')" class="btn-delete-user" ${isSelf ? 'disabled title="You cannot delete your own account"' : ''}>
+                    ✕ DELETE
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function createUser() {
+    const username = document.getElementById('new-username').value.trim();
+    const password = document.getElementById('new-password').value;
+    const email     = document.getElementById('new-email').value.trim();
+    const role      = document.getElementById('new-role').value;
+    const result    = document.getElementById('create-result');
+
+    if (!username || !password) {
+        result.innerHTML = '<span style="color:#ff3366;">// Username and password required</span>';
+        return;
+    }
+    if (password.length < 8) {
+        result.innerHTML = '<span style="color:#ff3366;">// Password must be at least 8 characters</span>';
+        return;
+    }
+
+    fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email, role })
+    })
+    .then(r => r.json().then(data => ({ status: r.status, data })))
+    .then(({ status, data }) => {
+        if (status === 201) {
+            result.innerHTML = `<span style="color:#00ff88;">✓ User '${username}' created</span>`;
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('new-email').value = '';
+            document.getElementById('new-role').value = 'analyst';
+            loadUsers();
+        } else {
+            result.innerHTML = `<span style="color:#ff3366;">✗ ${data.error}</span>`;
+        }
+    })
+    .catch(err => {
+        result.innerHTML = `<span style="color:#ff3366;">Error: ${err.message}</span>`;
+    });
+}
+
+function deleteUser(id, username) {
+    if (!confirm(`Delete user '${username}'? This cannot be undone.`)) return;
+    fetch(`/api/users/${id}`, { method: 'DELETE' })
+        .then(r => r.json().then(data => ({ status: r.status, data })))
+        .then(({ status, data }) => {
+            if (status === 200) {
+                loadUsers();
+            } else {
+                alert(data.error || 'Failed to delete user');
+            }
+        })
+        .catch(err => alert('Error: ' + err.message));
+}
+
+loadUsers();
+</script>
+{% endblock %}

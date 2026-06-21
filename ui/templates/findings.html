@@ -207,7 +207,7 @@ function renderFindings(findings) {
         const title     = f.title || 'N/A';
         const jobId     = f.job_id ? f.job_id.substring(0, 8) : 'N/A';
         const fullJobId = f.job_id || '';
-        const date      = f.created_at ? new Date(f.created_at).toLocaleDateString('en-GB') : 'N/A';
+        const date      = f.created_at ? new Date(f.created_at).toLocaleString('en-GB') : 'N/A';
         const descFull  = f.description || 'No description';
         const descShort = descFull.length > 200 ? descFull.substring(0, 200) + '...' : descFull;
         const descId    = 'desc-' + (f.id || Math.random().toString(36).substr(2,8));

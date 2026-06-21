@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}RGPD Compliance - {{ t('app_title') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">RGPD Compliance</h1>
+    <a href="/{{ lang }}/dashboard" class="btn btn-secondary">← Back</a>
+</div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:24px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // This page is a reminder for the audit team — not a public-facing legal
+    notice. This toolbox is a professional tool used on a dedicated mission
+    machine, not a website exposed to the internet.
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header">🔒 How This Toolbox Respects GDPR Principles</div>
+    <div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Data Minimization & Locality</h4>
+        <p style="margin:0 0 16px 0;">
+            All scan results, findings, and reports stay on this machine. No data is
+            sent to a cloud service, external server, or third party by default.
+            The only way data leaves the machine is a manual, deliberate export
+            (CSV/PDF/HTML report) to an isolated network with no internet access,
+            as defined by the "one dedicated machine per mission" policy.
+        </p>
+
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Right to Erasure</h4>
+        <p style="margin:0 0 16px 0;">
+            Deleting a Target, a Job, or a User account removes the associated
+            records from the database (cascade delete on Findings/Artifacts tied
+            to a Job). Full mission data wipe is achieved by destroying the machine's
+            encrypted disk at the end of an engagement.
+        </p>
+
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Access Control</h4>
+        <p style="margin:0 0 16px 0;">
+            Only authenticated, authorized team members (admin/analyst/viewer roles)
+            can access scan data. See the <a href="/{{ lang }}/compliance/authorized" style="color:#00d4ff;">Authorized</a>
+            page for scope enforcement details.
+        </p>
+
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Audit Trail</h4>
+        <p style="margin:0 0 16px 0;">
+            Every sensitive action (login, target creation/deletion, user management,
+            password changes, workflow launches) is logged in the <code style="color:#00d4ff;">audit_logs</code>
+            table — supporting accountability and traceability requirements.
+        </p>
+
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Known Limitation</h4>
+        <p style="margin:0;color:#ff9944;">
+            Optional external integrations (VirusTotal, Shodan — see
+            <a href="/{{ lang }}/integrations" style="color:#00d4ff;">Integrations</a>) require
+            internet access and send data to third-party APIs. These are disabled by
+            default and must be explicitly enabled — a deliberate tension with the
+            "no data leaves the machine" principle, documented honestly rather than hidden.
+        </p>
+
+    </div>
+</div>
+{% endblock %}

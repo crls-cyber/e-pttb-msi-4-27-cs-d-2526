@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Encryption - {{ t('app_title') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Encryption</h1>
+    <a href="/{{ lang }}/dashboard" class="btn btn-secondary">← Back</a>
+</div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:24px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Reminder for the audit team — what is encrypted today in this toolbox,
+    and what should be encrypted at the machine level for a real engagement.
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header">🔐 Encryption in This Toolbox</div>
+    <div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Password Storage</h4>
+        <p style="margin:0 0 16px 0;">
+            User passwords are hashed (never stored in clear text) using
+            Werkzeug's secure password hashing, before being saved to the database.
+        </p>
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Database</h4>
+        <p style="margin:0 0 16px 0;">
+            PostgreSQL stores all jobs, findings, targets, and audit logs.
+            Database access is restricted to the application's own credentials,
+            not exposed externally by default.
+        </p>
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Full Disk Encryption (Machine Level)</h4>
+        <p style="margin:0 0 16px 0;">
+            Per the "one dedicated machine per mission" policy, the underlying
+            machine disk should be fully encrypted (e.g. LUKS on Linux) — this
+            protects data at rest in case of physical theft. This is a deployment
+            recommendation, not something the toolbox application itself enforces.
+        </p>
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Known Limitation</h4>
+        <p style="margin:0;color:#ffd700;">
+            Full disk encryption protects against physical theft when the machine
+            is powered off — not against an active compromise while the machine
+            is in use (e.g. keylogger, live exfiltration). Defense in depth
+            (restricted sudoers, audit logs, network isolation) complements
+            encryption rather than replacing it. See
+            <a href="/{{ lang }}/compliance" style="color:#00d4ff;">Compliance</a>
+            for the full picture.
+        </p>
+
+    </div>
+</div>
+{% endblock %}

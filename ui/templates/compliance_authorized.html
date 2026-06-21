@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Authorization & Scope - {{ t('app_title') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Authorization &amp; Scope</h1>
+    <a href="/{{ lang }}/dashboard" class="btn btn-secondary">← Back</a>
+</div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:24px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // Reminder for the audit team — legal authorization is a prerequisite for
+    every scan launched from this toolbox, enforced both procedurally and technically.
+</div>
+
+<div style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;padding:8px 14px;margin-bottom:24px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ff6b35;letter-spacing:0.5px;">
+    ⚠️ Unauthorized scanning is illegal (Art. 323-1 Code Pénal — France).
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header">✅ How Scope Enforcement Works</div>
+    <div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+
+        <h4 style="color:#00d4ff;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Zero Trust by Default</h4>
+        <p style="margin:0 0 16px 0;">
+            No target is scannable until explicitly added to the
+            <a href="/{{ lang }}/targets" style="color:#00d4ff;">Targets</a> registry as
+            "Authorized". This applies to every job creation path — individual
+            scans, the 7 sequential Workflows, and all 3 Pivot Chains.
+        </p>
+
+        <h4 style="color:#00d4ff;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Supported Scope Types</h4>
+        <p style="margin:0 0 16px 0;">
+            IP address, CIDR range, exact domain, or wildcard domain (subdomains).
+            Unauthorized entries always override authorized ones on conflict
+            (fail-safe), and the most specific rule wins.
+        </p>
+
+        <h4 style="color:#00d4ff;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Who Can Modify Scope</h4>
+        <p style="margin:0 0 16px 0;">
+            Only the <code style="color:#ff4d6d;">admin</code> role can add or remove targets —
+            enforced server-side, not just hidden in the UI. This reflects real-world
+            engagement practice: scope is defined once by the lead/admin per the
+            signed Rules of Engagement, not improvised by individual analysts.
+        </p>
+
+        <h4 style="color:#00d4ff;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Real-World Nuance</h4>
+        <p style="margin:0;">
+            On a real engagement, scope is formally defined in a signed contract
+            (Rules of Engagement) before any testing begins — this toolbox's
+            Targets registry is the technical enforcement of that legal agreement,
+            not a replacement for it.
+        </p>
+
+    </div>
+</div>
+{% endblock %}

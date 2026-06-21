@@ -807,3 +807,22 @@ def admin_users():
 def pivot_chains():
     """Pivot Chains — data-driven workflows page."""
     return render_template('pivot_chains.html')
+
+# Compliance — RGPD / Authorized / Encrypted info pages
+@ui_bp.route('/en/compliance/rgpd')
+@ui_bp.route('/fr/compliance/rgpd')
+@login_required
+def compliance_rgpd():
+    return render_template('compliance_rgpd.html')
+
+@ui_bp.route('/en/compliance/authorized')
+@ui_bp.route('/fr/compliance/authorized')
+@login_required
+def compliance_authorized():
+    return render_template('compliance_authorized.html')
+
+@ui_bp.route('/en/compliance/encrypted')
+@ui_bp.route('/fr/compliance/encrypted')
+@login_required
+def compliance_encrypted():
+    return render_template('compliance_encrypted.html')

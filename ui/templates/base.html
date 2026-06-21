@@ -181,8 +181,8 @@ code{padding:2px 6px!important;font-size:11px!important}
             </a>
             <a href="/{{ lang }}/targets" class="nav-item {% if 'targets' in request.path %}active{% endif %}"><i class="fas fa-bullseye"></i><span>Targets</span></a>
             <a href="/{{ lang }}/reports" class="nav-item {% if 'reports' in request.path %}active{% endif %}"><i class="fas fa-file-alt"></i><span>Reports</span></a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-plug"></i><span>Integrations</span><span class="badge-coming-soon">SOON</span></a>
-            <a href="#" class="nav-item disabled"><i class="fas fa-shield-alt"></i><span>Compliance</span><span class="badge-coming-soon">SOON</span></a>
+            <a href="/{{ lang }}/integrations" class="nav-item {% if request.path == '/en/integrations' or request.path == '/fr/integrations' %}active{% endif %}"><i class="fas fa-plug"></i><span>Integrations</span></a>
+            <a href="/{{ lang }}/compliance" class="nav-item {% if request.path == '/en/compliance' or request.path == '/fr/compliance' %}active{% endif %}"><i class="fas fa-shield-alt"></i><span>Compliance</span></a>
             <a href="/{{ lang }}/analytics" class="nav-item {% if 'analytics' in request.path %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
             <a href="/{{ lang }}/settings" class="nav-item {% if 'settings' in request.path %}active{% endif %}"><i class="fas fa-cog"></i><span>Settings</span></a>
         </nav>
@@ -196,9 +196,9 @@ code{padding:2px 6px!important;font-size:11px!important}
         <div class="top-header">
             <div class="project-context">
                 <div class="compliance-badges">
-                    <span class="compliance-badge rgpd">🔒 RGPD</span>
-                    <span class="compliance-badge authorized">✅ Authorized</span>
-                    <span class="compliance-badge encrypted">🔐 Encrypted</span>
+                    <a href="/{{ lang }}/compliance/rgpd" class="compliance-badge rgpd">🔒 RGPD</a>
+                    <a href="/{{ lang }}/compliance/authorized" class="compliance-badge authorized">✅ Authorized</a>
+                    <a href="/{{ lang }}/compliance/encrypted" class="compliance-badge encrypted">🔐 Encrypted</a>
                 </div>
             </div>
             <div class="navbar-right">

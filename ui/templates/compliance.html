@@ -1,9 +1,101 @@
 {% extends "base.html" %}
+{% block title %}Compliance - {{ t('app_title') }}{% endblock %}
 {% block content %}
-<div style="max-width:800px;margin:60px auto;text-align:center;padding:40px;">
-    <div style="font-size:80px;margin-bottom:24px;">🚧</div>
-    <h1 style="font-family:'Share Tech Mono',monospace;font-size:32px;color:#00d4ff;letter-spacing:4px;margin-bottom:16px;text-transform:uppercase;">COMING SOON</h1>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;letter-spacing:2px;margin-bottom:32px;">// THIS MODULE IS UNDER DEVELOPMENT</p>
-    <a href="/en/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+<div class="page-header">
+    <h1 class="page-title">Compliance</h1>
 </div>
+
+<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7faec0;line-height:1.6;margin-bottom:24px;padding:10px 14px;border-left:2px solid #0e3a52;">
+    // This page is a reminder for the audit team — summarizing how this toolbox
+    was built to meet the security and compliance requirements of the project
+    specification (Cahier des charges — Projet M1 CS 2025). Not a public-facing
+    legal notice: this is a professional tool for a dedicated mission machine,
+    not a website exposed to the internet.
+</div>
+
+<div class="row">
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔑 Authentication &amp; RBAC</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Flask-Login session management, hashed passwords (Werkzeug).</p>
+                <p style="margin:0 0 10px 0;">3 roles: <span style="color:#ff4d6d;">admin</span> (full control + user/scope management),
+                <span style="color:#00d4ff;">analyst</span> (launch scans, see own results),
+                <span style="color:#7faec0;">viewer</span> (read-only).</p>
+                <p style="margin:0;">Forced password change on first login for new accounts.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🎯 Scope Enforcement</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Zero trust by default — no scan launches on a target not explicitly authorized.</p>
+                <p style="margin:0;">Full details: <a href="/{{ lang }}/compliance/authorized" style="color:#00d4ff;">Authorization &amp; Scope →</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">📋 Audit Logging</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Sensitive actions are logged: login, target/user create-delete,
+                password changes, workflow/pivot chain launches.</p>
+                <p style="margin:0;">Each entry records who, what, and when — supporting accountability.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔐 Data Protection</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Password hashing, restricted DB access.</p>
+                <p style="margin:0;">Full details: <a href="/{{ lang }}/compliance/encrypted" style="color:#00d4ff;">Encryption →</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🇪🇺 GDPR Principles</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Data stays on the dedicated machine — no cloud, no external server by default.</p>
+                <p style="margin:0;">Full details: <a href="/{{ lang }}/compliance/rgpd" style="color:#00d4ff;">RGPD Compliance →</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🏗️ Specification Alignment</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 10px 0;">Built per the original spec: Python/Flask/Poetry, PostgreSQL, MinIO,
+                Celery/Redis orchestration, Docker Compose, modular plugin system.</p>
+                <p style="margin:0;">13 tools integrated: Nmap, Nuclei, ZAP, SQLmap, Hydra, Subfinder,
+                theHarvester, WhatWeb, Metasploit, Aircrack-ng, Ettercap, Wireshark, Burp Suite.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header">📖 Known Limitations (Documented, Not Hidden)</div>
+    <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+        <ul style="margin:0;padding-left:20px;">
+            <li style="margin-bottom:8px;">No HTTPS in development (acceptable for local lab use, required for production deployment).</li>
+            <li style="margin-bottom:8px;">Optional external integrations (VirusTotal, Shodan) require internet access —
+                a deliberate tension with the "data stays on the machine" principle. See
+                <a href="/{{ lang }}/integrations" style="color:#00d4ff;">Integrations</a>.</li>
+            <li style="margin-bottom:8px;">Single-machine deployment — no built-in multi-mission isolation yet
+                (each machine = one mission, by design, see FUTURE_IMPROVEMENTS.md).</li>
+            <li style="margin:0;">UI available in EN/FR toggle, but full French translation is not yet complete.</li>
+        </ul>
+    </div>
+</div>
+
 {% endblock %}

@@ -1,9 +1,101 @@
 {% extends "base.html" %}
+{% block title %}Integrations - {{ t('app_title') }}{% endblock %}
 {% block content %}
-<div style="max-width:800px;margin:60px auto;text-align:center;padding:40px;">
-    <div style="font-size:80px;margin-bottom:24px;">🚧</div>
-    <h1 style="font-family:'Share Tech Mono',monospace;font-size:32px;color:#00d4ff;letter-spacing:4px;margin-bottom:16px;text-transform:uppercase;">COMING SOON</h1>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#4a7a8a;letter-spacing:2px;margin-bottom:32px;">// THIS MODULE IS UNDER DEVELOPMENT</p>
-    <a href="/en/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+<div class="page-header">
+    <h1 class="page-title">Integrations</h1>
 </div>
+
+<div style="background:rgba(255,215,0,0.08);border-left:3px solid #ffd700;padding:14px 18px;margin-bottom:24px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#ffd700;line-height:1.7;">
+    ⚠️ This module is not yet active in the toolbox. This page explains why,
+    and what it would take to enable it — rather than hiding the gap.
+</div>
+
+<div class="row">
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🛡️ VirusTotal</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 12px 0;">
+                    Would enrich findings with reputation data: is a discovered IP or
+                    domain already known as malicious? Has a file hash been flagged
+                    by other AV engines? Useful for cross-referencing targets and
+                    artifacts (e.g. uploaded PCAP/Metasploit logs) against a global
+                    threat intelligence database.
+                </p>
+                <p style="margin:0;color:#4a7a8a;">Status: disabled — button shown but inactive.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <div class="chart-card-header">🔍 Shodan</div>
+            <div style="padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.7;">
+                <p style="margin:0 0 12px 0;">
+                    Would cross-reference scanned IPs against Shodan's internet-wide
+                    scan database — useful for passive reconnaissance (what's exposed
+                    publicly about a target before actively touching it) and for
+                    validating Nmap findings against an independent external source.
+                </p>
+                <p style="margin:0;color:#4a7a8a;">Status: disabled — button shown but inactive.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="chart-card mb-4">
+    <div class="chart-card-header">🤔 Why This Was Left Out of the MVP</div>
+    <div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// API Keys &amp; Secrets Management</h4>
+        <p style="margin:0 0 16px 0;">
+            Both services require a personal/team API key — a secret that would
+            need secure storage (encrypted, not in plain config) and per-user
+            management, adding complexity beyond the current scope.
+        </p>
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Internet Dependency</h4>
+        <p style="margin:0 0 16px 0;">
+            This is the core tension: these are <strong style="color:#ffd700;">cloud APIs</strong>,
+            requiring outbound internet access from the mission machine. That
+            directly conflicts with this toolbox's "data stays on the machine,
+            no cloud" design principle (see <a href="/{{ lang }}/compliance/rgpd" style="color:#00d4ff;">RGPD Compliance</a>).
+        </p>
+
+        <h4 style="color:#ff6b35;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Rate Limits &amp; Reliability</h4>
+        <p style="margin:0;">
+            Free-tier API quotas are limited (VirusTotal: a few requests/minute).
+            Building a reliable feature on top of a rate-limited third-party
+            service adds operational fragility not worth the complexity for a
+            first version.
+        </p>
+
+    </div>
+</div>
+
+<div class="chart-card">
+    <div class="chart-card-header">🌐 A Note on Real-World Practice</div>
+    <div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#7faec0;line-height:1.8;">
+        <p style="margin:0 0 16px 0;">
+            This toolbox's "host-only, fully isolated" model is a deliberate
+            simplification for this academic lab — and a realistic choice for
+            <strong style="color:#c0d8e8;">highly sensitive engagements</strong>
+            (banking, defense, critical infrastructure) where contracts may
+            require air-gapped testing.
+        </p>
+        <p style="margin:0;">
+            In everyday practice, however, a pentester's machine is usually
+            <strong style="color:#c0d8e8;">connected to the client's network</strong>
+            (required to scan anything) and often has <strong style="color:#c0d8e8;">controlled
+            internet access</strong> — via a VPN back to their own company
+            infrastructure, for tool updates, or to query services like VirusTotal
+            and Shodan exactly as described above. Isolation in the field is
+            typically enforced by the <em>client</em> segmenting the test network,
+            not by the pentester cutting off internet entirely.
+        </p>
+    </div>
+</div>
+
 {% endblock %}

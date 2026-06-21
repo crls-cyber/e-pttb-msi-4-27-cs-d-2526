@@ -74,7 +74,25 @@ class PluginExecutor:
                 signal.alarm(0)
                 
                 # Parse output
-                findings = plugin.parse_output(execution_result.get('raw_output'))
+                # Pass metadata to parse_output when the plugin's signature accepts it
+                # (some plugins like nmap/nuclei/sqlmap take metadata as a 2nd arg,
+                # others like hydra expect it nested inside raw_output as a dict).
+                import inspect
+                sig_params = inspect.signature(plugin.parse_output).parameters
+                raw_output_value = execution_result.get('raw_output')
+                metadata_value = execution_result.get('metadata', {})
+
+                if 'metadata' in sig_params:
+                    findings = plugin.parse_output(raw_output_value, metadata=metadata_value)
+                elif isinstance(raw_output_value, str) and metadata_value:
+                    # Plugin expects a single dict-like raw_output containing metadata
+                    # (e.g. hydra) — wrap it so raw_output.get('metadata') works.
+                    findings = plugin.parse_output({
+                        'raw_output': raw_output_value,
+                        'metadata': metadata_value
+                    })
+                else:
+                    findings = plugin.parse_output(raw_output_value)
                 
                 # Success
                 result['success'] = True

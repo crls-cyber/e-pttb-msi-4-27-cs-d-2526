@@ -47,6 +47,19 @@
             table — supporting accountability and traceability requirements.
         </p>
 
+        <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Mission Purge (Planned)</h4>
+        <p style="margin:0 0 16px 0;">
+            A dedicated admin function to purge all mission data (jobs, findings,
+            targets, audit logs, MinIO artefacts) is planned but not yet implemented.
+            This will allow preparing the machine for a new engagement without
+            rebuilding the Docker environment from scratch.
+            <br><br>
+            <strong style="color:#ffd700;">Note</strong> : This applicative purge does NOT replace
+            full-disk secure erasure (LUKS encryption + wipe) at end of engagement.
+            Physical destruction of data is the final guarantee — the purge button
+            is an operational convenience, not a substitute for the physical security policy.
+        </p>
+
         <h4 style="color:#00ff88;font-size:11px;letter-spacing:1px;margin:0 0 10px 0;">// Known Limitation</h4>
         <p style="margin:0;color:#ff9944;">
             Optional external integrations (VirusTotal, Shodan — see

@@ -234,3 +234,4 @@ findings.csv
 # Coverage reports (confirmation)
 htmlcov/
 .pytest_cache/
+MY_LAB_CONFIG.md

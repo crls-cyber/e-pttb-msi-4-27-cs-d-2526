@@ -1,311 +1,335 @@
-# 🛡️ ToolBox Pentest M1 — Automated Penetration Testing Platform
+# 🛡️ ToolBox Pentest — Projet M1 Cybersécurité
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11+-green.svg)
-![Docker](https://img.shields.io/badge/docker-24.0+-blue.svg)
-![Status](https://img.shields.io/badge/status-MVP-success.svg)
+**Plateforme d'automatisation de tests d'intrusion**
 
-**Projet M1 Cybersécurité** — Plateforme d'automatisation complète de tests d'intrusion avec orchestration intelligente, reporting avancé et interface web intuitive.
+[![Licence](https://img.shields.io/badge/licence-CC--BY--NC--ND--4.0-lightgrey.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/docker-24.0+-blue.svg)](https://www.docker.com/)
+[![Statut](https://img.shields.io/badge/statut-v2.0%20complet-success.svg)]()
 
----
-
-## 📊 Dashboard
-
-![Dashboard](docs/images/01_dashboard.png)
+> **Projet académique** — M1 Cybersécurité, Sup de Vinci (2025-2026)
+> ToolBox modulaire d'automatisation de pentests avec RBAC, Pivot Chains data-driven, reporting professionnel et orchestration Docker.
 
 ---
 
-## 🎯 Objectifs du projet
+## 📋 Sommaire
 
-- ✅ **Automatiser** l'ensemble des phases d'un pentest (reconnaissance → exploitation → post-exploitation)
-- ✅ **Réduire de 40%** le temps de réalisation d'un pentest
-- ✅ **Standardiser** les pratiques et le reporting
-- ✅ **Modularité** : ajout de nouveaux outils sans toucher au core
-- ✅ **Sécurité** : RBAC, chiffrement, audit logs, HTTPS
-
----
-
-## 🚀 Fonctionnalités principales
-
-### ✅ **4 Plugins opérationnels**
-
-| Plugin | Description | Capabilities |
-|--------|-------------|--------------|
-| **Nmap** | Scan réseau, détection services/OS | Port scanning, service detection |
-| **Nuclei** | Scan vulnérabilités CVE (8000+ templates) | CVE detection, misconfigurations |
-| **SQLmap** | Exploitation injections SQL | SQL injection testing |
-| **theHarvester** | Reconnaissance OSINT | Email/subdomain/IP discovery |
-
-### ✅ **Workflow automatisé**
-
-Enchaînement intelligent des outils : **Nmap → Nuclei → SQLmap**
-
-![Jobs List](docs/images/02_jobs_list.png)
-
-### ✅ **Reporting avancé**
-
-- Export **HTML** interactif avec graphiques (Chart.js)
-- Export **PDF** professionnel (WeasyPrint)
-- Export **CSV** pour analyse externe
-
-### ✅ **Interface web intuitive**
-
-- Dashboard avec statistiques en temps réel
-- Suivi des jobs avec auto-refresh
-- Visualisation des findings par sévérité
-- Téléchargement des artifacts (XML, JSON, PCAP)
-
-![Job Detail](docs/images/03_job_detail_nmap.png)
-
-### ✅ **Sécurité intégrée**
-
-- **Authentification** : Flask-Login + sessions sécurisées
-- **RBAC** : 3 rôles (admin, analyst, viewer)
-- **Chiffrement** : Credentials chiffrés avec Fernet
-- **Audit logs** : Traçabilité complète des actions
+- [Vue d'ensemble](#vue-densemble)
+- [Fonctionnalités](#fonctionnalités)
+- [Architecture](#architecture)
+- [Stack technique](#stack-technique)
+- [Démarrage rapide](#démarrage-rapide)
+- [Plugins](#plugins)
+- [Documentation](#documentation)
+- [Sécurité](#sécurité)
+- [Mentions légales](#mentions-légales)
+- [Licence](#licence)
 
 ---
 
-## 🏗️ Architecture
+## 🎯 Vue d'ensemble
+
+**Pentest ToolBox v2** est une plateforme modulaire de tests d'intrusion conçue pour :
+- ✅ **Automatiser** les phases de reconnaissance, scan et exploitation
+- ✅ **Réduire** le temps de réalisation d'un pentest via des workflows orchestrés et des Pivot Chains data-driven
+- ✅ **Standardiser** les pratiques avec des plugins réutilisables et auto-découverts
+- ✅ **Sécuriser** les accès avec RBAC et contrôle de périmètre zero-trust
+- ✅ **Générer** des rapports professionnels (HTML, PDF, CSV)
+
+**Utilisateurs cibles :** Analystes sécurité, pentesters, équipes SOC, chercheurs académiques.
+
+---
+
+## ✨ Fonctionnalités
+
+### 🔌 13 Outils intégrés
+
+**Flux A — Plugins Docker automatisés (8)**
+
+| Plugin | Phase | Capacité |
+|--------|-------|---------|
+| **Nmap** | Reconnaissance | Scan réseau, détection ports et services |
+| **Nuclei** | Vulnérabilités | Détection CVE (5000+ templates) |
+| **SQLmap** | Exploitation | Automatisation injections SQL |
+| **Hydra** | Accès credentials | Brute-force (SSH, FTP, SMB, MySQL, RDP...) |
+| **Subfinder** | OSINT | Énumération passive de sous-domaines DNS |
+| **theHarvester** | OSINT | Collecte emails, hosts, IPs via moteurs de recherche |
+| **WhatWeb** | Fingerprinting | Identification technologies web |
+| **ZAP (OWASP)** | Audit web | Scan actif vulnérabilités web (XSS, CSRF...) |
+
+**Flux C — Parseurs Upload (5)**
+
+| Outil | Format importé | Phase |
+|-------|---------------|-------|
+| **Metasploit** | Log (.log) | Exploitation / Post-exploitation |
+| **Burp Suite** | Export XML (.xml) | Audit web avancé |
+| **Wireshark** | PCAP (.pcap) | Analyse réseau / Forensique |
+| **Aircrack-ng** | Log (.txt) | Audit Wi-Fi |
+| **Ettercap** | Log (.txt) | Man-in-the-Middle |
+
+### 🔄 7 Workflows séquentiels
+
+Enchaînements en un clic sur une cible fixe :
+
+| Workflow | Chaîne |
+|----------|--------|
+| Recon-to-Exploit | Nmap → Nuclei → Hydra |
+| Web Pentest Advanced | Nmap → Nuclei → SQLmap |
+| Web App Audit | WhatWeb → ZAP → SQLmap |
+| Network Bruteforce | Nmap → Hydra |
+| OSINT Reconnaissance | theHarvester → Subfinder |
+| Quick Vuln Scan | Nmap → Nuclei |
+| Full External Recon | Subfinder → theHarvester → Nmap → WhatWeb |
+
+### 🔀 3 Pivot Chains data-driven
+
+Contrairement aux workflows séquentiels, les Pivot Chains créent les jobs suivants **dynamiquement**, en fonction des résultats réels de l'étape précédente :
+
+| Pivot Chain | Logique | Résultat testé |
+|-------------|---------|---------------|
+| **Network Pivot Discovery** | Nmap (CIDR) → [par hôte découvert] → Nuclei + WhatWeb | 4 hôtes découverts, 8 jobs créés dynamiquement ✅ |
+| **Credential Access Discovery** | Nmap (ports auth) → [par service ouvert] → Hydra | 10 services trouvés, 10 jobs Hydra lancés précisément ✅ |
+| **Exploitation Readiness Report** | Nmap + Nuclei → [analyse findings] → Recommandations Metasploit | Backdoor vsftpd 2.3.4 identifié avec module précis, 15+ hints CVE ✅ |
+
+### 📊 Reporting professionnel
+
+- **Rapport par job** — HTML / PDF avec score CVSS, CVE, description, remédiation
+- **Rapport global** — tous les findings de tous les jobs complétés
+- **Rapport personnalisé** — filtré par cible, plugin et/ou plage de dates
+- **Export CSV** — pour analyse externe
+
+### 🔐 Sécurité intégrée
+
+- **Authentification** — Flask-Login, mots de passe hachés (Werkzeug)
+- **RBAC** — 3 rôles appliqués côté serveur (Admin, Analyst, Viewer)
+- **Scope Enforcement** — Zero-trust : aucun scan sans cible préalablement autorisée
+- **Audit Logs** — toutes les actions sensibles tracées
+- **Indépendance méthodologique** — chaque analyste ne voit que ses propres jobs/findings
+
+---
+
+## 🏛️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    INTERFACE WEB (Flask)                    │
-│              Dashboard | Jobs | Findings | Reports          │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-         ┌───────────────▼────────────────┐
-         │   API REST (Flask)             │
-         │   + RBAC + Authentication      │
-         └───────────┬────────────────────┘
+│              UTILISATEURS (Analystes)                       │
+│              Interface web EN/FR (thème Delta OS)           │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+         ┌───────────────────────┐
+         │   UI + API (Flask)    │
+         │   Port 5000           │
+         │   Auth + RBAC         │
+         │   13 pages dédiées    │
+         └───────────┬───────────┘
                      │
         ┌────────────┴────────────┐
         ▼                         ▼
 ┌───────────────┐         ┌──────────────┐
-│  PostgreSQL   │         │   Celery     │
-│  (Metadata)   │         │(Orchestrator)│
-└───────────────┘         └──────┬───────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-            ┌──────────────┐          ┌─────────────┐
-            │    Redis     │          │   Workers   │
-            │   (Broker)   │          │  (Plugins)  │
-            └──────────────┘          └─────┬───────┘
-                                            │
-                                            ▼
-                                    ┌──────────────┐
-                                    │    MinIO     │
-                                    │ (Artifacts)  │
-                                    └──────────────┘
+│  PostgreSQL   │         │    Redis     │
+│  Jobs         │         │   Broker     │
+│  Findings     │         │   Celery     │
+│  Utilisateurs │         └──────┬───────┘
+│  Audit logs   │                │
+└───────────────┘                ▼
+                    ┌─────────────────────────┐
+                    │   Celery Worker          │
+                    │   4 processus parallèles │
+                    └──────────┬──────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              ▼                                  ▼
+   ┌─────────────────────┐          ┌──────────────────────┐
+   │  Flux A : Docker    │          │  Flux C : Upload     │
+   │  8 outils automatisés│         │  5 parseurs externes │
+   └──────────┬──────────┘          └──────────────────────┘
+              ▼
+   ┌─────────────────────┐
+   │       MinIO          │
+   │  Stockage artefacts  │
+   │  (compatible S3)     │
+   └─────────────────────┘
 ```
+
+**Décisions d'architecture clés :**
+- **Celery** plutôt que threading — vrai async, retry, monitoring
+- **MinIO** plutôt que filesystem — compatible S3, prêt pour le cloud
+- **Flask** — recommandé par le cahier des charges, écosystème mature
+- **Auto-découverte des plugins** — ajouter un outil sans toucher au core
 
 ---
 
-## 📦 Stack technique
+## 🧰 Stack technique
 
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
-| **Backend** | Python + Flask | 3.11+ / 3.0+ |
-| **Orchestration** | Celery + Redis | 5.3+ / 7.0+ |
-| **Base de données** | PostgreSQL | 15+ |
-| **Stockage objets** | MinIO (S3-compatible) | Latest |
-| **Conteneurisation** | Docker + Docker Compose | 24+ |
-| **Gestion dépendances** | Poetry | 1.7+ |
+| Langage | Python | 3.11+ |
+| Framework web | Flask | 3.0+ |
+| ORM | SQLAlchemy | 2.0+ |
+| Jobs asynchrones | Celery | 5.3+ |
+| Broker | Redis | 7.0+ |
+| Base de données | PostgreSQL | 15+ |
+| Stockage objets | MinIO | Latest |
+| Conteneurs | Docker Compose | V2 |
+| Gestion dépendances | Poetry | 1.7+ |
+| Génération PDF | WeasyPrint | 62.0+ |
+| CI/CD | GitHub Actions | — |
 
 ---
 
-## 🚀 Démarrage rapide (10 minutes)
+## 🚀 Démarrage rapide
 
-### **Prérequis**
+### Prérequis
 
-- Kali Linux 2026+ (ou Debian/Ubuntu)
-- Docker + Docker Compose installés
-- 4GB RAM minimum, 8GB recommandé
-- 50GB d'espace disque
+- **OS :** Kali Linux 2026+ (ou Debian/Ubuntu 22.04+)
+- **Docker :** 24.0+
+- **Docker Compose :** V2
+- **RAM :** 4 Go minimum, 8 Go recommandés
+- **Disque :** 20 Go minimum
 
-### **Installation**
+### Installation
 
 ```bash
-# 1. Cloner le repository
-git clone https://github.com/crls-cyber/pentest-toolbox-v2.git
-cd pentest-toolbox-v2
+# 1. Cloner le dépôt
+git clone https://github.com/crls-cyber/e-pttb-msi-4-27-cs-d-2526.git
+cd e-pttb-msi-4-27-cs-d-2526
 
 # 2. Configurer les variables d'environnement
 cp deploy/.env.example deploy/.env
-nano deploy/.env  # Modifier les mots de passe
+nano deploy/.env  # Modifier les mots de passe et secrets
 
-# 3. Lancer l'infrastructure
-cd deploy
+# 3. Démarrer tous les services
 docker compose up -d
 
-# 4. Initialiser la base de données
+# 4. Attendre l'initialisation (~30 secondes)
+sleep 30
+
+# 5. Initialiser la base de données
 docker compose exec api python scripts/init_db.py
 
-# 5. Créer un utilisateur admin
+# 6. Créer l'utilisateur admin
 docker compose exec api python scripts/create_user.py \
   --username admin \
-  --password VotreMotDePasse \
+  --password VotreMotDePasseFort \
+  --email admin@toolbox.local \
   --role admin
+
+# 7. Ouvrir l'interface web
+firefox http://localhost:5000
 ```
 
-### **Accès à l'interface**
+### Premiers pas
 
-Ouvrez votre navigateur : **http://localhost:5000**
-
-Login : `admin` / `VotreMotDePasse`
+1. Se connecter en tant qu'`admin`
+2. Aller dans **Targets** → ajouter les cibles autorisées (IP, CIDR, domaine)
+3. Aller dans **Workflows** ou **Pivot Chains** → lancer un premier scan
+4. Les résultats apparaissent dans **Jobs** → **Findings**
 
 ---
 
-## 📸 Captures d'écran
+## 🔌 Plugins
 
-### **Findings Nuclei (CVE détectées)**
+### Plugins Docker automatisés (8)
 
-![Nuclei Findings](docs/images/04_findings_nuclei.png)
+| Plugin | Statut | Notes |
+|--------|--------|-------|
+| Nmap | ✅ Opérationnel | Détection de services, plages CIDR supportées |
+| Nuclei | ✅ Opérationnel | 5000+ templates CVE |
+| SQLmap | ✅ Opérationnel | Paramètre sqli_url optionnel |
+| Hydra | ✅ Opérationnel | Userlist en liste Python supportée |
+| Subfinder | ✅ Opérationnel | Noms de domaine uniquement (pas d'IPs) |
+| theHarvester | ✅ Opérationnel | Timeout possible sur sources rate-limitées (connu) |
+| WhatWeb | ✅ Opérationnel | |
+| ZAP (OWASP) | ⚠️ Partiel | Bug spider sans timeout identifié, correction planifiée |
 
-### **Plugin theHarvester (OSINT)**
+### Parseurs Upload (5)
 
-![theHarvester](docs/images/05_theharvester_success.png)
+| Outil | Statut |
+|-------|--------|
+| Metasploit | ✅ Opérationnel |
+| Burp Suite | ✅ Opérationnel |
+| Wireshark | ✅ Opérationnel |
+| Aircrack-ng | ✅ Opérationnel |
+| Ettercap | ✅ Opérationnel |
 
----
+### Ajouter un plugin
 
-## 🧪 Tester la toolbox
+Chaque plugin étend `PluginBase` et implémente trois méthodes :
+- `validate_config()` — validation des paramètres
+- `run()` — exécution de l'outil via subprocess
+- `parse_output()` — sortie brute → Findings structurés
 
-### **Test 1 : Scan Nmap simple**
-
-```bash
-curl -X POST http://localhost:5000/api/jobs \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "plugin": "nmap",
-    "config": {
-      "target": "scanme.nmap.org",
-      "ports": "80,443"
-    }
-  }'
-```
-
-### **Test 2 : Workflow automatisé**
-
-```bash
-curl -X POST http://localhost:5000/api/workflows/web-pentest \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "target": "192.168.1.100"
-  }'
-```
+Les plugins sont **auto-découverts** au démarrage — aucune modification du core nécessaire.
 
 ---
 
-## 📚 Documentation complète
+## 📚 Documentation
 
-- [Architecture détaillée](docs/architecture_pentest_toolbox_v3.md)
-- [Guide de développement](docs/PLAN_DEVELOPPEMENT_v3.md)
-- [Créer un plugin](docs/PLUGINS.md)
-- [API Reference](docs/API.md)
-
----
-
-## 🛠️ Développement
-
-### **Ajouter un nouveau plugin**
-
-```bash
-# 1. Créer la structure
-mkdir -p plugins/mon_plugin
-touch plugins/mon_plugin/__init__.py
-touch plugins/mon_plugin/plugin.py
-
-# 2. Implémenter PluginBase (voir docs/PLUGINS.md)
-
-# 3. Redémarrer le Worker
-docker compose restart worker
-```
-
-### **Lancer les tests**
-
-```bash
-poetry run pytest tests/ -v
-poetry run pytest --cov=core --cov=plugins
-```
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART_v3.md](QUICKSTART_v3.md) | Guide de démarrage pas à pas |
+| [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Plan de développement |
+| [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Checklist pré-lancement |
+| [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap et fonctionnalités planifiées |
+| [architecture_pentest_toolbox_v6_1.md](architecture_pentest_toolbox_v6_1.md) | Architecture détaillée |
 
 ---
 
 ## 🔐 Sécurité
 
-### **Bonnes pratiques**
+### Contrôles intégrés
 
-- ✅ Ne **JAMAIS** commiter le fichier `.env`
-- ✅ Utiliser des **mots de passe forts** (>20 caractères)
-- ✅ Scanner **uniquement des cibles autorisées**
-- ✅ Activer **HTTPS** en production (Traefik recommandé)
-- ✅ Sauvegarder régulièrement la base de données
+- ✅ Hachage des mots de passe (Werkzeug)
+- ✅ RBAC appliqué côté serveur
+- ✅ Scope enforcement zero-trust (aucun scan non autorisé)
+- ✅ Audit trail (toutes les actions sensibles tracées)
+- ✅ Sécurité des sessions (cookies signés Flask-Login)
 
-### **Cibles de test autorisées**
+### Recommandation de déploiement
 
-- ✅ `scanme.nmap.org` (Nmap uniquement)
-- ✅ `testphp.vulnweb.com` (Tests web)
-- ✅ Vos propres VMs de lab (DVWA, Metasploitable, etc.)
-- ❌ **JAMAIS** scanner l'Internet sans autorisation écrite
+Cette ToolBox est conçue pour des **machines dédiées par mission** — une machine par engagement. Les données restent locales par défaut. Aucune dépendance cloud requise.
 
----
+### Limite connue
 
-## 📊 Métriques du projet
-
-| Métrique | Valeur |
-|----------|--------|
-| **Plugins opérationnels** | 4 (Nmap, Nuclei, SQLmap, theHarvester) |
-| **Endpoints API** | 15+ |
-| **Coverage tests** | 43% (baseline) |
-| **Lignes de code** | ~5000 |
-| **Conformité CDC** | 92% |
+Le spider ZAP (`_wait_for_spider()`) ne dispose pas de paramètre timeout — peut bloquer indéfiniment sur certaines cibles. Correction planifiée. Contournement : redémarrer le worker en cas de blocage.
 
 ---
 
-## 🗓️ Roadmap
+## ⚖️ Mentions légales
 
-### **Phase 2 (En cours)**
+**Ce projet est un outil académique de recherche en sécurité.**
 
-- [ ] Plugin Hydra (brute-force)
-- [ ] Upload fichiers externes (PCAP Wireshark, logs Metasploit)
-- [ ] Enrichment APIs (VirusTotal, Shodan, OWASP mapping)
-- [ ] Export CSV
+**Article 323-1 du Code Pénal français :**
+> Le fait d'accéder ou de se maintenir, frauduleusement, dans tout ou partie d'un système de traitement automatisé de données est puni de deux ans d'emprisonnement et de 60 000 € d'amende.
 
-### **Phase 3 (À venir)**
+**N'utilisez cette ToolBox QUE sur :**
+- ✅ Vos propres systèmes
+- ✅ Des systèmes avec autorisation écrite explicite
+- ✅ Des cibles de lab autorisées (Metasploitable2, DVWA, etc.)
 
-- [ ] CI/CD GitHub Actions
-- [ ] Profils par pôle métier (SOC, SaaS, Infra)
-- [ ] Dashboard KPIs avancés
-- [ ] Intégration Maltego (graphes OSINT)
+**❌ Ne scannez JAMAIS des systèmes sans autorisation préalable écrite.**
 
----
-
-## 👥 Contributeurs
-
-**Développeur principal (Phase 1 MVP)** : Carlos  
-**Équipe** : Groupe M1 Cybersécurité (4 personnes)  
-**Encadrement** : Projet M1 CS 2025
+Les auteurs déclinent toute responsabilité en cas d'utilisation illégale de cet outil.
 
 ---
 
-## 📝 Licence
+## 📄 Licence
 
-MIT License - Voir [LICENSE](LICENSE) pour plus de détails.
+Ce projet est distribué sous licence **CC BY-NC-ND 4.0**
+(Attribution — Pas d'Utilisation Commerciale — Pas de Modification)
 
----
-
-## 🙏 Remerciements
-
-- **Nmap** : Gordon Lyon (Fyodor)
-- **Nuclei** : ProjectDiscovery
-- **SQLmap** : Bernardo Damele & Miroslav Stampar
-- **theHarvester** : Christian Martorella (Edge-Security)
-- **OWASP ZAP** : OWASP Foundation
+Voir [LICENSE](LICENSE) pour les conditions complètes.
 
 ---
 
-**Version** : v1.0.0-mvp  
-**Date** : 13 mai 2026  
-**Status** : ✅ MVP opérationnel
+## 🎓 Contexte académique
+
+**Établissement :** Sup de Vinci — M1 Cybersécurité
+**Période :** Décembre 2025 – Juin 2026
+**Équipe :** Carlos (@crls-cyber), Emeric (@freezy-ted), Antoine (@ItsJinmaa), Elsy (@nker-svg)
+
+---
+
+**Version :** v2.0
+**Dernière mise à jour :** 26 juin 2026
+**Statut :** ✅ Complet

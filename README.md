@@ -2,12 +2,13 @@
 
 **Automated Penetration Testing Platform**
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-CC--BY--NC--ND--4.0-lightgrey.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-24.0+-blue.svg)](https://www.docker.com/)
+[![Status](https://img.shields.io/badge/status-v2.0%20complete-success.svg)]()
 
-> **Academic Project** — M1 Cybersecurity (2026)  
-> Automated modular toolbox for penetration testing with RBAC, reporting, and Docker orchestration.
+> **Academic Project** — M1 Cybersecurity, Sup de Vinci (2025-2026)
+> Automated modular toolbox for penetration testing with RBAC, data-driven Pivot Chains, professional reporting, and Docker orchestration.
 
 ---
 
@@ -19,22 +20,20 @@
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
 - [Plugins](#plugins)
-- [Screenshots](#screenshots)
 - [Documentation](#documentation)
 - [Security](#security)
 - [Legal Notice](#legal-notice)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
 
 ## 🎯 Overview
 
-**Pentest Toolbox** is a modular penetration testing platform designed to:
-- ✅ **Automate** reconnaissance, scanning, exploitation phases
-- ✅ **Reduce** pentest time by 40%+ through orchestrated workflows
-- ✅ **Standardize** practices with reusable plugins
-- ✅ **Secure** access with RBAC (Admin, Analyst, Viewer)
+**Pentest Toolbox v2** is a modular penetration testing platform designed to:
+- ✅ **Automate** reconnaissance, scanning and exploitation phases
+- ✅ **Reduce** pentest time through orchestrated workflows and data-driven Pivot Chains
+- ✅ **Standardize** practices with reusable, auto-discovered plugins
+- ✅ **Secure** access with RBAC (Admin, Analyst, Viewer) and zero-trust scope enforcement
 - ✅ **Generate** professional reports (HTML, PDF, CSV)
 
 **Target users:** Security analysts, pentesters, SOC teams, academic researchers.
@@ -43,41 +42,69 @@
 
 ## ✨ Features
 
-### Core Capabilities
+### 🔌 13 Integrated Tools
 
-- 🔌 **5 Automated Plugins:**
-  - **Nmap** — Network scanning + port discovery
-  - **Nuclei** — CVE detection (8000+ templates)
-  - **SQLmap** — SQL injection automation
-  - **theHarvester** — OSINT (emails, subdomains)
-  - **Hydra** — Brute-force attacks (with legal warnings)
+**Flux A — Automated Docker Plugins (8)**
 
-- 📤 **2 External Parsers:**
-  - **Wireshark** — PCAP analysis (HTTP, FTP, protocols)
-  - **Metasploit** — Console log parsing (exploits, sessions)
+| Plugin | Phase | Capability |
+|--------|-------|------------|
+| **Nmap** | Reconnaissance | Network scanning, port & service detection |
+| **Nuclei** | Vulnerabilities | CVE detection (5000+ templates) |
+| **SQLmap** | Exploitation | SQL injection automation |
+| **Hydra** | Credential Access | Brute-force (SSH, FTP, SMB, MySQL, RDP...) |
+| **Subfinder** | OSINT | Passive subdomain enumeration |
+| **theHarvester** | OSINT | Email, host, IP collection via search engines |
+| **WhatWeb** | Fingerprinting | Web technology identification |
+| **ZAP (OWASP)** | Web Audit | Active web vulnerability scan (XSS, CSRF...) |
 
-- 🔄 **Automated Workflows:**
-  - Web Pentest: Nmap → Nuclei → SQLmap (sequential)
-  - Custom workflows via Celery task chains
+**Flux C — Upload Parsers (5)**
 
-- 📊 **Professional Reporting:**
-  - HTML reports with charts (Chart.js)
-  - PDF exports (WeasyPrint)
-  - CSV exports for data analysis
+| Tool | Import Format | Phase |
+|------|--------------|-------|
+| **Metasploit** | Log (.log) | Exploitation / Post-exploitation |
+| **Burp Suite** | XML export (.xml) | Advanced web audit |
+| **Wireshark** | PCAP (.pcap) | Network analysis / Forensics |
+| **Aircrack-ng** | Log (.txt) | Wi-Fi audit |
+| **Ettercap** | Log (.txt) | Man-in-the-Middle |
 
-- 🔐 **Enterprise Security:**
-  - **Authentication:** Bcrypt password hashing
-  - **RBAC:** 3 roles with granular permissions
-  - **Encryption:** Fernet for secrets
-  - **Audit Logs:** All sensitive actions tracked
-  - **GDPR Compliance:** User rights (access, deletion, portability)
+### 🔄 7 Sequential Workflows
 
-### User Interface
+One-click chains on a fixed target:
 
-- 🖥️ **Web Dashboard:** Flask + Jinja2 (responsive)
-- 📈 **Real-time Stats:** Jobs, findings, severity breakdown
-- 🔍 **Advanced Filtering:** By plugin, status, severity
-- 📥 **File Upload:** Drag-and-drop for PCAP/logs
+| Workflow | Chain |
+|----------|-------|
+| Recon-to-Exploit | Nmap → Nuclei → Hydra |
+| Web Pentest Advanced | Nmap → Nuclei → SQLmap |
+| Web App Audit | WhatWeb → ZAP → SQLmap |
+| Network Bruteforce | Nmap → Hydra |
+| OSINT Reconnaissance | theHarvester → Subfinder |
+| Quick Vuln Scan | Nmap → Nuclei |
+| Full External Recon | Subfinder → theHarvester → Nmap → WhatWeb |
+
+### 🔀 3 Data-Driven Pivot Chains
+
+Unlike sequential workflows, Pivot Chains dynamically create follow-up jobs based on the actual results of the previous step:
+
+| Pivot Chain | Logic | Tested Result |
+|-------------|-------|--------------|
+| **Network Pivot Discovery** | Nmap (CIDR) → [per discovered host] → Nuclei + WhatWeb | 4 hosts found, 8 jobs created dynamically ✅ |
+| **Credential Access Discovery** | Nmap (auth ports) → [per open service] → Hydra | 10 auth services found, 10 Hydra jobs launched precisely ✅ |
+| **Exploitation Readiness Report** | Nmap + Nuclei → [findings analysis] → Metasploit recommendations | vsftpd 2.3.4 backdoor identified with precise module, 15+ CVE hints ✅ |
+
+### 📊 Professional Reporting
+
+- **Per-job reports** — HTML / PDF with CVSS score, CVE ID, description, remediation
+- **Global report** — all findings across all completed jobs
+- **Custom report** — filtered by target, plugin and/or date range
+- **CSV export** — for external analysis
+
+### 🔐 Built-in Security
+
+- **Authentication** — Flask-Login, hashed passwords (Werkzeug)
+- **RBAC** — 3 roles enforced server-side (Admin, Analyst, Viewer)
+- **Scope Enforcement** — Zero-trust: no scan without prior authorization in Targets registry
+- **Audit Logs** — all sensitive actions tracked (login, target/user creation, workflow launches)
+- **Methodological independence** — analysts see only their own jobs/findings
 
 ---
 
@@ -85,43 +112,50 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    INTERFACE WEB (Flask)                    │
-│              Dashboard | Jobs | Findings | Reports          │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-         ┌───────────────▼────────────────┐
-         │   API REST (Flask)             │
-         │   + RBAC + Authentication      │
-         └───────────┬────────────────────┘
+│              USERS (Analysts)                               │
+│              Web Interface EN/FR (Delta OS theme)           │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+         ┌───────────────────────┐
+         │   UI + API (Flask)    │
+         │   Port 5000           │
+         │   Auth + RBAC         │
+         │   13 dedicated pages  │
+         └───────────┬───────────┘
                      │
         ┌────────────┴────────────┐
         ▼                         ▼
 ┌───────────────┐         ┌──────────────┐
-│  PostgreSQL   │         │   Celery     │
-│  (Metadata)   │         │(Orchestrator)│
-└───────────────┘         └──────┬───────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-            ┌──────────────┐          ┌─────────────┐
-            │    Redis     │          │   Workers   │
-            │   (Broker)   │          │  (Plugins)  │
-            └──────────────┘          └─────┬───────┘
-                                            │
-                                            ▼
-                                    ┌──────────────┐
-                                    │    MinIO     │
-                                    │ (Artifacts)  │
-                                    └──────────────┘
+│  PostgreSQL   │         │    Redis     │
+│  Jobs         │         │   Broker     │
+│  Findings     │         │   Celery     │
+│  Users        │         └──────┬───────┘
+│  Audit logs   │                │
+└───────────────┘                ▼
+                    ┌─────────────────────────┐
+                    │   Celery Worker          │
+                    │   4 parallel processes   │
+                    └──────────┬──────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              ▼                                  ▼
+   ┌─────────────────────┐          ┌──────────────────────┐
+   │  Flux A : Docker    │          │  Flux C : Upload     │
+   │  8 automated tools  │          │  5 external parsers  │
+   └──────────┬──────────┘          └──────────────────────┘
+              ▼
+   ┌─────────────────────┐
+   │       MinIO          │
+   │  Artifacts storage   │
+   │  (S3-compatible)     │
+   └─────────────────────┘
 ```
 
-**Components:**
-- **Flask API** — REST endpoints (17+), authentication, RBAC
-- **PostgreSQL** — Users, jobs, findings, audit logs
-- **Celery** — Asynchronous job orchestration
-- **Redis** — Message broker for Celery
-- **MinIO** — S3-compatible artifact storage (XML, PCAP, logs)
-- **Docker** — Containerized deployment (6 services)
+**Key design decisions:**
+- **Celery** over threading — true async, retry, monitoring
+- **MinIO** over filesystem — S3-compatible, cloud-ready
+- **Flask** — recommended by project spec, mature ecosystem
+- **Plugin auto-discovery** — add a tool without touching the core
 
 ---
 
@@ -129,22 +163,17 @@
 
 | Component | Technology | Version |
 |-----------|------------|---------|
-| **Backend** | Python + Flask | 3.11+ / 3.0+ |
-| **Database** | PostgreSQL | 15+ |
-| **Broker** | Redis | 7.0+ |
-| **Storage** | MinIO | Latest |
-| **Orchestration** | Celery | 5.3+ |
-| **ORM** | SQLAlchemy | 2.0+ |
-| **Containerization** | Docker + Compose | 24+ |
-| **Dependency Mgmt** | Poetry | 1.7+ |
-
-**Security Libraries:**
-- `bcrypt` — Password hashing
-- `cryptography` (Fernet) — Secret encryption
-- `flask-login` — Session management
-
-**Pentest Tools (in Docker):**
-- Nmap 7.99+, Nuclei latest, SQLmap 1.10+, theHarvester 4.6+, Hydra 9.6+
+| Language | Python | 3.11+ |
+| Web Framework | Flask | 3.0+ |
+| ORM | SQLAlchemy | 2.0+ |
+| Async Jobs | Celery | 5.3+ |
+| Message Broker | Redis | 7.0+ |
+| Database | PostgreSQL | 15+ |
+| Object Storage | MinIO | Latest |
+| Containers | Docker Compose | V2 |
+| Dependency Mgmt | Poetry | 1.7+ |
+| PDF Generation | WeasyPrint | 62.0+ |
+| CI/CD | GitHub Actions | — |
 
 ---
 
@@ -152,29 +181,27 @@
 
 ### Prerequisites
 
-- **OS:** Kali Linux 2026.1 (or Ubuntu 22.04+)
+- **OS:** Kali Linux 2026+ (or Debian/Ubuntu 22.04+)
 - **Docker:** 24.0+
-- **Docker Compose:** 2.0+
-- **Python:** 3.11+
-- **Poetry:** 1.7+
-- **Network:** Host-Only adapter for lab environment
+- **Docker Compose:** V2
+- **RAM:** 4GB minimum, 8GB recommended
+- **Disk:** 20GB minimum
 
-### Installation (10 minutes)
+### Installation
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/crls-cyber/pentest-toolbox-v2.git
-cd pentest-toolbox-v2
+git clone https://github.com/crls-cyber/e-pttb-msi-4-27-cs-d-2526.git
+cd e-pttb-msi-4-27-cs-d-2526
 
 # 2. Configure environment
 cp deploy/.env.example deploy/.env
 nano deploy/.env  # Edit passwords and secrets
 
-# 3. Start services
-cd deploy
+# 3. Start all services
 docker compose up -d
 
-# 4. Wait for services to start
+# 4. Wait for services to initialize (~30 seconds)
 sleep 30
 
 # 5. Initialize database
@@ -183,58 +210,56 @@ docker compose exec api python scripts/init_db.py
 # 6. Create admin user
 docker compose exec api python scripts/create_user.py \
   --username admin \
-  --password Admin123! \
+  --password YourStrongPassword \
   --email admin@toolbox.local \
   --role admin
 
-# 7. Access web interface
+# 7. Open web interface
 firefox http://localhost:5000
 ```
 
-**Default credentials:** `admin` / `Admin123!`
+### After Installation
+
+1. Log in as `admin`
+2. Go to **Targets** → add your authorized targets (IP, CIDR, domain)
+3. Go to **Workflows** or **Pivot Chains** → launch your first scan
+4. Results appear in **Jobs** → **Findings**
 
 ---
 
 ## 🔌 Plugins
 
-### Active Plugins (5)
+### Automated Docker Plugins (8)
 
-| Plugin | Capability | Status |
-|--------|------------|--------|
-| **Nmap** | Network scanning, port discovery | ✅ Operational |
-| **Nuclei** | CVE detection (8000+ templates) | ✅ Operational |
-| **SQLmap** | SQL injection automation | ✅ Operational |
-| **theHarvester** | OSINT (emails, subdomains, IPs) | ✅ Operational |
-| **Hydra** | Brute-force (FTP, SSH, HTTP, etc.) | ✅ Operational |
+| Plugin | Status | Notes |
+|--------|--------|-------|
+| Nmap | ✅ Operational | Service detection, CIDR ranges supported |
+| Nuclei | ✅ Operational | 5000+ CVE templates |
+| SQLmap | ✅ Operational | Optional sqli_url parameter |
+| Hydra | ✅ Operational | Userlist as Python list supported |
+| Subfinder | ✅ Operational | Domain names only (not IPs) |
+| theHarvester | ✅ Operational | Timeout on rate-limited sources (known) |
+| WhatWeb | ✅ Operational | |
+| ZAP (OWASP) | ⚠️ Partial | Spider timeout bug identified, fix planned |
 
-### External Parsers (2)
+### Upload Parsers (5)
 
-| Parser | File Types | Output |
-|--------|------------|--------|
-| **Wireshark** | .pcap, .pcapng, .cap | HTTP traffic, FTP creds, protocol stats |
-| **Metasploit** | .log, .txt | Exploits, sessions, vulnerabilities |
+| Tool | Status |
+|------|--------|
+| Metasploit | ✅ Operational |
+| Burp Suite | ✅ Operational |
+| Wireshark | ✅ Operational |
+| Aircrack-ng | ✅ Operational |
+| Ettercap | ✅ Operational |
 
 ### Adding a Plugin
 
-See [docs/PLUGINS.md](docs/PLUGINS.md) for the plugin development guide.
+Each plugin extends `PluginBase` and implements three methods:
+- `validate_config()` — parameter validation
+- `run()` — tool execution via subprocess
+- `parse_output()` — raw output → structured Findings
 
----
-
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard](docs/images/01_dashboard.png)
-
-### Job Details
-![Job Details](docs/images/03_job_detail_nmap.png)
-
-### Findings (Nuclei CVE Detection)
-![Findings](docs/images/04_findings_nuclei.png)
-
-### Security Warning (Hydra)
-![Hydra Warnings](docs/images/07_hydra_warnings.png)
-
-*More screenshots in [docs/images/](docs/images/)*
+Plugins are **auto-discovered** at startup — no core modification needed.
 
 ---
 
@@ -242,136 +267,69 @@ See [docs/PLUGINS.md](docs/PLUGINS.md) for the plugin development guide.
 
 | Document | Description |
 |----------|-------------|
-| [LISEZMOI.md](LISEZMOI.md) | 🇫🇷 French version of README |
-| [API.md](docs/API.md) | Complete API reference (17+ endpoints) |
-| [PLUGINS.md](docs/PLUGINS.md) | Plugin development guide |
-| [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md) | Current limitations & workarounds |
-| [RGPD_POLICY.md](docs/RGPD_POLICY.md) | GDPR compliance policy |
-| [BACKUP_PROCEDURES.md](docs/BACKUP_PROCEDURES.md) | Backup & recovery guide |
-| [ROADMAP_PHASE3.md](docs/ROADMAP_PHASE3.md) | Future features roadmap |
+| [QUICKSTART_v3.md](QUICKSTART_v3.md) | Step-by-step setup guide |
+| [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Development plan |
+| [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Pre-launch checklist |
+| [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap and planned features |
+| [architecture_pentest_toolbox_v6_1.md](architecture_pentest_toolbox_v6_1.md) | Detailed architecture |
 
 ---
 
 ## 🔐 Security
 
-### Built-in Security Features
+### Built-in Controls
 
-- ✅ **Password Hashing:** Bcrypt (cost factor 12)
-- ✅ **Secret Encryption:** Fernet symmetric encryption
-- ✅ **RBAC:** 3 roles (Admin, Analyst, Viewer)
-- ✅ **Audit Logs:** All sensitive actions tracked (IP, user-agent, timestamp)
-- ✅ **Session Security:** Httponly cookies, secure flag (HTTPS in Phase 3)
-- ✅ **GDPR Compliance:** User rights (access, rectification, erasure, portability)
+- ✅ Password hashing (Werkzeug)
+- ✅ RBAC enforced server-side
+- ✅ Zero-trust scope enforcement (no unauthorized scans)
+- ✅ Audit trail (all sensitive actions logged)
+- ✅ Session security (Flask-Login signed cookies)
 
-### Network Isolation
+### Deployment Recommendation
 
-**CRITICAL:** This toolbox is designed for **Host-Only networks** (isolated lab environments).
+This toolbox is designed for **dedicated mission machines** — one machine per engagement. Data stays local by default. No cloud dependencies required.
 
-**Authorized targets:**
-- ✅ Your own VMs (Metasploitable2, DVWA, WebSRV, etc.)
-- ✅ `scanme.nmap.org` (Nmap official test target)
-- ✅ `testphp.vulnweb.com` (Acunetix test site)
+### Known Limitation
 
-**❌ NEVER scan production systems without written authorization.**
-
-### Responsible Disclosure
-
-Found a vulnerability? Please report privately to: **admin@toolbox.local**
+ZAP spider (`_wait_for_spider()`) lacks a timeout parameter — can block indefinitely on certain targets. Fix planned. Workaround: restart worker if blocked.
 
 ---
 
 ## ⚖️ Legal Notice
 
-### Educational Purpose
-
-This project is an **academic research tool** for learning penetration testing techniques.
-
-### Legal Framework
+**This project is an academic research tool.**
 
 **Article 323-1 of the French Penal Code:**
-> "Accessing or maintaining fraudulent access to an automated data processing system is punishable by two years' imprisonment and a fine of €60,000."
+> Unauthorized access to an automated data processing system is punishable by two years' imprisonment and a fine of €60,000.
 
 **Use this toolbox ONLY on:**
 - ✅ Your own systems
 - ✅ Systems with explicit written authorization
-- ✅ Authorized public test targets (scanme.nmap.org, etc.)
+- ✅ Authorized lab targets (Metasploitable2, DVWA, etc.)
 
-**The authors assume NO responsibility for illegal use of this tool.**
+**❌ NEVER scan systems without prior written authorization.**
 
-### GDPR Compliance
-
-See [docs/RGPD_POLICY.md](docs/RGPD_POLICY.md) for data protection policy.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. **Fork** the repository
-2. **Create a feature branch:** `git checkout -b feature/my-new-plugin`
-3. **Follow coding standards:** `flake8 core/ plugins/`
-4. **Write tests:** Maintain >80% coverage
-5. **Commit with Conventional Commits:** `feat:`, `fix:`, `docs:`, etc.
-6. **Open a Pull Request** with detailed description
-
----
-
-## 📊 Project Metrics
-
-| Metric | Value |
-|--------|-------|
-| **Plugins** | 5 automated |
-| **Parsers** | 2 external |
-| **API Endpoints** | 17+ |
-| **UI Templates** | 9 |
-| **Documentation** | 10 files |
-| **Test Coverage** | ~40% (target: 85%) |
-| **CDC Compliance** | ~99% |
-
----
-
-## 🎓 Academic Context
-
-**Institution:** M1 Cybersecurity  
-**Period:** May 8 - June 26, 2026  
-**Team:** 4 members  
-
-**Objective:** Develop a production-ready penetration testing automation platform demonstrating:
-- Software architecture skills
-- Security best practices
-- DevOps workflows (Docker, CI/CD)
-- Project management (Agile)
+The authors assume **no responsibility** for illegal use of this tool.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.
+This project is licensed under **CC BY-NC-ND 4.0**
+(Attribution — Non Commercial — No Derivatives)
+
+See [LICENSE](LICENSE) for full terms.
 
 ---
 
-## 🙏 Acknowledgments
+## 🎓 Academic Context
 
-- **OWASP** — Web security testing methodologies
-- **Kali Linux** — Pre-configured security tools
-- **ProjectDiscovery** — Nuclei vulnerability scanner
-- **Docker Community** — Containerization platform
-
----
-
-## 📬 Contact
-
-**Project Lead:** Carlos  
-**GitHub:** [@crls-cyber](https://github.com/crls-cyber)  
-**Repository:** [pentest-toolbox-v2](https://github.com/crls-cyber/pentest-toolbox-v2)
+**Institution:** Sup de Vinci — M1 Cybersecurity
+**Period:** December 2025 – June 2026
+**Team:** Carlos (@crls-cyber), Emeric (@freezy-ted), Antoine (@ItsJinmaa), Elsy (@nker-svg)
 
 ---
 
-**⭐ If you find this project useful, please star it on GitHub!**
-
----
-
-**Version:** v1.0.0-mvp  
-**Last Updated:** May 14, 2026  
-**Status:** ✅ MVP Complete (Phase 1)
+**Version:** v2.0
+**Last Updated:** June 26, 2026
+**Status:** ✅ Complete

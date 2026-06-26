@@ -1,341 +1,172 @@
-# 🔒 RGPD & Data Protection Policy — ToolBox Pentest M1
+# 🔒 RGPD & Data Protection Policy — Pentest ToolBox v2
 
-**Version :** v1.0.0-mvp  
-**Date :** 14 mai 2026  
-**Scope :** Lab environment (Host-Only network)
-
----
-
-## 📋 Table des matières
-
-- [Context & Applicability](#context--applicability)
-- [Data Collection](#data-collection)
-- [Data Storage](#data-storage)
-- [Data Retention](#data-retention)
-- [User Rights](#user-rights)
-- [Security Measures](#security-measures)
-- [Incident Response](#incident-response)
-- [Legal Framework](#legal-framework)
+**Version :** 2.0
+**Date :** 26 juin 2026
+**Scope :** Environnement de lab (réseau Host-Only isolé)
 
 ---
 
-## 🎯 Context & Applicability
+## Contexte & Applicabilité
 
-### Purpose
+Ce document définit la politique de protection des données de la ToolBox Pentest v2,
+dans le cadre d'un projet académique M1 Cybersécurité (Sup de Vinci, 2025-2026).
 
-This document defines the **data protection policy** for the ToolBox Pentest M1 project, ensuring compliance with:
+**Ce document s'applique à :**
+- ✅ Environnements de lab isolés (réseau Host-Only, pas d'accès internet)
+- ✅ Tests internes sur VMs contrôlées (Metasploitable2, WebSRV, etc.)
+- ✅ Données utilisateurs au sein de la ToolBox (comptes, jobs, findings)
 
-- **RGPD** (Règlement Général sur la Protection des Données)
-- **GDPR** (General Data Protection Regulation)
-- French cybersecurity regulations
-
-### Scope
-
-**This policy applies to:**
-- ✅ Lab environments (academic project, isolated network)
-- ✅ Internal testing on controlled VMs (Metasploitable2, WebSRV, WS22)
-- ✅ User data within the toolbox (accounts, jobs, findings)
-
-**This policy does NOT apply to:**
-- ❌ Production pentesting (requires separate legal framework)
-- ❌ Client data (no real client data in MVP)
-- ❌ Third-party SaaS data (all data is self-hosted)
+**Ce document ne s'applique pas à :**
+- ❌ Pentesting en production réelle (cadre juridique distinct requis)
+- ❌ Données de clients réels (projet académique uniquement)
 
 ---
 
-## 📊 Data Collection
+## Données collectées
 
-### Personal Data Collected
+### Données personnelles
 
-| Data Type | Purpose | Legal Basis | Retention |
-|-----------|---------|-------------|-----------|
-| **Username** | Authentication | Contract/Consent | Until account deletion |
-| **Email** | Account recovery, notifications | Contract/Consent | Until account deletion |
-| **Password hash** | Authentication | Contract/Consent | Until account deletion |
-| **IP address** | Audit logging, security | Legitimate interest | 90 days |
-| **Session cookies** | Authentication state | Contract | Session duration |
+| Type | Finalité | Base légale | Rétention |
+|------|---------|-------------|-----------|
+| Nom d'utilisateur | Authentification | Contrat / Consentement | Jusqu'à suppression du compte |
+| Email | Récupération de compte | Contrat / Consentement | Jusqu'à suppression du compte |
+| Hash du mot de passe | Authentification | Contrat / Consentement | Jusqu'à suppression du compte |
+| Adresse IP | Audit logs, sécurité | Intérêt légitime | Durée de la mission |
+| Cookies de session | État d'authentification | Contrat | Durée de la session |
 
-### Technical Data Collected
+### Données techniques
 
-| Data Type | Purpose | Storage |
-|-----------|---------|---------|
-| **Scan targets** (IPs, domains) | Job execution | PostgreSQL (`jobs.config`) |
-| **Findings** (vulnerabilities) | Pentest results | PostgreSQL (`findings`) |
-| **Artifacts** (XML, PCAP, logs) | Evidence storage | MinIO S3 buckets |
-| **Audit logs** (user actions) | Security monitoring | PostgreSQL (`audit_logs`) |
+| Type | Finalité | Stockage |
+|------|---------|---------|
+| Cibles de scan (IPs, domaines, CIDR) | Exécution des jobs | PostgreSQL (`targets`, `jobs.config`) |
+| Findings (vulnérabilités détectées) | Résultats de pentest | PostgreSQL (`findings`) |
+| Artefacts (XML, PCAP, logs) | Preuves et rapports | MinIO (S3-compatible, local) |
+| Audit logs (actions sensibles) | Sécurité et traçabilité | PostgreSQL (`audit_logs`) |
 
-### Data NOT Collected
+### Données NON collectées
 
-- ❌ Biometric data
-- ❌ Health data
-- ❌ Financial data
-- ❌ Geolocation (beyond IP address)
-- ❌ Behavioral tracking (no analytics, no cookies beyond auth)
-
----
-
-## 🗄️ Data Storage
-
-### Storage Locations
-
-**All data is stored locally within the lab environment:**
-
-| Component | Technology | Location | Encryption |
-|-----------|------------|----------|------------|
-| **User accounts** | PostgreSQL | `postgres` container | Bcrypt passwords |
-| **Jobs & findings** | PostgreSQL | `postgres` container | Database-level encryption (optional) |
-| **Artifacts** | MinIO S3 | `minio` container | Server-side encryption (optional) |
-| **Audit logs** | PostgreSQL | `postgres` container | None (structured logs) |
-| **Secrets** | Environment variables | `.env` file (not in Git) | Fernet encryption |
-
-### Geographic Location
-
-**Data residency:** All data stays within the **physical machine** hosting the Kali VM (Host-Only network).
-
-**No cloud storage:** No data leaves the local network.
+- ❌ Données biométriques
+- ❌ Données de santé ou financières
+- ❌ Géolocalisation
+- ❌ Tracking comportemental (pas d'analytics, pas de cookies tiers)
 
 ---
 
-## ⏳ Data Retention
+## Stockage des données
 
-### Retention Periods
+**Toutes les données restent sur la machine physique hébergeant la VM Kali.**
+Aucune donnée ne quitte le réseau local. Aucune dépendance cloud.
 
-| Data Type | Retention Period | Rationale |
-|-----------|------------------|-----------|
-| **User accounts** | Until deletion by user or admin | Operational necessity |
-| **Jobs** | 1 year (configurable) | Historical analysis |
-| **Findings** | 1 year (configurable) | Audit trail |
-| **Artifacts** | 1 year (configurable) | Evidence preservation |
-| **Audit logs** | 90 days | Security monitoring |
-| **Session cookies** | Session duration (max 24h) | Authentication state |
-
-### Automated Deletion
-
-**Planned for Phase 2:**
-
-```bash
-# Cron job to delete old data
-0 2 * * 0 docker compose exec postgres psql -U pentest -c \
-  "DELETE FROM jobs WHERE created_at < NOW() - INTERVAL '1 year';"
-```
-
-### Manual Deletion
-
-**Admin can manually delete data via:**
-
-```bash
-# Delete specific job and related findings
-docker compose exec api python scripts/delete_job.py --job-id <uuid>
-
-# Delete user and all associated data
-docker compose exec api python scripts/delete_user.py --username <user>
-```
+| Composant | Technologie | Chiffrement |
+|-----------|------------|-------------|
+| Comptes utilisateurs | PostgreSQL | Mots de passe hachés (Werkzeug) |
+| Jobs & findings | PostgreSQL | Chiffrement disque recommandé (LUKS) |
+| Artefacts | MinIO (local) | Chiffrement disque recommandé (LUKS) |
+| Audit logs | PostgreSQL | Non chiffré (logs structurés) |
+| Secrets applicatifs | Fichier `.env` (hors Git) | Non commité |
 
 ---
 
-## 🙋 User Rights
+## Rétention des données
 
-### GDPR Rights
+| Type | Période | Remarque |
+|------|---------|---------|
+| Comptes utilisateurs | Jusqu'à suppression manuelle | Par l'admin ou l'utilisateur |
+| Jobs & findings | Durée de la mission | Purge manuelle en fin de mission |
+| Audit logs | Durée de la mission | Purge manuelle en fin de mission |
+| Cookies de session | Durée de la session | Configuré dans Settings (défaut : 30 min) |
 
-Users have the following rights under GDPR/RGPD:
+### Purge en fin de mission
 
-#### 1. Right to Access (Article 15)
+La suppression des données en fin d'engagement se fait en deux étapes :
 
-**Request:** "Show me all data you have about me"
+1. **Purge applicative (planifiée)** — un bouton admin dans Settings supprimera
+   jobs, findings, targets, audit logs et artefacts MinIO en une seule action.
+   Cette fonctionnalité n'est pas encore implémentée en v2.
 
-**Implementation:**
-```bash
-# Export user data to JSON
-curl http://localhost:5000/api/users/me/export -b cookies.txt > my_data.json
-```
-
-#### 2. Right to Rectification (Article 16)
-
-**Request:** "Correct my email address"
-
-**Implementation:** Edit via UI (`/profile`) or API (`PATCH /api/users/me`)
-
-#### 3. Right to Erasure (Article 17)
-
-**Request:** "Delete my account and all data"
-
-**Implementation:**
-```bash
-# Full account deletion (GDPR-compliant)
-curl -X DELETE http://localhost:5000/api/users/me -b cookies.txt
-```
-
-**What gets deleted:**
-- User account
-- All jobs created by user
-- All findings from user's jobs
-- All artifacts uploaded by user
-- All audit logs related to user
-
-#### 4. Right to Data Portability (Article 20)
-
-**Request:** "Export my data in machine-readable format"
-
-**Implementation:** Export endpoint returns JSON (already implemented above)
-
-#### 5. Right to Object (Article 21)
-
-**Not applicable** in this context (no automated decision-making, no profiling)
+2. **Destruction sécurisée du disque (recommandée)** — chiffrement LUKS + effacement
+   complet de la VM. C'est la seule garantie absolue qu'aucune donnée ne subsiste.
 
 ---
 
-## 🔐 Security Measures
+## Droits des utilisateurs (RGPD)
 
-### Technical Measures
+### Droits applicables
 
-| Measure | Implementation | Status |
-|---------|----------------|--------|
-| **Password hashing** | Bcrypt (cost factor 12) | ✅ Implemented |
-| **Secret encryption** | Fernet symmetric encryption | ✅ Implemented |
-| **Session security** | Httponly cookies, secure flag (HTTPS) | ⚠️ HTTPS in Phase 3 |
-| **RBAC** | Role-based access control (Admin, Analyst, Viewer) | ✅ Implemented |
-| **Audit logging** | All sensitive actions logged | ✅ Implemented |
-| **Network isolation** | Host-Only network (no Internet exposure) | ✅ Implemented |
-| **Container isolation** | Docker network segmentation | ✅ Implemented |
+| Droit | Article RGPD | Implémentation actuelle |
+|-------|-------------|------------------------|
+| Accès aux données | Art. 15 | Via l'interface : Jobs, Findings, Settings |
+| Rectification | Art. 16 | Via Settings (mot de passe, préférences) |
+| Effacement | Art. 17 | Suppression manuelle par l'admin (page Admin Users) |
+| Portabilité | Art. 20 | Export CSV des findings disponible |
+| Opposition | Art. 21 | Non applicable (pas de profilage automatisé) |
 
-### Organizational Measures
+### Exercer ses droits
 
-- ✅ **Access control:** Only authorized lab members can access the toolbox
-- ✅ **Documentation:** This policy + architecture docs
-- ✅ **Training:** Team aware of GDPR principles (M1 Cybersécurité)
-- ✅ **Incident response plan:** See below
+Pour exercer vos droits ou signaler un problème, contacter l'administrateur
+de la ToolBox directement (accès local à la machine de mission).
 
 ---
 
-## 🚨 Incident Response
+## Mesures de sécurité
 
-### Data Breach Procedure
+### Mesures techniques
 
-**If a data breach occurs (e.g., unauthorized access, data leak):**
+| Mesure | Implémentation | Statut |
+|--------|----------------|--------|
+| Hachage des mots de passe | Werkzeug (PBKDF2) | ✅ Implémenté |
+| RBAC | 3 rôles appliqués côté serveur (Admin, Analyst, Viewer) | ✅ Implémenté |
+| Scope enforcement | Zero-trust : aucun scan sans cible autorisée | ✅ Implémenté |
+| Audit logging | Toutes les actions sensibles tracées | ✅ Implémenté |
+| Isolation réseau | Réseau Host-Only (pas d'exposition internet) | ✅ Recommandé |
+| Isolation conteneurs | Réseau Docker segmenté | ✅ Implémenté |
+| HTTPS | Non implémenté (HTTP en environnement local) | ⏳ Planifié |
+| Chiffrement disque | LUKS (à configurer sur la VM hôte) | ⏳ Recommandé |
 
-#### Step 1: Containment (0-4 hours)
+### Indépendance méthodologique
 
-1. **Identify scope:** What data was accessed/leaked?
-2. **Isolate affected systems:** Shut down compromised containers
-3. **Preserve evidence:** Take snapshots, save logs
-
-```bash
-# Emergency shutdown
-docker compose down
-
-# Preserve logs
-docker compose logs > incident_$(date +%Y%m%d_%H%M%S).log
-
-# Take VM snapshot
-# (Via VMware interface)
-```
-
-#### Step 2: Assessment (4-24 hours)
-
-1. **Determine impact:** How many users affected?
-2. **Root cause analysis:** How did the breach occur?
-3. **Legal obligations:** Must notify CNIL within 72 hours if high risk
-
-#### Step 3: Notification (24-72 hours)
-
-**If required by law:**
-- Notify affected users via email
-- Report to CNIL (Commission Nationale de l'Informatique et des Libertés)
-
-**For academic project:**
-- Notify project supervisor
-- Document incident in `docs/INCIDENTS.md`
-
-#### Step 4: Remediation
-
-1. **Patch vulnerabilities**
-2. **Reset passwords**
-3. **Review access logs**
-4. **Update security measures**
+Chaque analyste ne voit que ses propres jobs et findings. Cette règle,
+appliquée côté serveur, garantit qu'aucun analyste ne peut accéder
+aux résultats de travaux d'un autre membre de l'équipe.
 
 ---
 
-## ⚖️ Legal Framework
+## Cadre légal
 
-### Applicable Regulations
+### RGPD / GDPR (Règlement UE 2016/679)
 
-#### RGPD/GDPR (EU Regulation 2016/679)
+Principes appliqués :
+- **Minimisation des données** — seules les données nécessaires sont collectées
+- **Limitation des finalités** — données utilisées uniquement pour les pentests autorisés
+- **Limitation de la conservation** — purge en fin de mission
+- **Intégrité et confidentialité** — RBAC, hachage, isolation réseau
+- **Responsabilité** — audit trail complet
 
-**Key principles:**
-- **Lawfulness, fairness, transparency** (Article 5.1.a)
-- **Purpose limitation** (Article 5.1.b)
-- **Data minimization** (Article 5.1.c)
-- **Accuracy** (Article 5.1.d)
-- **Storage limitation** (Article 5.1.e)
-- **Integrity and confidentiality** (Article 5.1.f)
-- **Accountability** (Article 5.2)
+### Article 323-1 du Code Pénal français
 
-**Compliance status:** ✅ Compliant for lab use
-
-#### French Data Protection Act (Loi Informatique et Libertés)
-
-**Last updated:** August 20, 2004 (modified 2018)
-
-**Key obligations:**
-- Data controller must be identified (Carlos, M1 project lead)
-- Users must consent to data processing
-- Security measures must be proportionate
-
-**Compliance status:** ✅ Compliant for academic project
-
-#### Article 323-1 Code Pénal (Cybersecurity)
-
-**Relevance:** This toolbox is used **only for authorized pentesting** (lab environment, controlled VMs).
-
-**Legal protection:** All scans are performed on:
-- ✅ Own machines (Metasploitable2, WebSRV, WS22)
-- ✅ Isolated Host-Only network
-- ❌ Never on production systems without explicit authorization
+La ToolBox est utilisée **uniquement sur des cibles autorisées** :
+- ✅ Machines propres (Metasploitable2, DVWA, WebSRV)
+- ✅ Réseau Host-Only isolé
+- ❌ Jamais sur des systèmes de production sans autorisation écrite explicite
 
 ---
 
-## 📝 Data Processing Register (RGPD Article 30)
+## Contexte académique
 
-### Processing Activities
-
-| Activity | Purpose | Legal Basis | Data | Retention |
-|----------|---------|-------------|------|-----------|
-| **User authentication** | Access control | Contract | Username, email, password hash | Until deletion |
-| **Job execution** | Pentest automation | Contract | Targets, configs, findings | 1 year |
-| **Audit logging** | Security monitoring | Legitimate interest | IP, actions, timestamps | 90 days |
-| **Artifact storage** | Evidence preservation | Contract | XML, PCAP, logs | 1 year |
+Ce projet est un outil académique de recherche en cybersécurité :
+- ✅ Utilisé uniquement en environnement de lab contrôlé
+- ✅ Aucune donnée client réelle traitée
+- ✅ Aucune utilisation commerciale
+- ✅ Les membres de l'équipe sont les seuls utilisateurs (consentement implicite)
 
 ---
 
-## 🎓 Academic Context
+## Contact
 
-### Exemptions & Clarifications
-
-**This project is an academic/educational tool:**
-
-- ✅ Used only in controlled lab environment
-- ✅ No real client data processed
-- ✅ No commercial use
-- ✅ Data subjects are project team members (consent obtained)
-
-**GDPR exemption for research (Article 89):**
-
-Academic research benefits from certain derogations, but **we choose to apply full GDPR compliance** as a learning exercise.
+**Responsable du traitement :** Carlos (@crls-cyber)
+**Dépôt GitHub :** https://github.com/crls-cyber/e-pttb-msi-4-27-cs-d-2526
 
 ---
 
-## 📞 Contact
-
-**Data Controller:** Carlos (M1 Cybersécurité)  
-**Email:** [admin@toolbox.local](mailto:admin@toolbox.local)  
-**Supervisor:** [Professeur responsable du projet]
-
-**To exercise your rights or report an issue:**
-- Open an issue on GitHub: `https://github.com/crls-cyber/pentest-toolbox-v2/issues`
-- Contact the project supervisor
-
----
-
-**Version:** v1.0.0-mvp  
-**Last Updated:** 14 mai 2026  
-**Next Review:** Phase 2 (before production deployment)
+*Voir aussi : `docs/STORAGE_GOVERNANCE.md` pour la gouvernance du stockage.*
+*Voir aussi : `docs/FUTURE_IMPROVEMENTS.md` pour les fonctionnalités planifiées.*

@@ -28,8 +28,8 @@ cd e-pttb-msi-4-27-cs-d-2526
 ## Step 2 — Configure environment
 
 ```bash
-cp deploy/.env.example deploy/.env
-nano deploy/.env
+cp deploy/.env.example .env
+nano .env
 ```
 
 Set strong passwords for all services. At minimum, change:

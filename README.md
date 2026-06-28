@@ -267,7 +267,7 @@ Plugins are **auto-discovered** at startup — no core modification needed.
 
 | Document | Description |
 |----------|-------------|
-| [QUICKSTART_v3.md](QUICKSTART_v3.md) | Step-by-step setup guide |
+| [QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step setup guide |
 | [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Development plan |
 | [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Pre-launch checklist |
 | [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap and planned features |

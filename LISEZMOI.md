@@ -267,7 +267,7 @@ Les plugins sont **auto-découverts** au démarrage — aucune modification du c
 
 | Document | Description |
 |----------|-------------|
-| [QUICKSTART_v3.md](QUICKSTART_v3.md) | Guide de démarrage pas à pas |
+| [QUICKSTART.md](docs/QUICKSTART.md) | Guide de démarrage pas à pas |
 | [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Plan de développement |
 | [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Checklist pré-lancement |
 | [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap et fonctionnalités planifiées |

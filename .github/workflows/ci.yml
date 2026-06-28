@@ -29,7 +29,7 @@ jobs:
     - name: Test with pytest
       env:
         # Clé générée pour cette fonction
-        FERNET_KEY: 'XftM-99YCeh-sJXBEvovCnd21TZ0trLH9Zi9Ig1b3gg='
+        FERNET_KEY: ${{ secrets.FERNET_KEY }}
       run: |
         # On utilise poetry run pour s'assurer que pytest utilise ton environnement virtuel
         poetry run pytest

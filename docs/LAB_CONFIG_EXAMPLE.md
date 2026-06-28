@@ -17,8 +17,8 @@ one vulnerable target machine will work.
 
 | Network | Type | Subnet | Usage |
 |---------|------|--------|-------|
-| VMnet1 | Host-only | 192.168.X.0/24 | Main lab network |
-| VMnet8 | NAT | 192.168.Y.0/24 | Isolated testing (optional) |
+| VMnet1 | Host-only | 192.168.10.0/24 | Main lab network |
+| VMnet8 | NAT | 192.168.20.0/24 | Isolated testing (optional) |
 
 > **Host-only** is recommended for the toolbox — it isolates all traffic
 > from the internet and from the host machine's production network.
@@ -36,7 +36,7 @@ one vulnerable target machine will work.
 
 ### Metasploitable2 (Primary target — recommended)
 - **OS:** Ubuntu 8.04 (intentionally vulnerable)
-- **Network:** Host-only
+- **Network:** Host-only — e.g. `192.168.10.102`
 - **Services available:** vsftpd 2.3.4, Samba 3.x, Tomcat 5.5, PostgreSQL, MySQL, SSH, FTP, Telnet...
 - **Download:** https://sourceforge.net/projects/metasploitable/
 
@@ -62,42 +62,39 @@ Before launching any scan, register your targets in the ToolBox:
 
 Example authorized entries:
 ```
-Type: CIDR    Value: 192.168.X.0/24    Description: Lab network
-Type: IP      Value: 192.168.X.102    Description: Metasploitable2
+Type: CIDR    Value: 192.168.10.0/24    Description: Lab network
+Type: IP      Value: 192.168.10.102     Description: Metasploitable2
 ```
 
 ---
 
-## Metasploit Plugin (optional)
+## Metasploit Plugin (upload-based)
 
-The Metasploit plugin uses an **upload-based** approach:
+The Metasploit plugin uses an **upload-based** approach — no daemon required:
+
 1. Run your exploit manually in `msfconsole` on Kali
 2. Save the session log: `spool /tmp/msf_session.log`
 3. Upload the log file via the ToolBox **Upload** page
 4. The ToolBox parses the log and creates structured Findings
 
-No msfrpcd daemon or API connection required.
-
 ---
 
 ## Network Routing Checklist
 
-Before running scans, verify:
+Before running scans, verify connectivity:
 
 ```bash
 # From Kali — can you reach your targets?
-ping 192.168.X.102        # Metasploitable2
-nmap -sn 192.168.X.0/24   # Discover all hosts on the segment
+ping 192.168.10.102        # Metasploitable2 (adapt to your IP)
+nmap -sn 192.168.10.0/24  # Discover all hosts on the segment
 
 # Docker services running?
-docker compose ps          # All services should be "Up"
+docker compose ps          # All services should show "Up"
 ```
 
 ---
 
-## Wireshark / PCAP Capture (for upload parser)
-
-To generate PCAP files for the Wireshark upload parser:
+## PCAP Capture (for Wireshark upload parser)
 
 ```bash
 # Capture traffic on the lab interface

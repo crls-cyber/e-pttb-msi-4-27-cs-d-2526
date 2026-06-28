@@ -327,7 +327,6 @@ Voir [LICENSE](LICENSE) pour les conditions complètes.
 
 **Établissement :** Sup de Vinci — M1 Cybersécurité
 **Période :** Décembre 2025 – Juin 2026
-**Équipe :** Carlos (@crls-cyber), Emeric (@freezy-ted), Antoine (@ItsJinmaa), Elsy (@nker-svg)
 
 ---
 

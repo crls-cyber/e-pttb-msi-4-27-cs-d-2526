@@ -327,7 +327,6 @@ See [LICENSE](LICENSE) for full terms.
 
 **Institution:** Sup de Vinci — M1 Cybersecurity
 **Period:** December 2025 – June 2026
-**Team:** Carlos (@crls-cyber), Emeric (@freezy-ted), Antoine (@ItsJinmaa), Elsy (@nker-svg)
 
 ---
 

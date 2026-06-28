@@ -267,11 +267,12 @@ Plugins are **auto-discovered** at startup — no core modification needed.
 
 | Document | Description |
 |----------|-------------|
-| [QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step setup guide |
-| [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Development plan |
-| [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Pre-launch checklist |
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step setup guide |
 | [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap and planned features |
-| [architecture_pentest_toolbox_v6_1.md](architecture_pentest_toolbox_v6_1.md) | Detailed architecture |
+| [docs/LAB_CONFIG_EXAMPLE.md](docs/LAB_CONFIG_EXAMPLE.md) | Example lab network configuration |
+| [docs/RGPD_POLICY.md](docs/RGPD_POLICY.md) | Data protection policy |
+| [docs/STORAGE_GOVERNANCE.md](docs/STORAGE_GOVERNANCE.md) | Storage governance |
+| [docs/CREDENTIALS.md](docs/CREDENTIALS.md) | Service endpoints and configuration |
 
 ---
 

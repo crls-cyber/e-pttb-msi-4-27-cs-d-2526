@@ -267,11 +267,12 @@ Les plugins sont **auto-découverts** au démarrage — aucune modification du c
 
 | Document | Description |
 |----------|-------------|
-| [QUICKSTART.md](docs/QUICKSTART.md) | Guide de démarrage pas à pas |
-| [PLAN_DEVELOPPEMENT_v3.md](PLAN_DEVELOPPEMENT_v3.md) | Plan de développement |
-| [CHECKLIST_PRELANCEMENT_v3.md](CHECKLIST_PRELANCEMENT_v3.md) | Checklist pré-lancement |
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | Guide de démarrage pas à pas |
 | [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md) | Roadmap et fonctionnalités planifiées |
-| [architecture_pentest_toolbox_v6_1.md](architecture_pentest_toolbox_v6_1.md) | Architecture détaillée |
+| [docs/LAB_CONFIG_EXAMPLE.md](docs/LAB_CONFIG_EXAMPLE.md) | Exemple de configuration réseau lab |
+| [docs/RGPD_POLICY.md](docs/RGPD_POLICY.md) | Politique de protection des données |
+| [docs/STORAGE_GOVERNANCE.md](docs/STORAGE_GOVERNANCE.md) | Gouvernance du stockage |
+| [docs/CREDENTIALS.md](docs/CREDENTIALS.md) | Endpoints et configuration des services |
 
 ---
 

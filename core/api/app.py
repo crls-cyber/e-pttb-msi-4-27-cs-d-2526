@@ -18,7 +18,7 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = 'ui.login'
     
     # User loader for Flask-Login
     from core.models import User

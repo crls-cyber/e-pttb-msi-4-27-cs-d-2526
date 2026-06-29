@@ -4,16 +4,7 @@
 <div class="page-header">
     <h1 class="page-title">{{ t('dashboard.title') }}</h1>
 </div>
-<div class="dashboard-alerts mb-4">
-    <div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,51,102,0.08);border-left:3px solid #ff3366;color:#ff8099;padding:12px 20px;margin-bottom:10px;">
-        <div>🚨 <strong>3 new CRITICAL findings</strong> in last 24h</div>
-        <a href="/{{ lang }}/findings" style="color:#00d4ff;font-weight:bold;">View →</a>
-    </div>
-    <div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;color:#ffaa88;padding:12px 20px;">
-        <div>⚠️ <strong>Metasploit exploit available</strong> for vsftpd 2.3.4 on 192.168.200.133</div>
-        <a href="/{{ lang }}/workflows" style="color:#00d4ff;font-weight:bold;">Exploit →</a>
-    </div>
-</div>
+<div id="dashboard-alerts" class="mb-4"></div>
 <div class="row mb-4">
     <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card"><div class="kpi-value kpi-critical" id="kpi-critical">-</div><div class="kpi-label">{{ t('dashboard.kpi.critical') }}</div></div>
@@ -30,13 +21,13 @@
     <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card disabled" style="position:relative;">
             <div class="badge-coming-soon" style="position:absolute;top:-8px;right:-8px;">SOON</div>
-            <div class="kpi-value">92%</div><div class="kpi-label">Coverage</div>
+            <div class="kpi-value">--</div><div class="kpi-label">Coverage</div>
         </div>
     </div>
     <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
         <div class="kpi-card disabled" style="position:relative;">
             <div class="badge-coming-soon" style="position:absolute;top:-8px;right:-8px;">SOON</div>
-            <div class="kpi-value">4.2</div><div class="kpi-label">Avg Risk Score</div>
+            <div class="kpi-value">--</div><div class="kpi-label">Avg Risk Score</div>
         </div>
     </div>
 </div>
@@ -81,6 +72,53 @@ fetch('/api/stats/dashboard').then(r=>r.json()).then(data=>{
     });
     html+='</tbody></table>';
     document.getElementById('recentJobs').innerHTML=html;
+}).then(()=>{
+    // Alertes dynamiques
+    fetch('/api/stats/dashboard').then(r=>r.json()).then(data=>{
+        const alerts=[];
+        const critical=data.findings_by_severity&&data.findings_by_severity.critical||0;
+        if(critical>0){
+            alerts.push(`<div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,51,102,0.08);border-left:3px solid #ff3366;color:#ff8099;padding:12px 20px;margin-bottom:10px;">
+                <div>🚨 <strong>${critical} CRITICAL finding${critical>1?'s':''}</strong> in last 24h</div>
+                <a href="/${lang}/findings?severity=critical" style="color:#00d4ff;font-weight:bold;">View →</a>
+            </div>`);
+        }
+        document.getElementById('dashboard-alerts').innerHTML=alerts.join('');
+    }).catch(()=>{});
 }).catch(err=>console.error('Dashboard error:',err));
+
+// Alertes dynamiques
+(function loadAlerts(){
+    const lang = document.documentElement.lang || '{{ lang }}';
+    const alertsContainer = document.getElementById('dashboard-alerts');
+    Promise.all([
+        fetch('/api/stats/dashboard').then(r=>r.json()),
+        fetch('/api/findings?severity=critical&limit=20').then(r=>r.json())
+    ]).then(([stats, findings]) => {
+        const alerts = [];
+        const now = new Date();
+        const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        const recentCritical = Array.isArray(findings) ? findings.filter(f =>
+            f.severity === 'critical' && new Date(f.created_at) >= sevenDaysAgo
+        ) : [];
+        const criticalCount = recentCritical.length;
+        if (criticalCount > 0) {
+            alerts.push('<div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,51,102,0.08);border-left:3px solid #ff3366;color:#ff8099;padding:12px 20px;margin-bottom:10px;"><div>\u{1F6A8} <strong>' + criticalCount + ' CRITICAL finding' + (criticalCount > 1 ? 's' : '') + '</strong> in last 24h</div><a href="/' + lang + '/findings?severity=critical" style="color:#00d4ff;font-weight:bold;">View \u2192</a></div>');
+        }
+        const exploitFindings = Array.isArray(findings) ? findings.filter(f =>
+            f.title && f.title.startsWith('[Readiness]') &&
+            f.description && f.description.includes('Recommendation type: PRECISE')
+        ) : [];
+        if (exploitFindings.length > 0) {
+            const f = exploitFindings[0];
+            const ipMatch = f.title.match(/(\d+\.\d+\.\d+\.\d+)/);
+            const ip = ipMatch ? ipMatch[1] : 'target';
+            const moduleMatch = f.description && f.description.match(/Action: Metasploit module: (.+)/);
+            const module = moduleMatch ? moduleMatch[1].trim() : 'unknown exploit';
+                alerts.push('<div class="alert d-flex justify-content-between align-items-center" style="background:rgba(255,107,53,0.08);border-left:3px solid #ff6b35;color:#ffaa88;padding:12px 20px;"><div>\u26A0\uFE0F <strong>Metasploit exploit available</strong> — ' + module + ' on ' + ip + '</div><a href="/' + lang + '/pivot-chains" style="color:#00d4ff;font-weight:bold;">Exploit \u2192</a></div>');
+        }
+        alertsContainer.innerHTML = alerts.join('');
+    }).catch(() => { alertsContainer.innerHTML = ''; });
+})();
 </script>
 {% endblock %}

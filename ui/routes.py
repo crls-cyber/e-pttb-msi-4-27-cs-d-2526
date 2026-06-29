@@ -27,9 +27,12 @@ def enforce_password_change():
 
 @ui_bp.route('/')
 def root():
-    """Redirect root to dashboard."""
-    lang = get_locale()
-    return redirect(f'/{lang}/dashboard')
+    """Redirect root to login if not authenticated, else to dashboard."""
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        lang = get_locale()
+        return redirect(f'/{lang}/dashboard')
+    return redirect('/login')
 
 @ui_bp.route('/login', methods=['GET', 'POST'])
 def login():

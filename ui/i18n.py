@@ -8,19 +8,16 @@ DEFAULT_LANGUAGE = 'en'
 
 def get_locale():
     """Determine the user's preferred language."""
-    # 1. Check session
-    if 'lang' in session and session['lang'] in SUPPORTED_LANGUAGES:
-        return session['lang']
-    
-    # 2. Check URL path
+    # 1. Check URL path first (allows switching language)
     if request.path.startswith('/fr/'):
         session['lang'] = 'fr'
         return 'fr'
     elif request.path.startswith('/en/'):
         session['lang'] = 'en'
         return 'en'
-    
-    # 3. Check Accept-Language header
+    # 2. Check session
+    if 'lang' in session and session['lang'] in SUPPORTED_LANGUAGES:
+        return session['lang']
     lang = request.accept_languages.best_match(SUPPORTED_LANGUAGES)
     if lang:
         session['lang'] = lang
